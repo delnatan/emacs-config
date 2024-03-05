@@ -168,6 +168,22 @@
   (global-corfu-mode)
   (corfu-popupinfo-mode))
 
+;; add corfu extension
+(use-package cape
+  :straight t
+  :bind (("C-c p p" . completion-at-point)
+	 ("C-c p \\" . cape-tex)
+	 ("C-c p _" . cape-tex)
+	 ("C-c p ^" . cape-tex)
+	 ("C-c p f" . cape-file)
+	 ("C-c p d" . cape-dabbrev)
+	 ("C-c p s" . cape-elisp-symbol)
+	 ("C-c p e" . cape-elisp-block))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-block))
+
 ;; use treesitter
 (use-package python
   :mode ("\\.py\\'" . python-ts-mode)
@@ -391,8 +407,6 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
                            "</style>\n")))))
 
 (add-hook 'org-export-before-processing-hook 'de/my-org-inline-css-hook)
-
-
 
 (defun de/reload-emacs-config()
   (interactive)

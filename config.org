@@ -208,6 +208,22 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
     :init
     (global-corfu-mode)
     (corfu-popupinfo-mode))
+
+  ;; add corfu extension
+  (use-package cape
+    :straight t
+    :bind (("C-c p p" . completion-at-point)
+  	 ("C-c p \\" . cape-tex)
+  	 ("C-c p _" . cape-tex)
+  	 ("C-c p ^" . cape-tex)
+  	 ("C-c p f" . cape-file)
+  	 ("C-c p d" . cape-dabbrev)
+  	 ("C-c p s" . cape-elisp-symbol)
+  	 ("C-c p e" . cape-elisp-block))
+    :init
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-elisp-block))
 #+end_src
 
 ** Python
@@ -519,11 +535,7 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 
 * Custom functions
 
-All custom functions are preceded by the prefix ~de/~.
-
-I often need to check what is the ~PATH~ variable from within Emacs.
-#+begin_src emacs-lisp
-#+end_src
+All custom functions are preceded by the prefix ~de/~. All other custom functions that can be called interactively is placed under ~~/Apps/emacs-config/custom~.
 
 Convenient function to reload Emacs config
 #+begin_src emacs-lisp
