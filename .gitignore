@@ -1,0 +1,6 @@
+# ignore .elc files
+*.elc
+# ignore hidden folders
+.*/
+# ignore all files in any directory that starts with a dot
+.*/**
