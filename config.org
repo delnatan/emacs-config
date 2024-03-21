@@ -171,6 +171,11 @@ Using ~dired-sidebar~ to conveniently go through files and folders in vertical m
     (ibuffer-mark-on-buffer
      (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
 
+  ;; for better quality icons, Emacs should be installed with imagemagick support
+  (use-package vscode-icon
+    :straight t
+    :commands (vscode-icon-for-file))
+
   (use-package dired-sidebar
     :straight (:type git :host github :repo "jojojames/dired-sidebar")
     :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
@@ -267,6 +272,28 @@ Silence eglot progress (in the *Messages* buffer)
   (setq eglot-report-progress nil)
 #+end_src
 
+Trying combobulate again...this time also using ~avy~ to move around magically.
+
+#+begin_src emacs-lisp
+  (use-package treesit
+    :mode (("\\.py\\'" . python-ts-mode)
+  	 ("\\.c\\'" . c-ts-mode)
+  	 ("\\.h\\'" . c-ts-mode))
+    :straight (:type built-in)
+    :config
+    (use-package combobulate
+      :straight (:type git :host github :repo "mickeynp/combobulate")
+      :preface
+      (setq combobulate-key-prefix "C-c o")
+      :hook
+      ((python-ts-mode . combobulate-mode))))
+
+  (use-package avy
+    :straight t)
+
+  (global-set-key (kbd "C-:") 'avy-goto-char)
+	   #+end_src
+
 For general code formatting I use ~apheleia~.
 #+begin_src emacs-lisp
   (use-package apheleia
@@ -325,7 +352,6 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
 #+begin_src emacs-lisp
   ;; use treesitter
   (use-package python
-    :mode ("\\.py\\'" . python-ts-mode)
     :config
     (define-key python-ts-mode-map (kbd "s-[") 'python-indent-shift-left)
     (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
@@ -566,7 +592,7 @@ Minor reconfiguration of ~org-mode~.
     )
 
   (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
-  
+
   ;; shortcut to insert source block
   (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
   (add-to-list 'org-structure-template-alist '("sp" . "src python"))
@@ -597,7 +623,7 @@ Use ~modern-mode~ for org:
   (use-package org-bullets
     :straight t
     :hook (org-mode . org-bullets-mode))
-  #+end_src
+#+end_src
 
 The org-modern package is nice for marking source blocks but when org-indent is enabled, the block "bracket" is disabled because it uses the fringe area. This small package tries to fix this.
 #+begin_src emacs-lisp

@@ -141,6 +141,11 @@
   (ibuffer-mark-on-buffer
    (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
 
+;; for better quality icons, Emacs should be installed with imagemagick support
+(use-package vscode-icon
+  :straight t
+  :commands (vscode-icon-for-file))
+
 (use-package dired-sidebar
   :straight (:type git :host github :repo "jojojames/dired-sidebar")
   :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
@@ -215,6 +220,24 @@
 
 (setq eglot-report-progress nil)
 
+(use-package treesit
+  :mode (("\\.py\\'" . python-ts-mode)
+	 ("\\.c\\'" . c-ts-mode)
+	 ("\\.h\\'" . c-ts-mode))
+  :straight (:type built-in)
+  :config
+  (use-package combobulate
+    :straight (:type git :host github :repo "mickeynp/combobulate")
+    :preface
+    (setq combobulate-key-prefix "C-c o")
+    :hook
+    ((python-ts-mode . combobulate-mode))))
+
+(use-package avy
+  :straight t)
+
+(global-set-key (kbd "C-:") 'avy-goto-char)
+
 (use-package apheleia
   :straight t
   :config
@@ -262,7 +285,6 @@
 
 ;; use treesitter
 (use-package python
-  :mode ("\\.py\\'" . python-ts-mode)
   :config
   (define-key python-ts-mode-map (kbd "s-[") 'python-indent-shift-left)
   (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
