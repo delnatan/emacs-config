@@ -1,3 +1,5 @@
+.DS_Store/
+
 # ignore .elc files
 *.elc
 # ignore hidden folders

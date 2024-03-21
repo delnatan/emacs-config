@@ -136,3 +136,47 @@ Usage: (sum-list \\='(1 2 3 4 5)) returns 15
   (interactive)
   (dolist (path exec-path)
     (insert (concat path "\n"))))
+
+
+(defun de/comment-fence ()
+  "Inserts a 'fenced' comment from the current point to the fill-column."
+  (interactive)
+  (let* ((current-column (current-column))
+         (fill-column (or fill-column 80))
+         (n (- fill-column current-column)))
+    (insert (make-string n ?#))))
+
+
+(defun de/comment-at-end ()
+  "Places a '#' at fill-column minus one for the current line or each line in the selected region."
+  (interactive)
+  (if (use-region-p)
+      ;; If a region is selected, apply to each line in the region
+      (let ((start (region-beginning))
+            (end (region-end))
+            (fill-column (or fill-column 80))) ; Use fill-column or default to 80
+        (save-excursion
+          (goto-char start)
+          (let ((end-marker (copy-marker end))) ; Use a marker for end to adjust position automatically
+            (while (< (point) end-marker)
+              (let ((line-end (save-excursion (end-of-line) (point))))
+                (if (< (current-column) (- fill-column 1))
+                    (progn
+                      (end-of-line)
+                      (if (> (- fill-column 1) (current-column))
+                          (insert (make-string (- (- fill-column 1) (current-column)) ? ))))
+                  (delete-region (+ (line-beginning-position) fill-column -1) line-end))
+                (end-of-line)
+                (unless (or (= (char-before) ?#) (> (current-column) fill-column))
+                  (insert "#")))
+              (forward-line 1)))))
+    ;; If no region is selected, apply to the current line
+    (save-excursion
+      (let* ((target-column (- fill-column 1))
+             (current-length (progn (end-of-line) (current-column))))
+        (if (< current-length target-column)
+            (insert (make-string (- target-column current-length) ? ) "#")
+          (goto-char (+ (line-beginning-position) target-column))
+          (unless (= (char-before) ?#)
+            (delete-region (point) (progn (end-of-line) (point)))
+            (insert "#")))))))

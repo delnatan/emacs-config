@@ -5,7 +5,7 @@
 (column-number-mode)
 ;; use y/n for yes-or-no
 (setopt use-short-answers t) ; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
- 
+
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
@@ -20,6 +20,7 @@
 ;; enable recent-file mode
 (recentf-mode 1)
 (setq recentf-max-saved-items 50)
+
 ;; Open recent files 
 (global-set-key (kbd "C-c r") 'recentf-open-files)
 
@@ -61,7 +62,9 @@
   )
 
 (use-package which-key
-  :straight (which-key :type git :host github :repo "justbur/emacs-which-key"))
+  :straight (which-key :type git :host github :repo "justbur/emacs-which-key")
+  :config
+  (which-key-setup-side-window-right-bottom))
 (which-key-mode)
 
 (setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
@@ -117,6 +120,84 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
+;; this was taken from https://www.emacswiki.org/emacs/DiredOmitMode
+(defun dired-dotfiles-toggle ()
+  "Show/hide dot-files"
+  (interactive)
+  (when (equal major-mode 'dired-sidebar-mode)
+    (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
+        (progn 
+          (set (make-local-variable 'dired-dotfiles-show-p) nil)
+          (message "h")
+          (dired-mark-files-regexp "^\\\.")
+          (dired-do-kill-lines))
+      (progn (revert-buffer) ; otherwise just revert to re-show
+             (set (make-local-variable 'dired-dotfiles-show-p) t)))))
+
+;; add dired-sidebar selector
+(defun ibuffer-mark-dired-sidebar-buffers ()
+  "Mark all `dired-sidebar' buffers."
+  (interactive)
+  (ibuffer-mark-on-buffer
+   (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
+
+(use-package dired-sidebar
+  :straight (:type git :host github :repo "jojojames/dired-sidebar")
+  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
+         :map dired-mode-map
+         ("<backtab>" . dired-dotfiles-toggle))
+  :commands (dired-sidebar-toggle-sidebar)
+  :init
+  (add-hook 'dired-sidebar-mode-hook
+            (lambda ()
+              (unless (file-remote-p default-directory)
+                (auto-revert-mode))))
+  :config
+  (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
+  (push 'rotate-windows dired-sidebar-toggle-hidden-commands)
+  (setq dired-sidebar-subtree-line-prefix "__")
+  (setq dired-sidebar-theme 'vscode)
+  (setq dired-sidebar-use-term-integration t))
+
+(use-package ibuffer
+  :straight (:type built-in)
+  :config
+  ;; define keymap to select all dired-sidebar modes while in ibuffer
+  (define-key ibuffer-mode-map (kbd "* |") 'ibuffer-mark-dired-sidebar-buffers))
+
+;; ;; define custom function to trigger show/hide in 'outline-minor-mode'
+(defun de/hide_all ()
+  (interactive)
+  (if outline-minor-mode
+      (progn (outline-hide-body)
+             (outline-hide-sublevels 1))
+    (message "Outline minor mode is not enabled.")))
+
+(add-hook 'prog-mode-hook 'outline-minor-mode)
+
+;; remap some of the terrible default keybindings
+(let ((kmap outline-minor-mode-map))
+  (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
+  (define-key kmap (kbd "M-<down>") 'outline-move-subtree-down)
+  (define-key kmap (kbd "<backtab>") 'outline-cycle)
+  (define-key kmap (kbd "C-S-h") 'de/hide_all)
+  (define-key kmap (kbd "C-S-s") 'outline-show-all))
+
+(defun de/scroll-half-page-down ()
+  (interactive)
+  (move-to-window-line-top-bottom)
+  (move-to-window-line-top-bottom)
+  (recenter-top-bottom))
+
+(defun de/scroll-half-page-up ()
+  (interactive)
+  (move-to-window-line-top-bottom)
+  (recenter-top-bottom)
+  (recenter-top-bottom))
+
+(global-set-key (kbd "C-v") 'de/scroll-half-page-down)
+(global-set-key (kbd "M-v") 'de/scroll-half-page-up)
+
 (setq treesit-language-source-alist
       '((bash "https://github.com/tree-sitter/tree-sitter-bash")
 	(c "https://github.com/tree-sitter/tree-sitter-c")
@@ -132,12 +213,7 @@
 	(toml "https://github.com/tree-sitter/tree-sitter-toml")
 	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 
-(use-package treesit
-  :straight (:type built-in)
-  :config
-  (use-package combobulate
-    :preface
-    (setq combobulate-key-prefix "C-c o")))
+(setq eglot-report-progress nil)
 
 (use-package apheleia
   :straight t
@@ -192,14 +268,13 @@
   (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
   )
 
-
 (use-package micromamba
   :straight t
   :config
   (defun change-inferior-python ()
     (when (executable-find "ipython3")
       (setq python-shell-interpreter "ipython3"
-  	    python-shell-interpreter-args "--simple-prompt")))
+    	    python-shell-interpreter-args "--simple-prompt")))
   :hook
   (micromamba-postactivate-hook . change-inferior-python)
   )
@@ -247,6 +322,9 @@
   :config
   (setq jupyter-eval-use-overlays t))
 
+(use-package gnuplot
+  :straight t)
+
 ;; enable languages for org-babel
 (org-babel-do-load-languages
  'org-babel-load-languages
@@ -254,6 +332,7 @@
    (awk . t)
    (sed . t)
    (shell . t)
+   (gnuplot . t)
    (python . t)
    (jupyter . t)))
 
@@ -285,20 +364,32 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (add-hook 'org-mode-hook 'de/org-jupyter-setup())
 
+(require 'bookmark)
+;; according to https://www.reddit.com/r/emacs/comments/17m8vwq/guide_setup_nano_emacs_theme_properly_on_windows/
+;; and bug https://github.com/rougier/nano-emacs/issues/147
+(defface bookmark-menu-heading
+  `((((class color) (min-colors 89)) (:foreground "#000000")))
+  "workaround")
+
 (straight-use-package
  '(nano :type git :host github :repo "rougier/nano-emacs"))
+
+;; (setq nano-font-size 14)
 
 ;; (setq nano-font-family-monospaced "Iosevka")
 
 (require 'nano-layout)
 (require 'nano-faces)
 (require 'nano-theme)
-(nano-faces)
 (require 'nano-theme-dark)
 (require 'nano-theme-light)
-(nano-theme-set-light)
+(nano-faces)
 (call-interactively 'nano-refresh-theme)
 (require 'nano-modeline)
+
+;; set italics font
+(set-face-attribute 'italic nil
+		    :family "Operator Mono" :weight 'light :slant 'italic :height 160)
 
 (require 'color)
 
@@ -306,14 +397,17 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 (if (equal nano-theme-var "dark")
     (set-face-attribute 'org-block nil :background
 			(color-lighten-name
-			 (face-attribute 'default :background) 15))
+			 (face-attribute 'default :background) 20))
   (set-face-attribute 'org-block nil :background
 		      (color-darken-name
 		       (face-attribute 'default :background) 3)))
 
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
+;; call these after init to avoid order-of-execution problems
+(add-hook 'after-init-hook
+          (lambda ()
+            (menu-bar-mode -1)
+            (tool-bar-mode -1)
+            (scroll-bar-mode -1)))
 
 ;; Set default frame size
 (add-to-list 'default-frame-alist '(width . 80))
@@ -344,7 +438,8 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
   (setq org-confirm-babel-evaluate nil)
   (setq org-display-inline-images t)
   (setq org-startup-with-inline-images t)
-  (setq org-pretty-entities t)
+  ;; I disabled this to make underscores appear proper
+  ;; (setq org-pretty-entities t)
   )
 
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -408,6 +503,18 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (add-hook 'org-export-before-processing-hook 'de/my-org-inline-css-hook)
 
+(use-package org-fragtog
+  :after org
+  :custom
+  (org-startup-with-latex-preview t)
+  :hook
+  (org-mode . org-fragtog-mode)
+  :custom
+  (org-format-latex-options
+   (plist-put org-format-latex-options :scale 2)
+   (plist-put org-format-latex-options :foreground 'auto)
+   (plist-put org-format-latex-options :background 'auto)))
+
 (defun de/reload-emacs-config()
   (interactive)
   "convenient function to reload config file"
@@ -456,4 +563,7 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (global-set-key (kbd "M-o") 'other-window)
 
-(load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01" t nil t)
+(load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
+
+(use-package scad-mode
+  :straight (scad-mode :type git :host github :repo "openscad/emacs-scad-mode"))
