@@ -180,3 +180,35 @@ Usage: (sum-list \\='(1 2 3 4 5)) returns 15
           (unless (= (char-before) ?#)
             (delete-region (point) (progn (end-of-line) (point)))
             (insert "#")))))))
+
+(defun de/calculate-hours-into-future ()
+  "Prompt the user for a date, time, and number of hours, then calculate the future date and time using Org-mode's date/time functionality."
+  (interactive)
+  (let* ((org-time-stamp-formats '("<%Y-%m-%d %H:%M>"))
+         (datetime (org-read-date nil 'to-time nil "Enter the date and time"))
+         (hours (read-number "Enter the number of hours to add: "))
+         (future-time (time-add datetime (seconds-to-time (* hours 3600))))
+         (future-time-stamp (format-time-string (car org-time-stamp-formats) future-time)))
+    (message "The future date and time is: %s" future-time-stamp)))
+
+
+(defun de/replace-tilde-with-dots-to-pad (start end)
+  "replace '~' character within rectangular region and fill it to pad
+content to rectangular width.
+
+Used to make neat table-of-content style dotted spaces
+"
+  (interactive "r")
+  (let* ((lines (extract-rectangle start end))
+	 (rect-width (apply 'max (mapcar 'length lines))))
+    (delete-rectangle start end)
+    (goto-char start)
+    (insert-rectangle
+     (mapcar (lambda (line)
+	       (let* ((trimmed-line (string-trim line))
+		      (ndots (- rect-width (length trimmed-line)))
+		      (ndots (+ ndots 1)) ;account for '~' character
+		      (dots (make-string ndots ?.)))
+		 (message "replacing '~' in %s with %s" line dots)
+		 (replace-regexp-in-string "~" dots line)))
+	     lines))))

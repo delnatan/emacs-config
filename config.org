@@ -22,7 +22,7 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
     :straight t)
 
   ;; for programming set fill to 80 columns and display column indicator
-  (setq-default fill-column 80)
+  (setq-default fill-column 79)
   (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
 
   ;; enable recent-file mode
@@ -50,6 +50,12 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
 
   ;; Kill current buffer (instead of asking first buffer name)
   (global-set-key (kbd "C-x k") 'kill-current-buffer)
+
+  ;; unbind annoying text-scaling with Ctrl-mouse wheel
+  (global-unset-key (kbd "C-<wheel-up>"))
+  (global-unset-key (kbd "C-<wheel-down>"))
+  (global-unset-key (kbd "C-<mouse-5>"))
+  (global-unset-key (kbd "C-<mouse-4>"))
 
   ;; Close frame if not the last, kill emacs else
   ;; took this from nano-emacs `nano-bindings.el`
@@ -94,12 +100,6 @@ Emacs will automatically create backup files in the same folder as the current d
         kept-new-versions 4
         kept-old-versions 2
         version-control t)
-#+end_src
-
-For terminal in Emacs I use `vterm`
-#+begin_src emacs-lisp
-  (use-package vterm
-    :straight t)  
 #+end_src
 
 Using vertico for auto-complete choices in a separate minibuffer.
@@ -272,12 +272,13 @@ Silence eglot progress (in the *Messages* buffer)
   (setq eglot-report-progress nil)
 #+end_src
 
-Trying combobulate again...this time also using ~avy~ to move around magically.
+Trying combobulate again...this time also using ~avy~ to move around magically. Use ~avy~ via keybinding =C-:=. Combobulate is turned on via =M-h= while in programming mode.
 
 #+begin_src emacs-lisp
   (use-package treesit
     :mode (("\\.py\\'" . python-ts-mode)
   	 ("\\.c\\'" . c-ts-mode)
+  	 ("\\.yaml\\'" . yaml-ts-mode)
   	 ("\\.h\\'" . c-ts-mode))
     :straight (:type built-in)
     :config
@@ -311,7 +312,7 @@ For general code formatting I use ~apheleia~.
   (require 'apheleia)
 #+end_src
 
-Use ~corfu~ for autocompletion. You can use multiple words to filter your search by using a separator, which is bound to the key =M-<space>= when a pop-up box is on the screen.
+Use ~corfu~ for autocompletion. You can use multiple words to filter your search by using a separator, which is bound to the key =M-<space>= when a pop-up box is on the screen. Sometimes the partial match can get in the way of doing things, like choosing to rename your file to something else that is a sub/superset of the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 #+begin_src emacs-lisp
   (use-package corfu
     :straight t
@@ -410,6 +411,7 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
      ("C-c C-c" . code-cells-eval)))
 #+end_src
 
+At the moment, editing org source block is broken because I'm using treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
 
 ** Jupyter setup
 
@@ -435,6 +437,9 @@ Also include some org-mode customization to accommodate jupyter
      (jupyter . t)))
 
   (org-babel-jupyter-override-src-block "python")
+
+  ;; patch for correct handling of 'python' org source blocks
+  (add-to-list 'org-src-lang-modes '("python" . python-ts))
 #+end_src
 
 A typical workflow in org-mode is to use source blocks with the following tag (after running =micromamba-activate=!):
@@ -480,6 +485,16 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 
 You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for next/previous blocks.
 
+As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering correctly. This is a workaround found in the ~emacs-jupyter~ issues list:
+#+begin_src emacs-lisp
+  (defun patch/display-ansi-colors ()
+    "Fixes kernel output in emacs-jupyter"
+    (ansi-color-apply-on-region (point-min) (point-max)))
+  (add-hook 'org-mode-hook
+  	  (lambda ()
+  	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+#+end_src
+
 
 * Theme and appearance
 Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
@@ -498,9 +513,11 @@ font-roboto-mono= or =font-iosevka=.
   (straight-use-package
    '(nano :type git :host github :repo "rougier/nano-emacs"))
 
-  ;; (setq nano-font-size 14)
+  (setq nano-font-size 14)
 
-  ;; (setq nano-font-family-monospaced "Iosevka")
+  ;; (setq nano-font-family-monospaced "IBM Plex Mono")
+
+  ;; (setq nano-font-family-proportional "IBM Plex Sans")
 
   (require 'nano-layout)
   (require 'nano-faces)
@@ -513,12 +530,12 @@ font-roboto-mono= or =font-iosevka=.
 
   ;; set italics font
   (set-face-attribute 'italic nil
-  		    :family "Operator Mono" :weight 'light :slant 'italic :height 160)
+  		    :family "Operator Mono" :weight 'light :slant 'italic :height 140)
 
-#+end_src
+  ;; I want show-paren-match to be more salient
+  (set-face-attribute 'show-paren-match nil :background "#eac1f8")
 
-#+RESULTS:
-: nano-modeline
+  #+end_src
 
 Setting it up this way allows one to call =M-x nano-toggle-theme= to switch
 between dark and light mode.
@@ -752,9 +769,14 @@ Resizing windows is counter intuitive, so I'd like up/down/left/right to resize 
   (global-set-key (kbd "S-C-<up>") 'enlarge-window)
 #+end_src
 
-The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often.
+The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
 #+begin_src emacs-lisp
-  (global-set-key (kbd "M-o") 'other-window)
+  ;; (global-set-key (kbd "M-o") 'other-window)
+
+  (use-package ace-window
+    :straight t
+    :bind
+    (("M-o" . ace-window)))
 #+end_src
 
 Load my custom functions

@@ -14,7 +14,7 @@
   :straight t)
 
 ;; for programming set fill to 80 columns and display column indicator
-(setq-default fill-column 80)
+(setq-default fill-column 79)
 (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
 
 ;; enable recent-file mode
@@ -42,6 +42,12 @@
 
 ;; Kill current buffer (instead of asking first buffer name)
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
+
+;; unbind annoying text-scaling with Ctrl-mouse wheel
+(global-unset-key (kbd "C-<wheel-up>"))
+(global-unset-key (kbd "C-<wheel-down>"))
+(global-unset-key (kbd "C-<mouse-5>"))
+(global-unset-key (kbd "C-<mouse-4>"))
 
 ;; Close frame if not the last, kill emacs else
 ;; took this from nano-emacs `nano-bindings.el`
@@ -76,9 +82,6 @@
       kept-new-versions 4
       kept-old-versions 2
       version-control t)
-
-(use-package vterm
-  :straight t)
 
 (use-package vertico
   :init
@@ -223,6 +226,7 @@
 (use-package treesit
   :mode (("\\.py\\'" . python-ts-mode)
 	 ("\\.c\\'" . c-ts-mode)
+	 ("\\.yaml\\'" . yaml-ts-mode)
 	 ("\\.h\\'" . c-ts-mode))
   :straight (:type built-in)
   :config
@@ -360,6 +364,9 @@
 
 (org-babel-jupyter-override-src-block "python")
 
+;; patch for correct handling of 'python' org source blocks
+(add-to-list 'org-src-lang-modes '("python" . python-ts))
+
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
 Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
@@ -386,6 +393,13 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (add-hook 'org-mode-hook 'de/org-jupyter-setup())
 
+(defun patch/display-ansi-colors ()
+  "Fixes kernel output in emacs-jupyter"
+  (ansi-color-apply-on-region (point-min) (point-max)))
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+
 (require 'bookmark)
 ;; according to https://www.reddit.com/r/emacs/comments/17m8vwq/guide_setup_nano_emacs_theme_properly_on_windows/
 ;; and bug https://github.com/rougier/nano-emacs/issues/147
@@ -396,9 +410,11 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 (straight-use-package
  '(nano :type git :host github :repo "rougier/nano-emacs"))
 
-;; (setq nano-font-size 14)
+(setq nano-font-size 14)
 
-;; (setq nano-font-family-monospaced "Iosevka")
+;; (setq nano-font-family-monospaced "IBM Plex Mono")
+
+;; (setq nano-font-family-proportional "IBM Plex Sans")
 
 (require 'nano-layout)
 (require 'nano-faces)
@@ -411,7 +427,10 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 ;; set italics font
 (set-face-attribute 'italic nil
-		    :family "Operator Mono" :weight 'light :slant 'italic :height 160)
+		    :family "Operator Mono" :weight 'light :slant 'italic :height 140)
+
+;; I want show-paren-match to be more salient
+(set-face-attribute 'show-paren-match nil :background "#eac1f8")
 
 (require 'color)
 
@@ -583,7 +602,12 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 (global-set-key (kbd "S-C-<down>") 'shrink-window)
 (global-set-key (kbd "S-C-<up>") 'enlarge-window)
 
-(global-set-key (kbd "M-o") 'other-window)
+;; (global-set-key (kbd "M-o") 'other-window)
+
+(use-package ace-window
+  :straight t
+  :bind
+  (("M-o" . ace-window)))
 
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 
