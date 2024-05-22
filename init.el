@@ -1,26 +1,26 @@
-  ;; install straight.el by bootstrapping
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+;; install straight.el by bootstrapping
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-  (straight-use-package 'use-package)
+(straight-use-package 'use-package)
 
-  (use-package straight
-    :custom
-    (straight-use-package-by-default t))
+(use-package straight
+  :custom
+  (straight-use-package-by-default t))
 
-  ;; org-mode version 9.6.15 came with emacs@29
-  (use-package org
-    :straight t)
+;; org-mode version 9.6.15 came with emacs@29
+(use-package org
+  :straight t)
 
 ;; I moved my config file into an org file
 (org-babel-load-file "~/Apps/emacs-config/config.org")
