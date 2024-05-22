@@ -1,10 +1,17 @@
 (set-default-coding-systems 'utf-8)
 (setq inhibit-startup-message t)
 (setq custom-safe-themes t)
-(global-visual-line-mode)
 (column-number-mode)
+
+;; use visual-line-mode only when programming or in org-mode
+(add-hook 'prog-mode-hook 'visual-line-mode)
+(add-hook 'org-mode-hook 'visual-line-mode)
+
+;; use smooth scrolling like most modern apps
+(pixel-scroll-precision-mode)
 ;; use y/n for yes-or-no
-(setopt use-short-answers t) ; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
+;; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
+(setopt use-short-answers t) 
 
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
@@ -19,13 +26,19 @@
 
 ;; enable recent-file mode
 (recentf-mode 1)
-(setq recentf-max-saved-items 50)
+(setq recentf-max-saved-items 30)
 
 ;; Open recent files 
 (global-set-key (kbd "C-c r") 'recentf-open-files)
 
 ;; map C-x C-b to `ibuffer`
 (define-key ctl-x-map "\C-b" 'ibuffer)
+
+;; set dired to group directories first
+(setq dired-listing-switches "-al --group-directories-first")
+
+;; refresh dired if file is changed on disk
+(setq dired-auto-revert-buffer t)
 
 ;; enable side scrolling with mouse wheel
 (setq mouse-wheel-tilt-scroll t)
@@ -50,7 +63,7 @@
 (global-unset-key (kbd "C-<mouse-4>"))
 
 ;; Close frame if not the last, kill emacs else
-;; took this from nano-emacs `nano-bindings.el`
+
 (defun de/delete-frame-or-kill-emacs ()
   "Delete frame or kill Emacs if there is only one frame."
   (interactive)
@@ -59,6 +72,33 @@
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
 
+;; Enable ibuffer
+(require 'ibuffer)
+
+;; Define custom groups for ibuffer
+;; add commonly used modes below
+(setq ibuffer-saved-filter-groups
+      '(("default"
+         ("Dired" (mode . dired-mode))
+         ("Python" (or (mode . python-mode)
+                       (mode . python-ts-mode)))
+         ("Org" (mode . org-mode))
+	 ("Jupyter" (mode . jupyter-repl-mode))
+         ("Emacs" (or (name . "^\\*scratch\\*$")
+                      (name . "^\\*Messages\\*$")))
+         ("Help" (or (name . "^\\*Help\\*$")
+                     (name . "^\\*Apropos\\*$")
+                     (name . "^\\*info\\*$"))))))
+
+;; Set the default filter group
+(add-hook 'ibuffer-mode-hook
+          (lambda ()
+            (ibuffer-switch-to-saved-filter-groups "default")))
+
+;; Enable ibuffer auto-mode
+(setq ibuffer-expert t)
+(setq ibuffer-show-empty-filter-groups nil)
+
 (use-package multiple-cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
@@ -66,12 +106,6 @@
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click))
   )
-
-(use-package which-key
-  :straight (which-key :type git :host github :repo "justbur/emacs-which-key")
-  :config
-  (which-key-setup-side-window-right-bottom))
-(which-key-mode)
 
 (setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
 
@@ -84,8 +118,18 @@
       version-control t)
 
 (use-package vertico
+  :straight t
+  :init (vertico-mode))
+
+(use-package marginalia
+  :straight t
+  (:keymaps 'minibuffer-local-map
+	    "M-A" 'marginalia-cycle)
+  :custom
+  (marginalia-max-relative-age 0)
+  (marginalia-align 'right)
   :init
-  (vertico-mode))
+  (marginalia-mode))
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -188,8 +232,8 @@
   (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
   (define-key kmap (kbd "M-<down>") 'outline-move-subtree-down)
   (define-key kmap (kbd "<backtab>") 'outline-cycle)
-  (define-key kmap (kbd "C-S-h") 'de/hide_all)
-  (define-key kmap (kbd "C-S-s") 'outline-show-all))
+  (define-key kmap (kbd "C-s-h") 'de/hide_all)
+  (define-key kmap (kbd "C-s-s") 'outline-show-all))
 
 (defun de/scroll-half-page-down ()
   (interactive)
@@ -223,21 +267,31 @@
 
 (setq eglot-report-progress nil)
 
+(use-package eglot
+  :straight (:type built-in)
+  :defer t
+  :bind (:map eglot-mode-map
+	      ("C-c C-d" . eldoc)
+	      ("C-c C-f" . eglot-format-buffer))
+  :hook ((python-base-mode . eglot-ensure)
+	 (python-base-mode . hs-minor-mode))
+  :custom (eglot-autoshutdown t))
+
+(use-package eglot-booster
+  :defer t
+  :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
+  :after eglot
+  :config (eglot-booster-mode))
+
 (use-package treesit
   :mode (("\\.py\\'" . python-ts-mode)
 	 ("\\.c\\'" . c-ts-mode)
 	 ("\\.yaml\\'" . yaml-ts-mode)
 	 ("\\.h\\'" . c-ts-mode))
-  :straight (:type built-in)
-  :config
-  (use-package combobulate
-    :straight (:type git :host github :repo "mickeynp/combobulate")
-    :preface
-    (setq combobulate-key-prefix "C-c o")
-    :hook
-    ((python-ts-mode . combobulate-mode))))
+  :straight (:type built-in))
 
-(use-package avy
+(use-package 
+  avy
   :straight t)
 
 (global-set-key (kbd "C-:") 'avy-goto-char)
@@ -245,12 +299,15 @@
 (use-package apheleia
   :straight t
   :config
-  (setf (alist-get 'yapf apheleia-formatters)
-	'("black" "--line-length" "79" "-"))
-  (setf (alist-get 'isort apheleia-formatters)
-        '("isort" "--stdout" "-"))
+  ;; customize ruff
+  (setf (alist-get 'ruff apheleia-formatters)
+        '("ruff" "format" "--silent"
+	  "--line-length" "79"
+	  "--stdin-filename" filepath "-"))
+
   (setf (alist-get 'python-ts-mode apheleia-mode-alist)
-        '(isort yapf))
+        '(ruff-isort ruff))
+
   :hook (prog-mode . apheleia-mode)
   )
 
@@ -261,12 +318,12 @@
   :custom
   (tab-always-indent 'complete)
   (completion-cycle-threshold nil)
-  (corfu-auto t)
+  (corfu-cycle t) ;; allow cycling through candidates
+  (corfu-auto t) ;; enable auto completion
   (corfu-quit-no-match 'separator) ;; or t
-  (corfu-auto-delay 0.15)
+  (corfu-auto-delay 0.1)
   (corfu-echo-documentation nil)
-  :config
-  (setq corfu-popinfo-delay nil)
+  (corfu-popupinfo-delay '(0.3 . 0.15))
   :init
   (global-corfu-mode)
   (corfu-popupinfo-mode))
@@ -310,27 +367,26 @@
   (micromamba-activate "utils"))
 
 (defun de/restart-python ()
-  "Clear current inferiorpython buffer and restart process"
+  "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-         (python-shell-restart)))
+	 (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-        (end (cadr (code-cells--bounds))))
+	(end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
   :straight t
   :defer t
-  :init
-  (add-hook 'python-mode-hook 'code-cells-mode-maybe)
+  :hook ((python-ts-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
-  	       '(python-ts-mode . python-shell-send-region) t)
+	       '(python-ts-mode . python-shell-send-region) t)
   :bind
   (:map
    code-cells-mode-map
@@ -344,11 +400,17 @@
    ("C-c C-c" . code-cells-eval)))
 
 (use-package jupyter
-  :straight t
-  :config
-  (setq jupyter-eval-use-overlays t))
+  :straight t (jupyter :type git :host github :repo "emacs-jupyter/jupyter")
+  :defer t
+  :custom
+  ;; (jupyter-eval-use-overlays t)
+  (jupyter-repl-echo-eval-p t)
+  :bind
+  (:map jupyter-repl-mode-map
+	("C-c C-k" . jupyter-repl-clear-cells)))
 
 (use-package gnuplot
+  :defer t
   :straight t)
 
 ;; enable languages for org-babel
@@ -381,6 +443,7 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
              (insertion-point (point-min))
              (properties (format "#+PROPERTY: header-args:python :session py
 #+PROPERTY: header-args:python+ :async yes
+#+PROPERTY: header-args:python+ :eval never-export
 #+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
@@ -400,50 +463,76 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 	  (lambda ()
 	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
 
-(require 'bookmark)
-;; according to https://www.reddit.com/r/emacs/comments/17m8vwq/guide_setup_nano_emacs_theme_properly_on_windows/
-;; and bug https://github.com/rougier/nano-emacs/issues/147
-(defface bookmark-menu-heading
-  `((((class color) (min-colors 89)) (:foreground "#000000")))
-  "workaround")
+(defun de/python-with-jupyter-repl
+    (kernel-name &optional repl-name filename)
+  "Choose jupyter kernel to open/start new Python file associated to it
+"
+  ;; ~interactive~ form only constructs a list of elements that
+  ;; correspond directly to the arguments of the function
+  (interactive
+   (let ((file (read-file-name "Open Python file: " nil nil nil)))
+     (list
+      ;; first argument, kernel-name
+      (jupyter-kernelspec-name
+       (jupyter-completing-read-kernelspec nil current-prefix-arg))
+      ;; second argument, repl-name
+      (if current-prefix-arg ;; if user supplies REPL name, use it
+	  (read-string "REPL name: ")
+	(file-name-base file)) ;; otherwise, use base filename
+      ;; third argument, filename
+      file)))
+  
+  ;; this means you can interactively choose what gets passed as the
+  ;; arguments for the function
 
-(straight-use-package
- '(nano :type git :host github :repo "rougier/nano-emacs"))
+  ;; open or create the Python file
+  (find-file filename)
 
-(setq nano-font-size 14)
+  ;; start the jupyter REPL and store the client symbol
+  (let ((client (jupyter-run-repl kernel-name repl-name)))
+    ;; wait for REPL to start and then associate the buffer
+    (sleep-for 1.0)
+    (jupyter-repl-associate-buffer client)))
 
-;; (setq nano-font-family-monospaced "IBM Plex Mono")
+(use-package nano-theme
+  :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 
-;; (setq nano-font-family-proportional "IBM Plex Sans")
+;; setup customization of nano colors via advice
+(defun de/customize-nano-themes ()
+  (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
 
-(require 'nano-layout)
-(require 'nano-faces)
+(defun de/advise-nano-themes ()
+  "Add advice to nano theme functions to set show-paren-match face."
+  (advice-add 'nano-dark :after #'de/customize-nano-themes)
+  (advice-add 'nano-light :after #'de/customize-nano-themes))
+
+(de/advise-nano-themes)
+
+
 (require 'nano-theme)
-(require 'nano-theme-dark)
-(require 'nano-theme-light)
-(nano-faces)
-(call-interactively 'nano-refresh-theme)
+(nano-mode)
+
+;; use the 'light scheme by default, switch by calling `nano-theme-toggle`
+(load-theme 'nano t)
+
+(use-package nano-modeline
+  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
+  :hook
+  (text-mode-hook nano-modeline-text-mode)
+  (prog-mode-hook nano-modeline-prog-mode)
+  (org-mode-hook nano-modeline-org-mode))
+
+;; set nano-modeline as default
 (require 'nano-modeline)
+(nano-modeline-text-mode t)
 
-;; set italics font
-(set-face-attribute 'italic nil
-		    :family "Operator Mono" :weight 'light :slant 'italic :height 140)
+;; hide the default modeline
+(setq-default mode-line-format nil)
 
-;; I want show-paren-match to be more salient
-(set-face-attribute 'show-paren-match nil :background "#eac1f8")
+;; set customization on emacs startup
+(add-hook 'emacs-startup-hook #'de/customize-nano-themes)
 
-(require 'color)
-
-;; for light color
-(if (equal nano-theme-var "dark")
-    (set-face-attribute 'org-block nil :background
-			(color-lighten-name
-			 (face-attribute 'default :background) 20))
-  (set-face-attribute 'org-block nil :background
-		      (color-darken-name
-		       (face-attribute 'default :background) 3)))
-
-;; call these after init to avoid order-of-execution problems
+;; call these after init to avoid orderof-execution problems
 (add-hook 'after-init-hook
           (lambda ()
             (menu-bar-mode -1)
@@ -454,12 +543,18 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 (add-to-list 'default-frame-alist '(width . 80))
 (add-to-list 'default-frame-alist '(height . 30))
 
+(use-package rainbow-mode
+  :straight t
+  :hook (org-mode prog-mode))
+
 ;; add emacs ~app~ folder to load-path
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 (use-package svg-lib
+  :defer t
   :straight t)
 (use-package stripes
+  :defer t
   :straight t)
 
 (require 'notes-list)
@@ -476,6 +571,7 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (use-package org
   :config
+  (add-hook 'org-mode-hook 'org-indent-mode)
   (setq org-confirm-babel-evaluate nil)
   (setq org-display-inline-images t)
   (setq org-startup-with-inline-images t)
@@ -491,32 +587,6 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 ;; LaTeX preview rendering default to SVG instead of PNG
 (setq org-preview-latex-default-process 'dvisvgm)
-
-(use-package org-modern
-  :ensure t
-  :custom
-  ;; adds extra indentation
-  (org-modern-hide-stars nil)
-  (org-modern-table nil)
-  (org-modern-list 
-   '(;; (?- . "-")
-     (?* . "•")
-     (?+ . "‣")))
-  ;;or other chars; so top bracket is drawn promptly
-  (org-modern-block-name '("" . ""))
-  :hook
-  (org-mode . org-modern-mode)
-  (org-agenda-finalize . org-modern-agenda))
-
-;; for nicely-aligned bullet stars
-(use-package org-bullets
-  :straight t
-  :hook (org-mode . org-bullets-mode))
-
-(use-package org-modern-indent
-  :straight (org-modern-indent :type git :host github :repo "jdtsmith/org-modern-indent")
-  :config ; add late to hook
-  (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
 (setq org-latex-preview-ltxpng-directory (expand-file-name "~/.emacs.d/tmp"))
@@ -546,11 +616,10 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (use-package org-fragtog
   :after org
-  :custom
-  (org-startup-with-latex-preview t)
   :hook
   (org-mode . org-fragtog-mode)
   :custom
+  (org-startup-with-latex-preview t)
   (org-format-latex-options
    (plist-put org-format-latex-options :scale 2)
    (plist-put org-format-latex-options :foreground 'auto)
@@ -597,13 +666,12 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 (global-set-key (kbd "s-<up>") 'de/move-text-up)
 (global-set-key (kbd "s-<down>") 'de/move-text-down)
 
-(global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
-(global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
-(global-set-key (kbd "S-C-<down>") 'shrink-window)
-(global-set-key (kbd "S-C-<up>") 'enlarge-window)
+(global-set-key (kbd "s-C-<left>") 'shrink-window-horizontally)
+(global-set-key (kbd "s-C-<right>") 'enlarge-window-horizontally)
+(global-set-key (kbd "s-C-<down>") 'shrink-window)
+(global-set-key (kbd "s-C-<up>") 'enlarge-window)
 
 ;; (global-set-key (kbd "M-o") 'other-window)
-
 (use-package ace-window
   :straight t
   :bind
@@ -611,5 +679,52 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 
+;; setup org-agenda keybinding to `C-c a`
+(global-set-key (kbd "C-c a") 'org-agenda)
+
+(setq org-agenda-files
+      '(
+	"/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
+	"/Users/delnatan/Documents/org/tasks.org"
+	"/Users/delnatan/StarrLuxtonLab/org/schedules.org"
+	"/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
+	"/Users/delnatan/Documents/org/meetings.org"
+	"/Users/delnatan/Documents/org/events.org"
+	)
+      )
+
+;; set =C-c c= to do org-capture
+(define-key global-map (kbd "C-c c") 'org-capture)
+
+;; set templates
+(setq org-capture-templates
+      '(("t" "TODO" entry (file+headline "~/Documents/org/tasks.org" "Tasks")
+  	 "* TODO %U %? \n  %i\n")
+	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
+	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n")
+	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
+	 "* Meeting with %? :MEETING:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  Participants: %^{Participants}\n- Agenda:\n  -  %^{Agenda}\n")
+	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events" )
+	 "* %? :EVENT:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  %i\n")))
+
+;; configure refile targets
+(setq org-refile-targets '((nil :maxlevel . 3)
+			   (org-agenda-files :maxlevel . 3)))
+
 (use-package scad-mode
+  :defer t
   :straight (scad-mode :type git :host github :repo "openscad/emacs-scad-mode"))
+
+(use-package csv-mode
+  :defer t
+  :straight (csv-mode :type git :host github :repo "emacsmirror/csv-mode"))
+
+(use-package ellama
+  :defer t
+  :init
+  (setopt ellama-keymap-prefix "C-c e")
+  (require 'llm-ollama)
+  (setopt ellama-provider
+	  (make-llm-ollama
+	   :chat-model "llama3:instruct"
+	   :embedding-model "llama3:latest")))
