@@ -45,6 +45,9 @@
 ;; reverse mouse direction for a more natural swipe feel
 (setq mouse-wheel-flip-direction t)
 
+;; enable automatic parenthesis pairing
+(electric-pair-mode 1)
+
 ;; create a new frame with *scratch* buffer
 (defun new-frame ()
   (interactive)
@@ -83,7 +86,7 @@
          ("Python" (or (mode . python-mode)
                        (mode . python-ts-mode)))
          ("Org" (mode . org-mode))
-	 ("Jupyter" (mode . jupyter-repl-mode))
+  	 ("Jupyter" (mode . jupyter-repl-mode))
          ("Emacs" (or (name . "^\\*scratch\\*$")
                       (name . "^\\*Messages\\*$")))
          ("Help" (or (name . "^\\*Help\\*$")
@@ -124,7 +127,7 @@
 (use-package marginalia
   :straight t
   (:keymaps 'minibuffer-local-map
-	    "M-A" 'marginalia-cycle)
+  	    "M-A" 'marginalia-cycle)
   :custom
   (marginalia-max-relative-age 0)
   (marginalia-align 'right)
@@ -252,18 +255,18 @@
 
 (setq treesit-language-source-alist
       '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-	(c "https://github.com/tree-sitter/tree-sitter-c")
-	(cmake "https://github.com/uyha/tree-sitter-cmake")
-	(css "https://github.com/tree-sitter/tree-sitter-css")
-	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
-	(html "https://github.com/tree-sitter/tree-sitter-html")
-	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-	(json "https://github.com/tree-sitter/tree-sitter-json")
-	(make "https://github.com/alemuller/tree-sitter-make")
-	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
-	(python "https://github.com/tree-sitter/tree-sitter-python")
-	(toml "https://github.com/tree-sitter/tree-sitter-toml")
-	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+  	(c "https://github.com/tree-sitter/tree-sitter-c")
+  	(cmake "https://github.com/uyha/tree-sitter-cmake")
+  	(css "https://github.com/tree-sitter/tree-sitter-css")
+  	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
+  	(html "https://github.com/tree-sitter/tree-sitter-html")
+  	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+  	(json "https://github.com/tree-sitter/tree-sitter-json")
+  	(make "https://github.com/alemuller/tree-sitter-make")
+  	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
+  	(python "https://github.com/tree-sitter/tree-sitter-python")
+  	(toml "https://github.com/tree-sitter/tree-sitter-toml")
+  	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 
 (setq eglot-report-progress nil)
 
@@ -271,10 +274,10 @@
   :straight (:type built-in)
   :defer t
   :bind (:map eglot-mode-map
-	      ("C-c C-d" . eldoc)
-	      ("C-c C-f" . eglot-format-buffer))
+  	      ("C-c C-d" . eldoc)
+  	      ("C-c C-f" . eglot-format-buffer))
   :hook ((python-base-mode . eglot-ensure)
-	 (python-base-mode . hs-minor-mode))
+  	 (python-base-mode . hs-minor-mode))
   :custom (eglot-autoshutdown t))
 
 (use-package eglot-booster
@@ -285,9 +288,9 @@
 
 (use-package treesit
   :mode (("\\.py\\'" . python-ts-mode)
-	 ("\\.c\\'" . c-ts-mode)
-	 ("\\.yaml\\'" . yaml-ts-mode)
-	 ("\\.h\\'" . c-ts-mode))
+  	 ("\\.c\\'" . c-ts-mode)
+  	 ("\\.yaml\\'" . yaml-ts-mode)
+  	 ("\\.h\\'" . c-ts-mode))
   :straight (:type built-in))
 
 (use-package 
@@ -302,8 +305,8 @@
   ;; customize ruff
   (setf (alist-get 'ruff apheleia-formatters)
         '("ruff" "format" "--silent"
-	  "--line-length" "79"
-	  "--stdin-filename" filepath "-"))
+  	  "--line-length" "79"
+  	  "--stdin-filename" filepath "-"))
 
   (setf (alist-get 'python-ts-mode apheleia-mode-alist)
         '(ruff-isort ruff))
@@ -332,13 +335,13 @@
 (use-package cape
   :straight t
   :bind (("C-c p p" . completion-at-point)
-	 ("C-c p \\" . cape-tex)
-	 ("C-c p _" . cape-tex)
-	 ("C-c p ^" . cape-tex)
-	 ("C-c p f" . cape-file)
-	 ("C-c p d" . cape-dabbrev)
-	 ("C-c p s" . cape-elisp-symbol)
-	 ("C-c p e" . cape-elisp-block))
+  	 ("C-c p \\" . cape-tex)
+  	 ("C-c p _" . cape-tex)
+  	 ("C-c p ^" . cape-tex)
+  	 ("C-c p f" . cape-file)
+  	 ("C-c p d" . cape-dabbrev)
+  	 ("C-c p s" . cape-elisp-symbol)
+  	 ("C-c p e" . cape-elisp-block))
   :init
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -357,7 +360,7 @@
   (defun change-inferior-python ()
     (when (executable-find "ipython3")
       (setq python-shell-interpreter "ipython3"
-    	    python-shell-interpreter-args "--simple-prompt")))
+      	    python-shell-interpreter-args "--simple-prompt")))
   :hook
   (micromamba-postactivate-hook . change-inferior-python)
   )
@@ -370,14 +373,14 @@
   "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-	 (python-shell-restart)))
+  	 (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-	(end (cadr (code-cells--bounds))))
+  	(end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
@@ -386,7 +389,7 @@
   :hook ((python-ts-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
-	       '(python-ts-mode . python-shell-send-region) t)
+  	       '(python-ts-mode . python-shell-send-region) t)
   :bind
   (:map
    code-cells-mode-map
@@ -407,7 +410,7 @@
   (jupyter-repl-echo-eval-p t)
   :bind
   (:map jupyter-repl-mode-map
-	("C-c C-k" . jupyter-repl-clear-cells)))
+  	("C-c C-k" . jupyter-repl-clear-cells)))
 
 (use-package gnuplot
   :defer t
@@ -431,7 +434,7 @@
 
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
-Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
+  Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
   (interactive)
   (unless (executable-find "jupyter")
     (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
@@ -442,9 +445,9 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
              (kernel-display-name (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
              (insertion-point (point-min))
              (properties (format "#+PROPERTY: header-args:python :session py
-#+PROPERTY: header-args:python+ :async yes
-#+PROPERTY: header-args:python+ :eval never-export
-#+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
+  #+PROPERTY: header-args:python+ :async yes
+  #+PROPERTY: header-args:python+ :eval never-export
+  #+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -460,13 +463,13 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
   "Fixes kernel output in emacs-jupyter"
   (ansi-color-apply-on-region (point-min) (point-max)))
 (add-hook 'org-mode-hook
-	  (lambda ()
-	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+  	  (lambda ()
+  	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
 
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
   "Choose jupyter kernel to open/start new Python file associated to it
-"
+  "
   ;; ~interactive~ form only constructs a list of elements that
   ;; correspond directly to the arguments of the function
   (interactive
@@ -477,8 +480,8 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
        (jupyter-completing-read-kernelspec nil current-prefix-arg))
       ;; second argument, repl-name
       (if current-prefix-arg ;; if user supplies REPL name, use it
-	  (read-string "REPL name: ")
-	(file-name-base file)) ;; otherwise, use base filename
+  	  (read-string "REPL name: ")
+  	(file-name-base file)) ;; otherwise, use base filename
       ;; third argument, filename
       file)))
   
@@ -573,10 +576,27 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
   (setq org-confirm-babel-evaluate nil)
+  ;; native syntax highlighting in source blocks
+  (setq org-src-fontify-natively t)
+  (setq org-src-tab-acts-natively t)
   (setq org-display-inline-images t)
+  ;; don't add extra spaces in the source blocks
+  (setq org-edit-src-content-indentation 0)
   (setq org-startup-with-inline-images t)
+  ;; edit code block in current window rather than split in two by default
+  (setq org-src-window-setup 'current-window)
+  ;; hide emphasis markers
+  (setq org-hide-emphasis-markers t)
+  ;; preserve indentation on export
+  (setq org-src-preserve-indentation t)
   ;; I disabled this to make underscores appear proper
   ;; (setq org-pretty-entities t)
+  ;; set default compiler to "xelatex" to handle unicode characters
+  ;; must be available via $PATH, I installed `mactex` via homebrew on MacOS
+  (setq org-latex-compiler "xelatex")
+  ;; added `-shell-escape` to support minted package
+  (setq org-latex-pdf-process
+	(list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
   )
 
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -587,6 +607,13 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 ;; LaTeX preview rendering default to SVG instead of PNG
 (setq org-preview-latex-default-process 'dvisvgm)
+
+;; use engrave-faces to support fontifying source blocks in LaTeX exports
+(use-package engrave-faces
+  :straight t
+  :defer t
+  :init
+  (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
 (setq org-latex-preview-ltxpng-directory (expand-file-name "~/.emacs.d/tmp"))
@@ -624,6 +651,11 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
    (plist-put org-format-latex-options :scale 2)
    (plist-put org-format-latex-options :foreground 'auto)
    (plist-put org-format-latex-options :background 'auto)))
+
+(use-package citeproc
+  :after org
+  :defer t
+  :straight t)
 
 (defun de/reload-emacs-config()
   (interactive)
@@ -684,13 +716,13 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 
 (setq org-agenda-files
       '(
-	"/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
-	"/Users/delnatan/Documents/org/tasks.org"
-	"/Users/delnatan/StarrLuxtonLab/org/schedules.org"
-	"/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
-	"/Users/delnatan/Documents/org/meetings.org"
-	"/Users/delnatan/Documents/org/events.org"
-	)
+  	"/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
+  	"/Users/delnatan/Documents/org/tasks.org"
+  	"/Users/delnatan/StarrLuxtonLab/org/schedules.org"
+  	"/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
+  	"/Users/delnatan/Documents/org/meetings.org"
+  	"/Users/delnatan/Documents/org/events.org"
+  	)
       )
 
 ;; set =C-c c= to do org-capture
@@ -699,17 +731,17 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
 ;; set templates
 (setq org-capture-templates
       '(("t" "TODO" entry (file+headline "~/Documents/org/tasks.org" "Tasks")
-  	 "* TODO %U %? \n  %i\n")
-	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
-	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n")
-	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
-	 "* Meeting with %? :MEETING:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  Participants: %^{Participants}\n- Agenda:\n  -  %^{Agenda}\n")
-	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events" )
-	 "* %? :EVENT:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  %i\n")))
+    	 "* TODO %U %? \n  %i\n")
+  	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
+  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n")
+  	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
+  	 "* Meeting with %? :MEETING:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  Participants: %^{Participants}\n- Agenda:\n  -  %^{Agenda}\n")
+  	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events" )
+  	 "* %? :EVENT:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  %i\n")))
 
 ;; configure refile targets
 (setq org-refile-targets '((nil :maxlevel . 3)
-			   (org-agenda-files :maxlevel . 3)))
+  			   (org-agenda-files :maxlevel . 3)))
 
 (use-package scad-mode
   :defer t
@@ -720,11 +752,10 @@ Ensure 'jupyter' is available, or interactively activate it using 'micromamba-ac
   :straight (csv-mode :type git :host github :repo "emacsmirror/csv-mode"))
 
 (use-package ellama
-  :defer t
   :init
   (setopt ellama-keymap-prefix "C-c e")
   (require 'llm-ollama)
   (setopt ellama-provider
-	  (make-llm-ollama
-	   :chat-model "llama3:instruct"
-	   :embedding-model "llama3:latest")))
+  	  (make-llm-ollama
+  	   :chat-model "llama3:instruct"
+  	   :embedding-model "llama3:latest")))

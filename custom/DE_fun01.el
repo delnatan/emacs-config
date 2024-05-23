@@ -1,4 +1,5 @@
-;; DE_fun01.el --- Custom-defined functions for various text-related tasks -*- lexical-binding: t -*-
+;; -*- lexical-binding: t -*-
+;; DE_fun01.el --- Custom-defined functions for various text-related tasks
 
 (defun de/wrap-region (n start end)
   "Wrap text in current region.
@@ -81,8 +82,7 @@ string's start (sstart) and end (send)"
 	     (sstart (string-to-number (read-from-minibuffer "String start: ")))
 	     (send (string-to-number (read-from-minibuffer (format "String end (%d): " (length regionp))))))
 	(message "Put %d to %d (%d total chars) to kill-ring" sstart send (length regionp))
-	(kill-new (substring regionp sstart send))
-	)
+	(kill-new (substring regionp (- sstart 1) send)))
     (message "no region was selected")))
 
 
