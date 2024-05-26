@@ -553,24 +553,34 @@
 ;; add emacs ~app~ folder to load-path
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
+
 (use-package svg-lib
   :defer t
-  :straight t)
+  :straight (svg-lib :type git :host github :repo "rougier/svg-lib"))
+
 (use-package stripes
   :defer t
   :straight t)
 
 (require 'notes-list)
 
-(defun de/insert-org-note-tags ()
-  "Inserts predefined org-mode tags at the beginning of the document."
+(defun de/insert-org-note-properties ()
+  "Insert common Org properties at the beginning of the document."
   (interactive)
-  (goto-char (point-min)) ; Move to the beginning of the buffer
-  (insert "#+TITLE: note title\n")
-  (insert (format "#+DATE: <%s>\n" (format-time-string "%Y-%m-%d %a")))
-  (insert "#+FILETAGS: note\n")
-  (insert "#+SUMMARY: my note\n")
-  (insert "#+ICON: material/notebook\n\n"))
+  (let ((title (read-string "Title: "))
+        (filetags (read-string "File tags: "))
+        (summary (read-string "Summary: "))
+        (date (format-time-string "%Y-%m-%d"))
+        (icon "material/notebook"))
+    (goto-char (point-min))
+    (insert (format "#+TITLE    : %s\n" title))
+    (insert (format "#+DATE     : %s\n" date))
+    (insert (format "#+FILETAGS : %s\n" filetags))
+    (insert (format "#+SUMMARY  : %s\n" summary))
+    (insert (format "#+ICON     : %s\n" icon))))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c i p") 'de/insert-org-note-properties))
 
 (use-package org
   :config
@@ -597,6 +607,10 @@
   ;; added `-shell-escape` to support minted package
   (setq org-latex-pdf-process
 	(list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+  :bind  (:map org-mode-map
+	       ("C-c l" . org-store-link)
+	       ("C-c C-l" . org-insert-link)
+	       ("C-x v l" . org-toggle-link-display))
   )
 
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -614,6 +628,8 @@
   :defer t
   :init
   (setq org-latex-src-block-backend 'engraved))
+
+(setq org-latex-engraved-theme 'nano)
 
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
 (setq org-latex-preview-ltxpng-directory (expand-file-name "~/.emacs.d/tmp"))

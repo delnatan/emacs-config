@@ -1,0 +1,46 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /Users/delnatan/Apps/emacs-config/config.org
+
+
+* Rougier's ~notes-list~
+:PROPERTIES:
+:ARCHIVE_TIME: 2024-05-25 Sat 21:58
+:ARCHIVE_FILE: ~/Apps/emacs-config/config.org
+:ARCHIVE_CATEGORY: config
+:END:
+
+#+begin_src emacs-lisp
+;; add emacs ~app~ folder to load-path
+(add-to-list 'load-path "~/Apps/emacs/notes-list")  
+(add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
+(use-package svg-lib
+  :defer t
+  :straight (svg-lib :type git :host github :repo "rougier/svg-lib"))
+(use-package stripes
+  :defer t
+  :straight t)
+
+(require 'notes-list)
+
+(defun de/insert-org-note-properties ()
+  "Insert common Org properties at the beginning of the document."
+  (interactive)
+  (let ((title (read-string "Title: "))
+        (filetags (read-string "File tags: "))
+        (summary (read-string "Summary: "))
+        (date (format-time-string "%Y-%m-%d"))
+        (icon "material/notebook"))
+    (goto-char (point-min))
+    (insert (format "#+TITLE    : %s\n" title))
+    (insert (format "#+DATE     : %s\n" date))
+    (insert (format "#+FILETAGS : %s\n" filetags))
+    (insert (format "#+SUMMARY  : %s\n" summary))
+    (insert (format "#+ICON     : %s\n" icon))))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c i p") 'de/insert-org-note-properties))
+#+end_src
+
+
