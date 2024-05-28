@@ -34,9 +34,6 @@
 ;; map C-x C-b to `ibuffer`
 (define-key ctl-x-map "\C-b" 'ibuffer)
 
-;; set dired to group directories first
-(setq dired-listing-switches "-al --group-directories-first")
-
 ;; refresh dired if file is changed on disk
 (setq dired-auto-revert-buffer t)
 
@@ -511,12 +508,31 @@
 
 (de/advise-nano-themes)
 
+;; dont use nano's default fonts
+(setq nano-fonts-use nil)
 
 (require 'nano-theme)
 (nano-mode)
 
 ;; use the 'light scheme by default, switch by calling `nano-theme-toggle`
 (load-theme 'nano t)
+
+;; set default font to whatever you want
+(set-face-attribute 'default nil
+		    :family "Monaspace Neon"
+		    :height 130
+		    :weight 'light)
+
+(set-face-attribute 'bold nil
+		    :family "Monaspace Neon"
+		    :height 130
+		    :weight 'regular)
+
+(set-face-attribute 'italic nil
+		    :family "Monaspace Radon"
+		    :height 130
+		    :weight 'light
+		    :slant 'italic)
 
 (use-package nano-modeline
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
@@ -573,11 +589,11 @@
         (date (format-time-string "%Y-%m-%d"))
         (icon "material/notebook"))
     (goto-char (point-min))
-    (insert (format "#+TITLE    : %s\n" title))
-    (insert (format "#+DATE     : %s\n" date))
-    (insert (format "#+FILETAGS : %s\n" filetags))
-    (insert (format "#+SUMMARY  : %s\n" summary))
-    (insert (format "#+ICON     : %s\n" icon))))
+    (insert (format "#+TITLE: %s\n" title))
+    (insert (format "#+DATE: %s\n" date))
+    (insert (format "#+FILETAGS: %s\n" filetags))
+    (insert (format "#+SUMMARY: %s\n" summary))
+    (insert (format "#+ICON: %s\n" icon))))
 
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c i p") 'de/insert-org-note-properties))
@@ -597,6 +613,7 @@
   (setq org-src-window-setup 'current-window)
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
+  (setq org-image-actual-width t)
   ;; preserve indentation on export
   (setq org-src-preserve-indentation t)
   ;; I disabled this to make underscores appear proper
