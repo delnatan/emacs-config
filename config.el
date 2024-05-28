@@ -8,7 +8,7 @@
 (add-hook 'org-mode-hook 'visual-line-mode)
 
 ;; use smooth scrolling like most modern apps
-(pixel-scroll-precision-mode)
+;; (pixel-scroll-precision-mode)
 ;; use y/n for yes-or-no
 ;; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
 (setopt use-short-answers t) 
@@ -117,9 +117,16 @@
       kept-old-versions 2
       version-control t)
 
+(use-package swiper
+  :straight t
+  :bind (("C-s" . swiper)
+         ("C-r" . swiper)))
+
+
 (use-package vertico
   :straight t
   :init (vertico-mode))
+
 
 (use-package marginalia
   :straight t
@@ -442,9 +449,9 @@
              (kernel-display-name (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
              (insertion-point (point-min))
              (properties (format "#+PROPERTY: header-args:python :session py
-  #+PROPERTY: header-args:python+ :async yes
-  #+PROPERTY: header-args:python+ :eval never-export
-  #+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
+#+PROPERTY: header-args:python+ :async yes
+#+PROPERTY: header-args:python+ :eval never-export
+#+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -614,6 +621,9 @@
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width t)
+  ;; add svg file for exporting inline svg images during export
+  (setq org-export-default-inline-image-rule
+	'(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\)\\'")))
   ;; preserve indentation on export
   (setq org-src-preserve-indentation t)
   ;; I disabled this to make underscores appear proper
@@ -636,8 +646,23 @@
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("sp" . "src python"))
 
+
+;; add a customized dvisvgxelatex to the preview process
+(customize-set-variable
+ 'org-preview-latex-process-alist
+ (append org-preview-latex-process-alist
+	 '((dvisvgmx :programs
+		    ("xelatex" "dvisvgm")
+		    :description "xdv > svg" :message "you need to install the programs: latex and dvisvgm." :image-input-type "xdv" :image-output-type "svg" :image-size-adjust
+		    (1.7 . 1.5)
+		    :latex-compiler
+		    ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
+		    :image-converter
+		    ("dvisvgm %f --no-fonts --exact-bbox --scale=%S --output=%O")))))
+
+
 ;; LaTeX preview rendering default to SVG instead of PNG
-(setq org-preview-latex-default-process 'dvisvgm)
+(setq org-preview-latex-default-process 'dvisvgmx)
 
 ;; use engrave-faces to support fontifying source blocks in LaTeX exports
 (use-package engrave-faces
@@ -744,6 +769,28 @@
 
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 
+(defun de/insert-org-export-properties ()
+  "Insert common Org properties at the beginning of the document."
+  (interactive)
+  ;; go to the top of the document
+  (goto-char (point-min))
+  (insert "#+OPTIONS: html-postamble:nil\n")
+  (insert "#+LATEX_CLASS: article\n")
+  (insert "#+LATEX_CLASS_OPTIONS: [letterpaper]\n")
+  (insert "#+LATEX_HEADER: \\usepackage[inkscapelatex=false]{svg}\n")
+  (insert "#+LATEX_HEADER: \\usepackage{fontspec}\n")
+  (insert "#+LATEX_HEADER: \\usepackage{float}\n")
+  (insert "#+LATEX_HEADER: \\setmainfont{Helvetica}\n")
+  (insert "#+LATEX_HEADER: \\setsansfont{Helvetica}\n")
+  (insert "#+LATEX_HEADER: \\setmonofont{Courier New}\n")
+  (insert "#+LATEX_HEADER: \\usepackage[margin=1in]{geometry}\n"))
+
+;; place cursor within the top of the python source block
+(defun de/insert-inline-svg-matplotlib ()
+  (interactive)
+  (insert "import matplotlib_inline\n")
+  (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
+
 ;; setup org-agenda keybinding to `C-c a`
 (global-set-key (kbd "C-c a") 'org-agenda)
 
@@ -768,9 +815,9 @@
   	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
   	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n")
   	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
-  	 "* Meeting with %? :MEETING:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  Participants: %^{Participants}\n- Agenda:\n  -  %^{Agenda}\n")
-  	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events" )
-  	 "* %? :EVENT:\nSCHEDULED: %^T\n-  Location: %^{Location}\n-  %i\n")))
+  	 "* %? :MEETING:\nSCHEDULED: %^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n")
+  	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events")
+  	 "* %? :EVENT:\nSCHEDULED: %^T\n- Location: %^{Location}\n-  %i\n")))
 
 ;; configure refile targets
 (setq org-refile-targets '((nil :maxlevel . 3)
