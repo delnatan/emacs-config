@@ -4,8 +4,8 @@
 (column-number-mode)
 
 ;; use visual-line-mode only when programming or in org-mode
-(add-hook 'prog-mode-hook 'visual-line-mode)
-(add-hook 'org-mode-hook 'visual-line-mode)
+;; (add-hook 'prog-mode-hook 'visual-line-mode)
+;; (add-hook 'org-mode-hook 'visual-line-mode)
 
 ;; use smooth scrolling like most modern apps
 ;; (pixel-scroll-precision-mode)
@@ -71,6 +71,17 @@
       (delete-frame)
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
+
+
+;; use `visual-fill-column`
+(use-package visual-fill-column
+  :straight t
+  :hook ((org-mode . visual-fill-column-mode)
+	 (org-mode . visual-line-mode)
+	 (prog-mode . visual-fill-column-mode)
+	 (prog-mode . visual-line-mode))
+  :config
+  (setq visual-fill-column-width 80))
 
 ;; Enable ibuffer
 (require 'ibuffer)
@@ -301,7 +312,10 @@
   avy
   :straight t)
 
-(global-set-key (kbd "C-:") 'avy-goto-char)
+;; configure avy globally, use prefix M-g 
+(global-set-key (kbd "M-g c") 'avy-goto-char)
+(global-set-key (kbd "M-g t") 'avy-goto-char-timer)
+(global-set-key (kbd "M-g l") 'avy-goto-line)
 
 (use-package apheleia
   :straight t
@@ -431,10 +445,14 @@
    (python . t)
    (jupyter . t)))
 
-(org-babel-jupyter-override-src-block "python")
+;; uncomment below to override `python` language designation
+;; use `jupyter-python` for jupyter and `python` for vanilla python
+;; (org-babel-jupyter-override-src-block "python")
+
 
 ;; patch for correct handling of 'python' org source blocks
-(add-to-list 'org-src-lang-modes '("python" . python-ts))
+(add-to-list 'org-src-lang-modes '(("python" . python-ts)
+				   ("jupyter-python" . python-ts)))
 
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
@@ -501,8 +519,34 @@
     (sleep-for 1.0)
     (jupyter-repl-associate-buffer client)))
 
+;; setup custom fonts here 
+(defvar default-fs (font-spec :name "Roboto Mono" :height 140
+			      :weight 'light ))
+(defvar nano-mono-fs (font-spec :name "Roboto Mono" :height 140
+				:weight 'light ))
+(defvar nano-italic-fs (font-spec :name "Victor Mono" :height 0.9
+				  :weight 'regular :slant 'italic ))
+
 (use-package nano-theme
-  :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
+  :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
+  :init
+  (require 'nano-theme)
+  (nano-mode)
+  :custom
+  ;; customize light them to with `ReMarkable` colors
+  (nano-light-background "#F8F4ED")
+  (nano-light-foreground "#2A2523")
+  (nano-light-highlight "#E8E2D9")
+  (nano-light-subtle "#D1C8B8"))
+
+(load-theme 'nano t)
+
+;; for some reason, this is needed to render the fonts properly
+(add-hook 'window-setup-hook
+	  (lambda ()
+	    (set-face-attribute 'default nil :font default-fs)
+	    (set-face-attribute 'nano-mono nil :font nano-mono-fs)
+	    (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
 
 ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
@@ -514,32 +558,6 @@
   (advice-add 'nano-light :after #'de/customize-nano-themes))
 
 (de/advise-nano-themes)
-
-;; dont use nano's default fonts
-(setq nano-fonts-use nil)
-
-(require 'nano-theme)
-(nano-mode)
-
-;; use the 'light scheme by default, switch by calling `nano-theme-toggle`
-(load-theme 'nano t)
-
-;; set default font to whatever you want
-(set-face-attribute 'default nil
-		    :family "Monaspace Neon"
-		    :height 130
-		    :weight 'light)
-
-(set-face-attribute 'bold nil
-		    :family "Monaspace Neon"
-		    :height 130
-		    :weight 'regular)
-
-(set-face-attribute 'italic nil
-		    :family "Monaspace Radon"
-		    :height 130
-		    :weight 'light
-		    :slant 'italic)
 
 (use-package nano-modeline
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
@@ -640,6 +658,11 @@
 	       ("C-x v l" . org-toggle-link-display))
   )
 
+;; remove under/over line in org source block header/footer
+(custom-set-faces
+ '(org-block-begin-line ((t (:underline nil))))
+ '(org-block-end-line ((t (:overline nil)))))
+
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
 ;; shortcut to insert source block
@@ -652,13 +675,13 @@
  'org-preview-latex-process-alist
  (append org-preview-latex-process-alist
 	 '((dvisvgmx :programs
-		    ("xelatex" "dvisvgm")
-		    :description "xdv > svg" :message "you need to install the programs: latex and dvisvgm." :image-input-type "xdv" :image-output-type "svg" :image-size-adjust
-		    (1.7 . 1.5)
-		    :latex-compiler
-		    ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
-		    :image-converter
-		    ("dvisvgm %f --no-fonts --exact-bbox --scale=%S --output=%O")))))
+		     ("xelatex" "dvisvgm")
+		     :description "xdv > svg" :message "you need to install the programs: latex and dvisvgm." :image-input-type "xdv" :image-output-type "svg" :image-size-adjust
+		     (1.7 . 1.5)
+		     :latex-compiler
+		     ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
+		     :image-converter
+		     ("dvisvgm %f --no-fonts --exact-bbox --scale=%S --output=%O")))))
 
 
 ;; LaTeX preview rendering default to SVG instead of PNG
@@ -706,7 +729,7 @@
   :custom
   (org-startup-with-latex-preview t)
   (org-format-latex-options
-   (plist-put org-format-latex-options :scale 2)
+   (plist-put org-format-latex-options :scale 1.6)
    (plist-put org-format-latex-options :foreground 'auto)
    (plist-put org-format-latex-options :background 'auto)))
 
