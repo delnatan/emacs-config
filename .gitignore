@@ -6,3 +6,4 @@
 .*/
 # ignore all files in any directory that starts with a dot
 .*/**
+config.el

@@ -2,7 +2,7 @@
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
 
-My second attempt at customizing Emacs (Running ~emacs-plus@29~ installed via ~homebrew~).
+My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~homebrew~).
 
 * Basic settings
 
@@ -13,14 +13,23 @@ My second attempt at customizing Emacs (Running ~emacs-plus@29~ installed via ~h
 (column-number-mode)
 
 ;; use visual-line-mode only when programming or in org-mode
-;; (add-hook 'prog-mode-hook 'visual-line-mode)
-;; (add-hook 'org-mode-hook 'visual-line-mode)
+(add-hook 'prog-mode-hook 'visual-line-mode)
+(add-hook 'org-mode-hook 'visual-line-mode)
 
 ;; use smooth scrolling like most modern apps
-;; (pixel-scroll-precision-mode)
+(pixel-scroll-precision-mode)
+
+;; show current line highlight
+;; (global-hl-line-mode 1)
+
+;; enable global auto revert (refresh buffer if there's file changes)
+(global-auto-revert-mode 1)
+(setq make-backup-files nil)
+(setq auto-revert-verbose nil)
+
 ;; use y/n for yes-or-no
 ;; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
-(setopt use-short-answers t) 
+(setq use-short-answers t) 
 
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
@@ -59,7 +68,7 @@ My second attempt at customizing Emacs (Running ~emacs-plus@29~ installed via ~h
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
-(global-set-key (kbd "M-n") 'new-frame)
+(global-set-key (kbd "M-s-n") 'new-frame)
 (global-set-key (kbd "M-`") 'other-frame)
 
 ;; Kill current buffer (instead of asking first buffer name)
@@ -72,7 +81,6 @@ My second attempt at customizing Emacs (Running ~emacs-plus@29~ installed via ~h
 (global-unset-key (kbd "C-<mouse-4>"))
 
 ;; Close frame if not the last, kill emacs else
-
 (defun de/delete-frame-or-kill-emacs ()
   "Delete frame or kill Emacs if there is only one frame."
   (interactive)
@@ -81,16 +89,6 @@ My second attempt at customizing Emacs (Running ~emacs-plus@29~ installed via ~h
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
 
-
-;; use `visual-fill-column`
-(use-package visual-fill-column
-  :straight t
-  :hook ((org-mode . visual-fill-column-mode)
-	 (org-mode . visual-line-mode)
-	 (prog-mode . visual-fill-column-mode)
-	 (prog-mode . visual-line-mode))
-  :config
-  (setq visual-fill-column-width 80))
 #+end_src
 
 Customize ~ibuffer~ to show things by groups. To disable filtering (remove all filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the saved filter group, do =/ R=.
@@ -104,12 +102,18 @@ Customize ~ibuffer~ to show things by groups. To disable filtering (remove all f
 (setq ibuffer-saved-filter-groups
       '(("default"
          ("Dired" (mode . dired-mode))
+	 ("Web" (or (mode . tsx-ts-mode)
+		    (mode . js-ts-mode)
+		    (mode . js-json-mode)))
          ("Python" (or (mode . python-mode)
                        (mode . python-ts-mode)))
+	 ("Rust" (mode . rust-ts-mode))
          ("Org" (mode . org-mode))
-  	 ("Jupyter" (mode . jupyter-repl-mode))
+    	 ("Jupyter" (mode . jupyter-repl-mode))
          ("Emacs" (or (name . "^\\*scratch\\*$")
                       (name . "^\\*Messages\\*$")))
+	 ("Document" (or (mode . pdf-view-mode)
+			 (mode . doc-view-mode)))
          ("Help" (or (name . "^\\*Help\\*$")
                      (name . "^\\*Apropos\\*$")
                      (name . "^\\*info\\*$"))))))
@@ -151,22 +155,19 @@ Emacs will automatically create backup files in the same folder as the current d
 Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]] (reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so the standard =C-s= and =C-r= keybinding is replaced here with its corresponding version in swiper.
 
 #+begin_src emacs-lisp
-
 (use-package swiper
   :straight t
   :bind (("C-s" . swiper)
          ("C-r" . swiper)))
 
-
 (use-package vertico
   :straight t
   :init (vertico-mode))
 
-
 (use-package marginalia
   :straight t
   (:keymaps 'minibuffer-local-map
-  	    "M-A" 'marginalia-cycle)
+    	    "M-A" 'marginalia-cycle)
   :custom
   (marginalia-max-relative-age 0)
   (marginalia-align 'right)
@@ -289,6 +290,38 @@ In terms of code folding we will use Emacs' =outline-minor-mode=, which is the s
 
 #+end_src
 
+I'd like to be able to toggle horizontal/vertical split when I have 2 windows open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
+
+#+begin_src emacs-lisp
+(defun de/toggle-split-direction ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
+
+(global-set-key (kbd "C-x |")  'de/toggle-split-direction)
+
+#+end_src
+
 ** Navigation
 
 I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybindings to custom functions that scrolls half-page up/down & keep things in the center for easier viewing:
@@ -312,24 +345,41 @@ I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybind
 
 * Programming setup
 
+Adding rust toolchain to my ~exec-path~ variable:
+#+begin_src emacs-lisp
+(let ((cargo-bin-path (expand-file-name "~/.cargo/bin")))
+  (when (file-directory-p cargo-bin-path)
+    (add-to-list 'exec-path cargo-bin-path)
+    (setenv "PATH" (concat cargo-bin-path path-separator (getenv "PATH")))))
+
+;; add global pnpm path also
+(let ((pnpm-home (expand-file-name "~/Library/pnpm")))
+  (when (file-directory-p pnpm-home)
+    (add-to-list 'exec-path pnpm-home)
+    (setenv "PATH" (concat pnpm-home path-separator (getenv "PATH")))))
+#+end_src
+
 Setup ~treesitter~ for several languages. To tell whether the current buffer is using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
 (setq treesit-language-source-alist
       '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-  	(c "https://github.com/tree-sitter/tree-sitter-c")
-  	(cmake "https://github.com/uyha/tree-sitter-cmake")
-  	(css "https://github.com/tree-sitter/tree-sitter-css")
-  	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
-  	(html "https://github.com/tree-sitter/tree-sitter-html")
-  	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-  	(json "https://github.com/tree-sitter/tree-sitter-json")
-  	(make "https://github.com/alemuller/tree-sitter-make")
-  	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
-  	(python "https://github.com/tree-sitter/tree-sitter-python")
-  	(toml "https://github.com/tree-sitter/tree-sitter-toml")
-  	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+    	(c "https://github.com/tree-sitter/tree-sitter-c")
+    	(cmake "https://github.com/uyha/tree-sitter-cmake")
+    	(css "https://github.com/tree-sitter/tree-sitter-css")
+    	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
+    	(html "https://github.com/tree-sitter/tree-sitter-html")
+    	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+    	(json "https://github.com/tree-sitter/tree-sitter-json")
+    	(make "https://github.com/alemuller/tree-sitter-make")
+	(rust "https://github.com/tree-sitter/tree-sitter-rust")
+    	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
+    	(python "https://github.com/tree-sitter/tree-sitter-python")
+    	(toml "https://github.com/tree-sitter/tree-sitter-toml")
+    	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 #+end_src
+
+At the moment, you'll have to build treesitter grammars for TypeScript manually because of some issue with creating a new temporary directory!? 
 
 Silence eglot progress (in the *Messages* buffer)
 #+begin_src emacs-lisp
@@ -340,34 +390,32 @@ I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to spee
 
 #+begin_src emacs-lisp
 (use-package eglot
-  :straight (:type built-in)
   :defer t
+  :straight (:type built-in)
   :bind (:map eglot-mode-map
-  	      ("C-c C-d" . eldoc)
-  	      ("C-c C-f" . eglot-format-buffer))
+    	      ("C-c C-d" . eldoc)
+    	      ("C-c C-f" . eglot-format-buffer))
   :hook ((python-base-mode . eglot-ensure)
-  	 (python-base-mode . hs-minor-mode))
-  :custom (eglot-autoshutdown t))
+    	 (python-base-mode . hs-minor-mode)
+	 (rust-mode . eglot-ensure))
+  :custom
+  (eglot-autoshutdown t))
 
 (use-package eglot-booster
-  :defer t
   :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
   :after eglot
   :config (eglot-booster-mode))
 #+end_src
 
-Trying combobulate again...this time also using ~avy~ to move around magically. Use ~avy~ via keybinding =C-:=. Combobulate is turned on via =M-h= while in programming mode.
+Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't' uses a timer to type some characters, and 'l' for going to a specific line.
 
 #+begin_src emacs-lisp
-(use-package treesit
-  :mode (("\\.py\\'" . python-ts-mode)
-  	 ("\\.c\\'" . c-ts-mode)
-  	 ("\\.yaml\\'" . yaml-ts-mode)
-  	 ("\\.h\\'" . c-ts-mode))
-  :straight (:type built-in))
+(use-package treesit-auto
+  :straight (treesit-auto :type git :host github :repo "renzmann/treesit-auto")
+  :config
+  (global-treesit-auto-mode))
 
-(use-package 
-  avy
+(use-package avy
   :straight t)
 
 ;; configure avy globally, use prefix M-g 
@@ -379,21 +427,37 @@ Trying combobulate again...this time also using ~avy~ to move around magically. 
 
 For general code formatting I use ~apheleia~. Python code formatting uses =ruff= installed via homebrew. Doing so will obviate installing a formatter for every Python environment.
 
+For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
+
 #+begin_src emacs-lisp
 (use-package apheleia
   :straight t
   :config
-  ;; customize ruff
+  ;; supress auto-revert warnings
+  (setq apheleia-inhibit-functions
+	(cons #'buffer-modified-p apheleia-inhibit-functions))
+  ;; define formatters
   (setf (alist-get 'ruff apheleia-formatters)
-        '("ruff" "format" "--silent"
-  	  "--line-length" "79"
-  	  "--stdin-filename" filepath "-"))
-
-  (setf (alist-get 'python-ts-mode apheleia-mode-alist)
-        '(ruff-isort ruff))
-
-  :hook (prog-mode . apheleia-mode)
-  )
+        '("ruff" "format" "--verbose" "--line-length" "79"
+	  "--stdin-filename" filepath))
+  (setf (alist-get 'prettier-typescript apheleia-formatters)
+	'("prettier" "--use-tabs=false" "--print-width" "80"
+	  "--stdin-filename" filepath "--parser=typescript"))
+  (setf (alist-get 'prettier-json apheleia-formatters)
+	'("prettier" "--use-tabs=false" "--print-width" "80"
+	  "--stdin-filename" filepath "--parser=json"))
+  (setf (alist-get 'prettier-javascript apheleia-formatters)
+	'("prettier" "--use-tabs=false" "--print-width" "80"
+	  "--stdin-filename" filepath "--parser=babel-flow"))
+  (setf (alist-get 'rustfmt apheleia-formatters)
+        '("rustfmt" "--config"
+          "max_width=80,hard_tabs=false,tab_spaces=4,use_small_heuristics=Off" filepath))
+  ;; define commands for each mode
+  (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
+  (setf (alist-get 'rust-ts-mode apheleia-mode-alist) 'rustfmt)
+  (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
+  (setf (alist-get 'js-ts-mode apheleia-mode-alist) 'prettier-javascript)
+  :hook (prog-mode . apheleia-mode))
 
 (require 'apheleia)
 #+end_src
@@ -420,17 +484,26 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
 (use-package cape
   :straight t
   :bind (("C-c p p" . completion-at-point)
-  	 ("C-c p \\" . cape-tex)
-  	 ("C-c p _" . cape-tex)
-  	 ("C-c p ^" . cape-tex)
-  	 ("C-c p f" . cape-file)
-  	 ("C-c p d" . cape-dabbrev)
-  	 ("C-c p s" . cape-elisp-symbol)
-  	 ("C-c p e" . cape-elisp-block))
+    	 ("C-c p \\" . cape-tex)
+    	 ("C-c p _" . cape-tex)
+    	 ("C-c p ^" . cape-tex)
+    	 ("C-c p f" . cape-file)
+    	 ("C-c p d" . cape-dabbrev)
+    	 ("C-c p s" . cape-elisp-symbol)
+    	 ("C-c p e" . cape-elisp-block))
   :init
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block))
+
+  ;; (defun de/my-cape-tex-advice (orig-fun &rest args)
+  ;;   "Advice for cape-tex to allow single-character completion"
+  ;;   (let ((cape-tex-prefix-required nil))
+  ;;     (apply orig-fun args)))
+
+  ;; (advice-add 'cape-tex :around #'de/my-cape-tex-advice))
+
 #+end_src
 
 ** Python
@@ -451,7 +524,7 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
   (defun change-inferior-python ()
     (when (executable-find "ipython3")
       (setq python-shell-interpreter "ipython3"
-      	    python-shell-interpreter-args "--simple-prompt")))
+            python-shell-interpreter-args "--simple-prompt")))
   :hook
   (micromamba-postactivate-hook . change-inferior-python)
   )
@@ -467,14 +540,14 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
   "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-  	 (python-shell-restart)))
+    	 (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-  	(end (cadr (code-cells--bounds))))
+    	(end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
@@ -483,7 +556,7 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
   :hook ((python-ts-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
-  	       '(python-ts-mode . python-shell-send-region) t)
+    	       '(python-ts-mode . python-shell-send-region) t)
   :bind
   (:map
    code-cells-mode-map
@@ -506,12 +579,12 @@ Also include some org-mode customization to accommodate jupyter
 (use-package jupyter
   :straight t (jupyter :type git :host github :repo "emacs-jupyter/jupyter")
   :defer t
+  :bind (:map jupyter-repl-mode-map
+	      ("C-c C-k" . jupyter-repl-clear-cells))
   :custom
   ;; (jupyter-eval-use-overlays t)
   (jupyter-repl-echo-eval-p t)
-  :bind
-  (:map jupyter-repl-mode-map
-  	("C-c C-k" . jupyter-repl-clear-cells)))
+  (jupyter-repl-prompt-margin-width 7))
 
 (use-package gnuplot
   :defer t
@@ -532,10 +605,14 @@ Also include some org-mode customization to accommodate jupyter
 ;; use `jupyter-python` for jupyter and `python` for vanilla python
 ;; (org-babel-jupyter-override-src-block "python")
 
-
 ;; patch for correct handling of 'python' org source blocks
-(add-to-list 'org-src-lang-modes '(("python" . python-ts)
-				   ("jupyter-python" . python-ts)))
+(add-to-list 'org-src-lang-modes '("python" . python-ts))
+
+;; there seems to be already 'jupyter-python' entry in the list
+;; so we remove that, then add our own with 'python-ts'
+(setq org-src-lang-modes
+      (cons '("jupyter-python" . python-ts)
+  	    (assq-delete-all "jupyter-python" org-src-lang-modes)))
 #+end_src
 
 A typical workflow in org-mode is to use source blocks with the following tag (after running =micromamba-activate=!):
@@ -554,7 +631,7 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 #+begin_src emacs-lisp
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
-  Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
+    Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
   (interactive)
   (unless (executable-find "jupyter")
     (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
@@ -562,12 +639,15 @@ To make life a bit simpler, I've made a function to insert this snippet with the
   (if (executable-find "jupyter")
       (let* ((kernelspec (jupyter-completing-read-kernelspec))
              (kernel-name (jupyter-kernelspec-name kernelspec))
-             (kernel-display-name (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
+             (kernel-display-name
+  	      (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
              (insertion-point (point-min))
-             (properties (format "#+PROPERTY: header-args:python :session py
-#+PROPERTY: header-args:python+ :async yes
-#+PROPERTY: header-args:python+ :eval never-export
-#+PROPERTY: header-args:python+ :kernel %s\n"  kernel-name)))
+             (properties
+  	      (format
+  	       "#+PROPERTY: header-args:jupyter-python :session py
+,#+PROPERTY: header-args:jupyter-python+ :async yes
+,#+PROPERTY: header-args:jupyter-python+ :eval never-export
+,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -588,9 +668,9 @@ As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering cor
   "Fixes kernel output in emacs-jupyter"
   (ansi-color-apply-on-region (point-min) (point-max)))
 (add-hook 'org-mode-hook
-  	  (lambda ()
-  	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
-  #+end_src
+    	  (lambda ()
+    	    (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+#+end_src
 
 For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
 
@@ -598,7 +678,7 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
   "Choose jupyter kernel to open/start new Python file associated to it
-  "
+    "
   ;; ~interactive~ form only constructs a list of elements that
   ;; correspond directly to the arguments of the function
   (interactive
@@ -609,8 +689,8 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
        (jupyter-completing-read-kernelspec nil current-prefix-arg))
       ;; second argument, repl-name
       (if current-prefix-arg ;; if user supplies REPL name, use it
-  	  (read-string "REPL name: ")
-  	(file-name-base file)) ;; otherwise, use base filename
+    	  (read-string "REPL name: ")
+    	(file-name-base file)) ;; otherwise, use base filename
       ;; third argument, filename
       file)))
   
@@ -637,62 +717,78 @@ font-roboto-mono= or =font-iosevka=.
 As of [2024-05-20 Mon], trying out Nicolas' update repos to rebuild nano-emacs piece-by-piece.
 
 #+begin_src emacs-lisp
-;; setup custom fonts here 
-(defvar default-fs (font-spec :name "Roboto Mono" :height 140
-			      :weight 'light ))
-(defvar nano-mono-fs (font-spec :name "Roboto Mono" :height 140
-				:weight 'light ))
-(defvar nano-italic-fs (font-spec :name "Victor Mono" :height 0.9
-				  :weight 'regular :slant 'italic ))
+  (use-package nano-theme
+    :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
+    :init
+    (require 'nano-theme)
+    (nano-mode))
+  ;; :custom
+  ;; (nano-light-background "#F8F4ED")
+  ;; (nano-light-foreground "#2A2523")
+  ;; (nano-light-highlight "#E8E2D9")
+  ;; (nano-light-subtle "#D1C8B8")
+  ;; (nano-light-faded "#B8A898"))
 
-(use-package nano-theme
-  :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
-  :init
-  (require 'nano-theme)
-  (nano-mode)
-  :custom
+  ;; add the following to customize nano-theme
+  ;; :custom
   ;; customize light them to with `ReMarkable` colors
-  (nano-light-background "#F8F4ED")
-  (nano-light-foreground "#2A2523")
-  (nano-light-highlight "#E8E2D9")
-  (nano-light-subtle "#D1C8B8"))
+  ;; (nano-light-background "#F8F4ED")
+  ;; (nano-light-foreground "#2A2523")
+  ;; (nano-light-highlight "#E8E2D9")
+  ;; (nano-light-subtle "#D1C8B8")
+  ;; (nano-light-faded "#B8A898")
 
-(load-theme 'nano t)
+  ;; load nano theme
+  ;; (custom-set-faces
+  ;;  '(nano-mono ((t (:family "Iosevka"
+  ;; 			  :height 130
+  ;; 			  :weight light)))))
 
-;; for some reason, this is needed to render the fonts properly
-(add-hook 'window-setup-hook
-	  (lambda ()
-	    (set-face-attribute 'default nil :font default-fs)
-	    (set-face-attribute 'nano-mono nil :font nano-mono-fs)
-	    (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
+  (load-theme 'nano t)
 
-;; setup customization of nano colors via advice
-(defun de/customize-nano-themes ()
-  (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
+  ;; this function is a workaround for emacs-plus@29 where nano-theme "Roboto
+  ;; Mono" font with light weight is not rendered properly
+  ;; (defun de/set-custom-fonts (&optional frame)
+  ;;   "set custom fonts for current frame."
+  ;;   (with-selected-frame (or frame (selected-frame))
+  ;;     (set-face-attribute 'default nil :font default-fs)
+  ;;     (set-face-attribute 'nano-mono nil :font nano-mono-fs)
+  ;;     (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
 
-(defun de/advise-nano-themes ()
-  "Add advice to nano theme functions to set show-paren-match face."
-  (advice-add 'nano-dark :after #'de/customize-nano-themes)
-  (advice-add 'nano-light :after #'de/customize-nano-themes))
+  ;; ;; for some reason, this is needed to render the fonts properly
+  ;; (add-hook 'window-setup-hook 'de/set-custom-fonts)
+  ;; (add-hook 'after-make-frame-functions 'de/set-custom-fonts)
 
-(de/advise-nano-themes)
+  ;; setup customization of nano colors via advice
+  (defun de/customize-nano-themes ()
+    (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
 
-(use-package nano-modeline
-  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
-  :hook
-  (text-mode-hook nano-modeline-text-mode)
-  (prog-mode-hook nano-modeline-prog-mode)
-  (org-mode-hook nano-modeline-org-mode))
+  (defun de/advise-nano-themes ()
+    "Add advice to nano theme functions to set show-paren-match face."
+    (advice-add 'nano-dark :after #'de/customize-nano-themes)
+    (advice-add 'nano-light :after #'de/customize-nano-themes))
 
-;; set nano-modeline as default
-(require 'nano-modeline)
-(nano-modeline-text-mode t)
+  (de/advise-nano-themes)
 
-;; hide the default modeline
-(setq-default mode-line-format nil)
+  (use-package nano-modeline
+    :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
+    :hook
+    (text-mode-hook nano-modeline-text-mode)
+    (prog-mode-hook nano-modeline-prog-mode)
+    (org-mode-hook nano-modeline-org-mode))
 
-;; set customization on emacs startup
-(add-hook 'emacs-startup-hook #'de/customize-nano-themes)
+  ;; set nano-modeline as default
+  (require 'nano-modeline)
+  (nano-modeline-text-mode t)
+
+  ;; hide the default modeline
+  (setq-default mode-line-format nil)
+
+  ;; set customization on emacs startup
+  (add-hook 'emacs-startup-hook #'de/customize-nano-themes)
+
+  ;; customize cursor after all the nano stuff
+  (setq-default cursor-type '(hbar . 4))
 
 #+end_src
 
@@ -705,15 +801,15 @@ The nice thing about setting up nano this way, is that we can use any other them
 Minimal aesthetics to look more modern
 #+begin_src emacs-lisp
 ;; call these after init to avoid orderof-execution problems
-(add-hook 'after-init-hook
-          (lambda ()
-            (menu-bar-mode -1)
-            (tool-bar-mode -1)
-            (scroll-bar-mode -1)))
+;; (add-hook 'after-init-hook
+;;           (lambda ()
+;;             (menu-bar-mode -1)
+;;             (tool-bar-mode -1)
+;;             (scroll-bar-mode -1)))
 
 ;; Set default frame size
 (add-to-list 'default-frame-alist '(width . 80))
-(add-to-list 'default-frame-alist '(height . 30))
+(add-to-list 'default-frame-alist '(height . 40))
 #+end_src
 
 I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~.
@@ -777,7 +873,7 @@ Minor reconfiguration of ~org-mode~.
   (setq org-edit-src-content-indentation 0)
   (setq org-startup-with-inline-images t)
   ;; edit code block in current window rather than split in two by default
-  (setq org-src-window-setup 'current-window)
+  (setq org-src-window-setup 'split-window-below)
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width t)
@@ -797,8 +893,7 @@ Minor reconfiguration of ~org-mode~.
   :bind  (:map org-mode-map
 	       ("C-c l" . org-store-link)
 	       ("C-c C-l" . org-insert-link)
-	       ("C-x v l" . org-toggle-link-display))
-  )
+	       ("C-x v l" . org-toggle-link-display)))
 
 ;; remove under/over line in org source block header/footer
 (custom-set-faces
@@ -810,7 +905,7 @@ Minor reconfiguration of ~org-mode~.
 ;; shortcut to insert source block
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("sp" . "src python"))
-
+(add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
 
 ;; add a customized dvisvgxelatex to the preview process
 (customize-set-variable
@@ -882,20 +977,7 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 
 Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export??
 
-For LaTeX previews use ~org-fragtog~
-
-#+begin_src emacs-lisp
-(use-package org-fragtog
-  :after org
-  :hook
-  (org-mode . org-fragtog-mode)
-  :custom
-  (org-startup-with-latex-preview t)
-  (org-format-latex-options
-   (plist-put org-format-latex-options :scale 1.6)
-   (plist-put org-format-latex-options :foreground 'auto)
-   (plist-put org-format-latex-options :background 'auto)))
-#+end_src
+To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c .. because that would close a window!)
 
 For citations, I want to use csl styles, so I'll need the ~citeproc~ package
 #+begin_src emacs-lisp
@@ -994,6 +1076,7 @@ When exporting an org document to PDF or HTML there are lots of settings that on
   ;; go to the top of the document
   (goto-char (point-min))
   (insert "#+OPTIONS: html-postamble:nil\n")
+  (insert "#+OPTIONS: ^:nil") ;; disable sub/superscript
   (insert "#+LATEX_CLASS: article\n")
   (insert "#+LATEX_CLASS_OPTIONS: [letterpaper]\n")
   (insert "#+LATEX_HEADER: \\usepackage[inkscapelatex=false]{svg}\n")
@@ -1024,7 +1107,7 @@ I've started using org-mode for scheduling stuff. For now, I'll just keep any ag
   	"/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
   	"/Users/delnatan/Documents/org/tasks.org"
   	"/Users/delnatan/StarrLuxtonLab/org/schedules.org"
-      "/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
+	"/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
   	"/Users/delnatan/Documents/org/meetings.org"
   	"/Users/delnatan/Documents/org/events.org"
   	)
@@ -1055,13 +1138,19 @@ Generally, the notes are meant to be refiled so that it would show up when you r
 ;; set templates
 (setq org-capture-templates
       '(("t" "TODO" entry (file+headline "~/Documents/org/tasks.org" "Tasks")
-    	 "* TODO %U %? \n  %i\n")
+    	 "TODO %U %? \n  %i\n" :prepend t)
   	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
-  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n")
+  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t)
   	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
-  	 "* %? :MEETING:\nSCHEDULED: %^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n")
+  	 "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t)
   	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events")
-  	 "* %? :EVENT:\nSCHEDULED: %^T\n- Location: %^{Location}\n-  %i\n")))
+  	 "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t)))
+
+(defun de/org-sort-entries-by-date ()
+  "Sort entries in descending order by date"
+  (org-sort-entries t ?t))
+
+(add-hook 'org-capture-after-finalize-hook 'de/org-sort-entries-by-date)
 
 ;; configure refile targets
 (setq org-refile-targets '((nil :maxlevel . 3)
@@ -1089,6 +1178,66 @@ Sometimes I work with a lot of CSV files when doing data processing using Python
   :straight (csv-mode :type git :host github :repo "emacsmirror/csv-mode"))
 #+end_src
 
+For reading pdfs, let's try out pdf-tools, which has a nice 'midnight' mode.
+#+begin_src emacs-lisp
+(use-package pdf-tools
+  :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
+  :config
+  (pdf-tools-install)
+  (setq-default pdf-view-display-size 'fit-width)
+  (setq pdf-view-midnight-colors '("#2a2523" . "#f8f4ed")))
+
+#+end_src
+
+I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to match a literal dot in the file name. You need to declare and escape and then ~\.~ to match a dot (because a dot matches any character in regex). The ~\\'~ just means the 'end of string'.
+
+#+begin_src emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.[jt]sx\\'" . tsx-ts-mode))
+
+(add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
+(add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
+#+end_src
+
+Also Rust...
+#+begin_src emacs-lisp
+(use-package rust-mode
+  :straight t
+  :mode "\\.rs\\'"
+  :init
+  (setq rust-indent-offset 4)
+  (setq rust-format-on-save t)
+  :config
+  (add-hook 'rust-mode-hook 'eglot-ensure)
+  :bind (:map rust-mode-map
+              ("C-c C-c" . rust-run)
+              ("C-c C-t" . rust-test)
+              ("C-c C-b" . rust-compile)))
+
+(use-package cargo
+  :straight t
+  :hook (rust-mode . cargo-minor-mode))
+
+#+end_src
+
+Finally, trying ~magit~!
+#+begin_src emacs-lisp
+(use-package magit
+  :straight t
+  :bind (("C-x g" . magit-status)))
+#+end_src
+
+** Snippets
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :straight t
+  :hook ((org-mode prog-mode) . yas-minor-mode-on)
+  :init
+  (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
+#+end_src
+
+
 ** LLM in Emacs
 
 #+begin_src emacs-lisp
@@ -1098,7 +1247,268 @@ Sometimes I work with a lot of CSV files when doing data processing using Python
   (require 'llm-ollama)
   (setopt ellama-provider
   	  (make-llm-ollama
-  	   :chat-model "llama3:instruct"
-  	   :embedding-model "llama3:latest")))
+  	   :chat-model "llama3.1:latest"
+  	   :embedding-model "llama3.1:latest")))
 
 #+end_src
+
+
+* E-mail setup
+
+** use-package & mu4e configuration
+#+begin_src emacs-lisp
+(use-package mu4e
+  :straight nil
+  :load-path "/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e"
+  :config
+  (require 'mu4e-contrib)
+  (require 'smtpmail)
+  
+  (setq mu4e-mu-binary (executable-find "mu"))
+  ;; this is the directory we created before:
+  (setq mu4e-maildir "~/.maildir")
+  ;; this command is called to sync imap servers:
+  (setq mu4e-get-mail-command (concat (executable-find "mbsync") " -a"))
+  ;; how often to call it in seconds:
+  (setq mu4e-update-interval 300)
+  ;; save attachment to desktop by default
+  ;; or another choice of yours:
+  (setq mu4e-attachment-dir "~/Downloads/MailAttachments/")
+  ;; rename files when moving - needed for mbsync:
+  (setq mu4e-change-filenames-when-moving t)
+  ;; list of your email adresses:
+  (setq mu4e-user-mail-address-list '("delnatan@gmail.com"
+				      "delnatan@ucdavis.edu"))
+  (setq mu4e-maildir-shortcuts
+	'(("/gmail/INBOX" . ?g)
+          ("/gmail/Sent" . ?G)
+	  ("/ucd/INBOX" . ?u)
+	  ("/ucd/Sent" . ?U)))
+
+  ;; add bookmark
+  ;; (add-to-list 'mu4e-bookmarks
+  ;; 	       (mu4e-bookmark-define
+  ;; 		"maildir:/gmail/INBOX"
+  ;; 		"Inbox - Gmail"
+  ;; 		?g))
+
+  (setq mu4e-contexts
+	`(,(make-mu4e-context
+            :name "gmail"
+            :enter-func
+            (lambda () (mu4e-message "Enter delnatan@gmail.com context"))
+            :leave-func
+            (lambda () (mu4e-message "Leave delnatan@gmail.com context"))
+            :match-func
+            (lambda (msg)
+              (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@gmail.com")))
+            :vars '((user-mail-address . "delnatan@gmail.com")
+                    (user-full-name . "Daniel Elnatan")
+                    (mu4e-drafts-folder . "/gmail/Drafts")
+                    (mu4e-refile-folder . "/gmail/Archive")
+                    (mu4e-sent-folder . "/gmail/Sent")
+                    (mu4e-trash-folder . "/gmail/Trash")))
+	  ,(make-mu4e-context
+	    :name "UCD"
+	    :enter-func
+	    (lambda () (mu4e-message "Enter delnatan@ucdavis.edu context"))
+	    :leave-func
+	    (lambda () (mu4e-message "Leave delnatan@ucdavis.edu context"))
+	    :match-func
+	    (lambda (msg)
+	      (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@ucdavis.edu")))
+	    :vars `((user-mail-address . "delnatan@ucdavis.edu")
+		    (user-full-name . "Daniel Elnatan")
+		    (mu4e-drafts-folder . "/ucd/Drafts")
+		    (mu4e-refile-folder . "/ucd/Archive")
+		    (mu4e-sent-folder . "/ucd/Sent")
+		    (mu4e-trash-folder . "/ucd/Deleted Items")))))
+  
+  ;; start with the first (default) context
+  (setq mu4e-context-policy 'pick-first)
+  ;; ask for context if no context matches
+  (setq mu4e-compose-context-policy 'ask)
+
+  ;; use smtp
+  (setq message-send-mail-function 'message-send-mail-with-sendmail)
+  (setq sendmail-program "msmtp")
+  )
+
+
+#+end_src
+
+Using Nicolas Rougier's ~mu4e-dashboard~
+
+#+begin_src emacs-lisp
+(use-package async
+  :straight t)
+
+(add-to-list 'load-path "~/Apps/emacs/mu4e-dashboard/")
+
+;; ensure that mu4e-dashboard is loaded after executing mu4e
+(with-eval-after-load 'mu4e (require 'mu4e-dashboard))
+#+end_src
+
+
+** Notes on setting up ~isync~ and ~mu4~
+
+~mu~ was installed via Homebrew in MacOS, and it actually comes with ~mu4e~, so I need to point use-package to use the files that were installed by homebrew in ~/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e~.
+
+Setting up gmail was relatively trivial by using "App password", following the guide in [[https://macowners.club/posts/email-emacs-mu4e-macos/]], I was able to get pretty far.
+
+But when setting up the UC Davis e-mail, this was when things got pretty hairy. I had to basically re-build ~isync~ from source instead of using whatever the homebrew recipe for ~isync~ does. This was because isync, when installed via the standard recipe via homebrew, uses Apple's internal SASL library. You can check this by running:
+
+~otool -L $(which mbsync)~
+
+You can see that it uses the library from ~/usr/lib~.
+
+Now, the "modern" microsoft exchange 365 authentication method needs /XOAUTH2/, which you can install from [[https://github.com/moriyoshi/cyrus-sasl-xoauth2]], but you first need to install ~cyrus-sasl~ from homebrew. Make sure than when you run ~pluginviewer~ (from cyrus-sasl), that the 'xoauth2' is present. You can do this by specifying that ~./configure --with-cyrus-sasl=/path/to/cyrus-sasl~, when building the xoauth2 plugin.
+
+In addition, you need to register your 'web app' in microsoft's [[https://portal.azure.com][Azure portal]]. 
+
+Do this in conjunction with installing the python command line ~oauth2ms~ ([[https://github.com/harishkrupo/oauth2ms]]), follow the guide there. It would take you pretty far. I installed the python package until my 'utils' conda environment, which was added as a "shebang" line at the top of the oauth2ms script. Here are my settings for mbsync and smtp:
+
+=~/.mbsyncrc=:
+#+begin_example
+######################################################################
+# GMAIL IMAP SETUP for mbsync (isync)                                #
+######################################################################
+IMAPAccount gmail
+Host imap.gmail.com
+User delnatan@gmail.com
+PassCmd "security find-generic-password -s isync-gmail -a delnatan@gmail.com -w"
+Port 993
+TLSType IMAPS
+TLSVersions +1.2
+AuthMechs PLAIN
+SystemCertificates no
+CertificateFile ~/.maildir/certificates/root-certificates.pem
+
+IMAPStore gmail-remote
+Account gmail
+
+MaildirStore gmail-local
+SubFolders Verbatim
+Path ~/.maildir/gmail/
+Inbox ~/.maildir/gmail/INBOX/
+
+Channel gmail
+Far :gmail-remote:
+Near :gmail-local:
+Patterns *
+Create Near
+Sync All
+Expunge Both
+SyncState *
+
+
+######################################################################
+# EXCHANGE UCD EMAIL                                                 #
+######################################################################
+IMAPAccount ucd
+User delnatan@ucdavis.edu
+Host outlook.office365.com
+Port 993
+TLSType IMAPS
+TLSVersions +1.2
+PassCmd oauth2ms
+AuthMechs XOAUTH2
+CertificateFile ~/.maildir/certificates/root-certificates.pem
+
+IMAPStore ucd-remote
+Account ucd
+
+MaildirStore ucd-local
+SubFolders Verbatim
+Path ~/.maildir/ucd/
+Inbox ~/.maildir/ucd/INBOX
+
+Channel ucd
+Far :ucd-remote:
+Near :ucd-local:
+Patterns *
+Create Near
+Sync All
+Expunge Both
+SyncState *
+
+#+end_example
+
+Note that I use "TLSVersions", which is presumable new in isync 1.5.0 because the previous keyword "SSLversions" has been deprecated. It requires the version value to have +/- signs.
+
+As for the oauth2ms configuration, make sure you (requests are subject to approval of the azure account, mine was approved within a business day) get the details from the azure portal and put them in the config like below:
+=~/.config/oauth2ms/config.json=:
+#+begin_src json
+{
+    "tenant_id": "<your_tenant_id>"
+    "client_id": "<your_client_id>",
+    "client_secret": "<your_client_secret>",
+    "redirect_host": "localhost",
+    "redirect_port": "5123",
+    "redirect_path": "/getToken/",
+    "scopes": [
+	"https://outlook.office.com/IMAP.AccessAsUser.All",
+	"https://outlook.office.com/SMTP.Send"
+    ]
+}
+#+end_src
+
+The port number is arbitrary, I just chose something that I don't typically use.
+
+Once done, run ~mbsync -aV~. Then, initialize ~mu~ by running:
+
+#+begin_src bash
+mu init -m ~/.maildir \
+   --my-address delnatan@gmail.com \
+   --my-address delnatan@ucdavis.edu
+
+mu index
+#+end_src
+
+To send e-mails, SMTP needs to be setup properly also.
+
+=~/.msmtprc=:
+#+begin_example
+# SMTP, for sending e-mails
+
+# Default values for all accounts
+defaults
+logfile ~/.maildir/msmtp.log
+tls_trust_file ~/.maildir/certificates/root-certificates.pem
+
+######################################################################
+# GMAIL SMTP                                                         #
+######################################################################
+account gmail
+auth on
+host smtp.gmail.com
+port 465
+protocol smtp
+from delnatan@gmail.com
+user delnatan
+passwordeval security find-generic-password -s isync-gmail -a delnatan@gmail.com -w
+tls on
+tls_starttls off
+
+######################################################################
+# UCD Exchange (office 365)                                          #
+######################################################################
+account ucd
+host smtp.office365.com
+port 587
+user delnatan@ucdavis.edu
+from delnatan@ucdavis.edu
+auth xoauth2
+passwordeval "oauth2ms"
+tls on
+tls_starttls on
+tls_certcheck on
+
+######################################################################
+account default : gmail
+#+end_example
+
