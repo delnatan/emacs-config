@@ -86,7 +86,7 @@ string's start (sstart) and end (send)"
     (message "no region was selected")))
 
 
-(defun cleaned-region-length (start end)
+(defun de/cleaned-region-length (start end)
   "run clean-string() and count the number of characters.
 Useful for counting the number of characters in a region with linebreaks.
 Meant to be used with biosequences."

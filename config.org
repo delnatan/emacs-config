@@ -2,8 +2,18 @@
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
 
-My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~homebrew~).
+Running ~emacs-plus@30~ installed via ~homebrew~.
 
+Patch until it's fixed
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :straight (exec-path-from-shell
+               :type git :host github
+               :repo "purcell/exec-path-from-shell")
+    :init
+    (when (memq window-system '(mac ns x))
+      (exec-path-from-shell-initialize)))
+#+end_src
 * Basic settings
 
 #+begin_src emacs-lisp
@@ -22,6 +32,9 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
 ;; show current line highlight
 ;; (global-hl-line-mode 1)
 
+;; new in emacs 30, enable which-key-mode
+(which-key-mode)
+
 ;; enable global auto revert (refresh buffer if there's file changes)
 (global-auto-revert-mode 1)
 (setq make-backup-files nil)
@@ -29,7 +42,7 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
 
 ;; use y/n for yes-or-no
 ;; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
-(setq use-short-answers t) 
+(setq use-short-answers t)
 
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
@@ -46,7 +59,7 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
 (recentf-mode 1)
 (setq recentf-max-saved-items 30)
 
-;; Open recent files 
+;; Open recent files
 (global-set-key (kbd "C-c r") 'recentf-open-files)
 
 ;; map C-x C-b to `ibuffer`
@@ -89,126 +102,108 @@ My second attempt at customizing Emacs (Running ~emacs-plus@30~ installed via ~h
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
 
+
+
 #+end_src
 
 Customize ~ibuffer~ to show things by groups. To disable filtering (remove all filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the saved filter group, do =/ R=.
 
 #+begin_src emacs-lisp
-;; Enable ibuffer
-(require 'ibuffer)
+  ;; Enable ibuffer
+  (require 'ibuffer)
 
-;; Define custom groups for ibuffer
-;; add commonly used modes below
-(setq ibuffer-saved-filter-groups
-      '(("default"
-         ("Dired" (mode . dired-mode))
-	 ("Web" (or (mode . tsx-ts-mode)
-		    (mode . js-ts-mode)
-		    (mode . js-json-mode)))
-         ("Python" (or (mode . python-mode)
-                       (mode . python-ts-mode)))
-	 ("Rust" (mode . rust-ts-mode))
-         ("Org" (mode . org-mode))
-    	 ("Jupyter" (mode . jupyter-repl-mode))
-         ("Emacs" (or (name . "^\\*scratch\\*$")
-                      (name . "^\\*Messages\\*$")))
-	 ("Document" (or (mode . pdf-view-mode)
-			 (mode . doc-view-mode)))
-         ("Help" (or (name . "^\\*Help\\*$")
-                     (name . "^\\*Apropos\\*$")
-                     (name . "^\\*info\\*$"))))))
+  ;; Define custom groups for ibuffer
+  ;; add commonly used modes below
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("Dired" (mode . dired-mode))
+  	 ("Web" (or (mode . tsx-ts-mode)
+  		    (mode . js-ts-mode)
+  		    (mode . js-json-mode)))
+           ("Python" (or (mode . python-mode)
+                         (mode . python-ts-mode)))
+  	 ("Rust" (mode . rust-ts-mode))
+           ("Org" (mode . org-mode))
+      	 ("Jupyter" (mode . jupyter-repl-mode))
+           ("Emacs" (or (name . "^\\*scratch\\*$")
+                        (name . "^\\*Messages\\*$")))
+  	 ("Document" (or (mode . pdf-view-mode)
+  			 (mode . doc-view-mode)))
+           ("Help" (or (name . "^\\*Help\\*$")
+                       (name . "^\\*Apropos\\*$")
+                       (name . "^\\*info\\*$"))))))
 
-;; Set the default filter group
-(add-hook 'ibuffer-mode-hook
-          (lambda ()
-            (ibuffer-switch-to-saved-filter-groups "default")))
+  ;; Set the default filter group
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "default")))
 
-;; Enable ibuffer auto-mode
-(setq ibuffer-expert t)
-(setq ibuffer-show-empty-filter-groups nil)
+  ;; Enable ibuffer auto-mode
+  (setq ibuffer-expert t)
+  (setq ibuffer-show-empty-filter-groups nil)
 #+end_src
 
 Use multiple cursors
 #+begin_src emacs-lisp
-(use-package multiple-cursors
-  :straight t
-  :bind (("C->" . mc/mark-next-like-this)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C-S-c C-S-c" . mc/edit-lines)
-         ("C-S-<mouse-1>" . mc/add-cursor-on-click))
-  )
+  (use-package multiple-cursors
+    :straight t
+    :bind (("C->" . mc/mark-next-like-this)
+           ("C-<" . mc/mark-previous-like-this)
+  	 ("C-c C-<" . mc/mark-all-like-this)
+           ("C-S-c C-S-c" . mc/edit-lines)
+           ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
 
 Emacs will automatically create backup files in the same folder as the current directory, but this creates a lot of clutter, so let's just move all the files into a hidden folder
 #+begin_src emacs-lisp
-(setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
+  (setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
 
-(setq auto-save-file-name-transforms
-      '((".*" "~/.emacs.d/bak/autosaves" t)))
-(setq backup-by-copying t ; use copying to create backup files
-      delete-old-versions t ; delete excess backup files
-      kept-new-versions 4
-      kept-old-versions 2
-      version-control t)
+  (setq auto-save-file-name-transforms
+        '((".*" "~/.emacs.d/bak/autosaves" t)))
+  (setq backup-by-copying t ; use copying to create backup files
+        delete-old-versions t ; delete excess backup files
+        kept-new-versions 4
+        kept-old-versions 2
+        version-control t)
 #+end_src
 
 Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]] (reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so the standard =C-s= and =C-r= keybinding is replaced here with its corresponding version in swiper.
 
 #+begin_src emacs-lisp
-(use-package swiper
-  :straight t
-  :bind (("C-s" . swiper)
-         ("C-r" . swiper)))
+  (use-package swiper
+    :straight t
+    :bind (("C-s" . swiper)
+           ("C-r" . swiper)))
 
-(use-package vertico
-  :straight t
-  :init (vertico-mode))
+  (use-package vertico
+    :straight t
+    :init (vertico-mode))
 
-(use-package marginalia
-  :straight t
-  (:keymaps 'minibuffer-local-map
-    	    "M-A" 'marginalia-cycle)
-  :custom
-  (marginalia-max-relative-age 0)
-  (marginalia-align 'right)
-  :init
-  (marginalia-mode))
+  (use-package marginalia
+    :straight t
+    (:keymaps 'minibuffer-local-map
+      	    "M-A" 'marginalia-cycle)
+    :custom
+    (marginalia-max-relative-age 0)
+    (marginalia-align 'right)
+    :init
+    (marginalia-mode))
 
-;; A few more useful configurations...
-(use-package emacs
-  :init
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
-  (defun crm-indicator (args)
-    (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string
-                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                   crm-separator)
-                  (car args))
-          (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  ;; A few more useful configurations...
+  (use-package emacs
+    :custom
+    (tab-always-indent 'complete)
+    (text-mode-ispell-word-completion nil)
+    (read-extended-command-predicate #'command-completion-default-include-p))
 
-  ;; Do not allow the cursor in the minibuffer prompt
-  (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-  ;; Vertico commands are hidden in normal buffers.
-  ;; (setq read-extended-command-predicate
-  ;;       #'command-completion-default-include-p)
-
-  ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t))
-
-(use-package orderless
-  :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-  (setq completion-styles '(orderless basic)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
+  (use-package orderless
+    :init
+    ;; Configure a custom style dispatcher (see the Consult wiki)
+    ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
+    ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+    (setq completion-styles '(orderless basic)
+          completion-category-defaults nil
+          completion-category-overrides '((file (styles partial-completion)))))
 
 #+end_src
 
@@ -216,109 +211,111 @@ Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how
 
 Using ~dired-sidebar~ to conveniently go through files and folders in vertical minibuffer
 #+begin_src emacs-lisp
-;; this was taken from https://www.emacswiki.org/emacs/DiredOmitMode
-(defun dired-dotfiles-toggle ()
-  "Show/hide dot-files"
-  (interactive)
-  (when (equal major-mode 'dired-sidebar-mode)
-    (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
-        (progn 
-          (set (make-local-variable 'dired-dotfiles-show-p) nil)
-          (message "h")
-          (dired-mark-files-regexp "^\\\.")
-          (dired-do-kill-lines))
-      (progn (revert-buffer) ; otherwise just revert to re-show
-             (set (make-local-variable 'dired-dotfiles-show-p) t)))))
+  ;; this was taken from https://www.emacswiki.org/emacs/DiredOmitMode
+  (defun dired-dotfiles-toggle ()
+    "Show/hide dot-files"
+    (interactive)
+    (when (equal major-mode 'dired-sidebar-mode)
+      (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
+          (progn 
+            (set (make-local-variable 'dired-dotfiles-show-p) nil)
+            (message "h")
+            (dired-mark-files-regexp "^\\\.")
+            (dired-do-kill-lines))
+        (progn (revert-buffer) ; otherwise just revert to re-show
+               (set (make-local-variable 'dired-dotfiles-show-p) t)))))
 
-;; add dired-sidebar selector
-(defun ibuffer-mark-dired-sidebar-buffers ()
-  "Mark all `dired-sidebar' buffers."
-  (interactive)
-  (ibuffer-mark-on-buffer
-   (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
+  ;; add dired-sidebar selector
+  (defun ibuffer-mark-dired-sidebar-buffers ()
+    "Mark all `dired-sidebar' buffers."
+    (interactive)
+    (ibuffer-mark-on-buffer
+     (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
 
-;; for better quality icons, Emacs should be installed with imagemagick support
-(use-package vscode-icon
-  :straight t
-  :commands (vscode-icon-for-file))
+  ;; for better quality icons, Emacs should be installed with imagemagick support
+  (use-package vscode-icon
+    :straight t
+    :commands (vscode-icon-for-file))
 
-(use-package dired-sidebar
-  :straight (:type git :host github :repo "jojojames/dired-sidebar")
-  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
-         :map dired-mode-map
-         ("<backtab>" . dired-dotfiles-toggle))
-  :commands (dired-sidebar-toggle-sidebar)
-  :init
-  (add-hook 'dired-sidebar-mode-hook
-            (lambda ()
-              (unless (file-remote-p default-directory)
-                (auto-revert-mode))))
-  :config
-  (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
-  (push 'rotate-windows dired-sidebar-toggle-hidden-commands)
-  (setq dired-sidebar-subtree-line-prefix "__")
-  (setq dired-sidebar-theme 'vscode)
-  (setq dired-sidebar-use-term-integration t))
+  (use-package dired-sidebar
+    :straight (:type git :host github :repo "jojojames/dired-sidebar")
+    :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
+           :map dired-mode-map
+           ("<backtab>" . dired-dotfiles-toggle))
+    :commands (dired-sidebar-toggle-sidebar)
+    :init
+    (add-hook 'dired-sidebar-mode-hook
+              (lambda ()
+                (unless (file-remote-p default-directory)
+                  (auto-revert-mode))))
+    :config
+    (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
+    (push 'rotate-windows dired-sidebar-toggle-hidden-commands)
+    (setq dired-sidebar-subtree-line-prefix "__")
+    (setq dired-sidebar-theme 'vscode)
+    (setq dired-sidebar-use-term-integration t))
 
-(use-package ibuffer
-  :straight (:type built-in)
-  :config
-  ;; define keymap to select all dired-sidebar modes while in ibuffer
-  (define-key ibuffer-mode-map (kbd "* |") 'ibuffer-mark-dired-sidebar-buffers))
+  (use-package ibuffer
+    :straight (:type built-in)
+    :config
+    ;; define keymap to select all dired-sidebar modes while in ibuffer
+    (define-key ibuffer-mode-map (kbd "* |") 'ibuffer-mark-dired-sidebar-buffers))
 
 #+end_src
 
-In terms of code folding we will use Emacs' =outline-minor-mode=, which is the same mechanism used in org-mode. 
+Customize keybindings for outline-minor-mode when editing structured texts.
 #+begin_src emacs-lisp
-;; ;; define custom function to trigger show/hide in 'outline-minor-mode'
-(defun de/hide_all ()
-  (interactive)
-  (if outline-minor-mode
-      (progn (outline-hide-body)
-             (outline-hide-sublevels 1))
-    (message "Outline minor mode is not enabled.")))
+  ;; ;; define custom function to trigger show/hide in 'outline-minor-mode'
+  (defun de/hide_all ()
+    (interactive)
+    (if outline-minor-mode
+        (progn (outline-hide-body)
+               (outline-hide-sublevels 1))
+      (message "Outline minor mode is not enabled.")))
 
-(add-hook 'prog-mode-hook 'outline-minor-mode)
+  ;; enable outline-minor-mode when programming
+  ;; (add-hook 'prog-mode-hook 'outline-minor-mode)
 
-;; remap some of the terrible default keybindings
-(let ((kmap outline-minor-mode-map))
-  (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
-  (define-key kmap (kbd "M-<down>") 'outline-move-subtree-down)
-  (define-key kmap (kbd "<backtab>") 'outline-cycle)
-  (define-key kmap (kbd "C-s-h") 'de/hide_all)
-  (define-key kmap (kbd "C-s-s") 'outline-show-all))
+  ;; remap some of the terrible default keybindings
+  (let ((kmap outline-minor-mode-map))
+    (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
+    (define-key kmap (kbd "M-<down>") 'outline-move-subtree-down)
+    (define-key kmap (kbd "<backtab>") 'outline-cycle)
+    (define-key kmap (kbd "C-s-h") 'de/hide_all)
+    (define-key kmap (kbd "C-s-s") 'outline-show-all))
 
 #+end_src
+
 
 I'd like to be able to toggle horizontal/vertical split when I have 2 windows open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
 
 #+begin_src emacs-lisp
-(defun de/toggle-split-direction ()
-  (interactive)
-  (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer))
-             (next-win-buffer (window-buffer (next-window)))
-             (this-win-edges (window-edges (selected-window)))
-             (next-win-edges (window-edges (next-window)))
-             (this-win-2nd (not (and (<= (car this-win-edges)
-                                         (car next-win-edges))
-                                     (<= (cadr this-win-edges)
-                                         (cadr next-win-edges)))))
-             (splitter
-              (if (= (car this-win-edges)
-                     (car (window-edges (next-window))))
-                  'split-window-horizontally
-                'split-window-vertically)))
-        (delete-other-windows)
-        (let ((first-win (selected-window)))
-          (funcall splitter)
-          (if this-win-2nd (other-window 1))
-          (set-window-buffer (selected-window) this-win-buffer)
-          (set-window-buffer (next-window) next-win-buffer)
-          (select-window first-win)
-          (if this-win-2nd (other-window 1))))))
+  (defun de/toggle-split-direction ()
+    (interactive)
+    (if (= (count-windows) 2)
+        (let* ((this-win-buffer (window-buffer))
+               (next-win-buffer (window-buffer (next-window)))
+               (this-win-edges (window-edges (selected-window)))
+               (next-win-edges (window-edges (next-window)))
+               (this-win-2nd (not (and (<= (car this-win-edges)
+                                           (car next-win-edges))
+                                       (<= (cadr this-win-edges)
+                                           (cadr next-win-edges)))))
+               (splitter
+                (if (= (car this-win-edges)
+                       (car (window-edges (next-window))))
+                    'split-window-horizontally
+                  'split-window-vertically)))
+          (delete-other-windows)
+          (let ((first-win (selected-window)))
+            (funcall splitter)
+            (if this-win-2nd (other-window 1))
+            (set-window-buffer (selected-window) this-win-buffer)
+            (set-window-buffer (next-window) next-win-buffer)
+            (select-window first-win)
+            (if this-win-2nd (other-window 1))))))
 
-(global-set-key (kbd "C-x |")  'de/toggle-split-direction)
+  (global-set-key (kbd "C-x |")  'de/toggle-split-direction)
 
 #+end_src
 
@@ -326,102 +323,126 @@ I'd like to be able to toggle horizontal/vertical split when I have 2 windows op
 
 I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybindings to custom functions that scrolls half-page up/down & keep things in the center for easier viewing:
 #+begin_src emacs-lisp
-(defun de/scroll-half-page-down ()
-  (interactive)
-  (move-to-window-line-top-bottom)
-  (move-to-window-line-top-bottom)
-  (recenter-top-bottom))
+  (defun de/scroll-half-page-down ()
+    (interactive)
+    (move-to-window-line-top-bottom)
+    (move-to-window-line-top-bottom)
+    (recenter-top-bottom))
 
-(defun de/scroll-half-page-up ()
-  (interactive)
-  (move-to-window-line-top-bottom)
-  (recenter-top-bottom)
-  (recenter-top-bottom))
+  (defun de/scroll-half-page-up ()
+    (interactive)
+    (move-to-window-line-top-bottom)
+    (recenter-top-bottom)
+    (recenter-top-bottom))
 
-(global-set-key (kbd "C-v") 'de/scroll-half-page-down)
-(global-set-key (kbd "M-v") 'de/scroll-half-page-up)
+  (global-set-key (kbd "C-v") 'de/scroll-half-page-down)
+  (global-set-key (kbd "M-v") 'de/scroll-half-page-up)
 #+end_src
 
 
 * Programming setup
 
+With claude.ai, it has become much easier to write both backend (using rust) and front-end (using TypeScript/Javascript) for a GUI application with tauri. 
+
 Adding rust toolchain to my ~exec-path~ variable:
 #+begin_src emacs-lisp
-(let ((cargo-bin-path (expand-file-name "~/.cargo/bin")))
-  (when (file-directory-p cargo-bin-path)
-    (add-to-list 'exec-path cargo-bin-path)
-    (setenv "PATH" (concat cargo-bin-path path-separator (getenv "PATH")))))
+  (let ((cargo-bin-path (expand-file-name "~/.cargo/bin")))
+    (when (file-directory-p cargo-bin-path)
+      (add-to-list 'exec-path cargo-bin-path)
+      (setenv "PATH" (concat cargo-bin-path path-separator (getenv "PATH")))))
 
-;; add global pnpm path also
-(let ((pnpm-home (expand-file-name "~/Library/pnpm")))
-  (when (file-directory-p pnpm-home)
-    (add-to-list 'exec-path pnpm-home)
-    (setenv "PATH" (concat pnpm-home path-separator (getenv "PATH")))))
+  ;; add global pnpm path also
+  (let ((pnpm-home (expand-file-name "~/Library/pnpm")))
+    (when (file-directory-p pnpm-home)
+      (add-to-list 'exec-path pnpm-home)
+      (setenv "PATH" (concat pnpm-home path-separator (getenv "PATH")))))
 #+end_src
 
 Setup ~treesitter~ for several languages. To tell whether the current buffer is using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
-(setq treesit-language-source-alist
-      '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-    	(c "https://github.com/tree-sitter/tree-sitter-c")
-    	(cmake "https://github.com/uyha/tree-sitter-cmake")
-    	(css "https://github.com/tree-sitter/tree-sitter-css")
-    	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
-    	(html "https://github.com/tree-sitter/tree-sitter-html")
-    	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-    	(json "https://github.com/tree-sitter/tree-sitter-json")
-    	(make "https://github.com/alemuller/tree-sitter-make")
-	(rust "https://github.com/tree-sitter/tree-sitter-rust")
-    	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
-    	(python "https://github.com/tree-sitter/tree-sitter-python")
-    	(toml "https://github.com/tree-sitter/tree-sitter-toml")
-    	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+  (setq treesit-language-source-alist
+        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+      	(c "https://github.com/tree-sitter/tree-sitter-c")
+      	(cmake "https://github.com/uyha/tree-sitter-cmake")
+      	(css "https://github.com/tree-sitter/tree-sitter-css")
+      	(elisp "https://github.com/Wilfred/tree-sitter-elisp")
+      	(html "https://github.com/tree-sitter/tree-sitter-html")
+      	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+      	(json "https://github.com/tree-sitter/tree-sitter-json")
+      	(make "https://github.com/alemuller/tree-sitter-make")
+  	(rust "https://github.com/tree-sitter/tree-sitter-rust")
+      	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
+      	(python "https://github.com/tree-sitter/tree-sitter-python")
+      	(toml "https://github.com/tree-sitter/tree-sitter-toml")
+      	(yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+
 #+end_src
 
 At the moment, you'll have to build treesitter grammars for TypeScript manually because of some issue with creating a new temporary directory!? 
 
 Silence eglot progress (in the *Messages* buffer)
 #+begin_src emacs-lisp
-(setq eglot-report-progress nil)
+  (setq eglot-report-progress nil)
 #+end_src
 
 I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed up LSP via ~eglot-booster~.
 
 #+begin_src emacs-lisp
-(use-package eglot
-  :defer t
-  :straight (:type built-in)
-  :bind (:map eglot-mode-map
-    	      ("C-c C-d" . eldoc)
-    	      ("C-c C-f" . eglot-format-buffer))
-  :hook ((python-base-mode . eglot-ensure)
-    	 (python-base-mode . hs-minor-mode)
-	 (rust-mode . eglot-ensure))
-  :custom
-  (eglot-autoshutdown t))
+  (use-package eglot
+    :defer t
+    :straight (:type built-in)
+    :bind (:map eglot-mode-map
+      	      ("C-c C-d" . eldoc)
+      	      ("C-c C-f" . eglot-format-buffer))
+    :hook ((python-base-mode . eglot-ensure)
+  	 (rust-mode . eglot-ensure))
+    :custom
+    (eglot-autoshutdown t))
 
-(use-package eglot-booster
-  :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
-  :after eglot
-  :config (eglot-booster-mode))
+  (use-package eglot-booster
+    :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
+    :after eglot
+    :config (eglot-booster-mode))
 #+end_src
 
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't' uses a timer to type some characters, and 'l' for going to a specific line.
 
 #+begin_src emacs-lisp
-(use-package treesit-auto
-  :straight (treesit-auto :type git :host github :repo "renzmann/treesit-auto")
+  (use-package treesit-auto
+    :straight (treesit-auto :type git :host github :repo "renzmann/treesit-auto")
+    :config
+    (setq treesit-auto-install 'prompt)
+    (global-treesit-auto-mode))
+
+  (use-package avy
+    :straight t)
+
+  ;; configure avy globally, use prefix M-g 
+  (global-set-key (kbd "M-g c") 'avy-goto-char)
+  (global-set-key (kbd "M-g t") 'avy-goto-char-timer)
+  (global-set-key (kbd "M-g l") 'avy-goto-line)
+
+#+end_src
+
+Use `treesit-fold` for code folding
+#+begin_src emacs-lisp
+(use-package treesit-fold
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
+  :hook (prog-mode . treesit-fold-mode)
+  :bind (:map prog-mode-map
+         ("C-c f f" . treesit-fold-toggle)    
+         ("C-c f c" . treesit-fold-close)     
+         ("C-c f o" . treesit-fold-open)      
+         ("C-c f r" . treesit-fold-open-recursively)
+         ("C-c f C" . treesit-fold-close-all)  
+         ("C-c f O" . treesit-fold-open-all))) 
+
+(use-package treesit-fold-indicators
+  :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :config
-  (global-treesit-auto-mode))
+  (global-treesit-fold-indicators-mode))
 
-(use-package avy
-  :straight t)
-
-;; configure avy globally, use prefix M-g 
-(global-set-key (kbd "M-g c") 'avy-goto-char)
-(global-set-key (kbd "M-g t") 'avy-goto-char-timer)
-(global-set-key (kbd "M-g l") 'avy-goto-line)
 
 #+end_src
 
@@ -466,17 +487,20 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
 
 #+begin_src emacs-lisp
 (use-package corfu
-  :straight t
+  :straight (corfu :type git :host github :repo "minad/corfu")
   :custom
-  (tab-always-indent 'complete)
   (completion-cycle-threshold nil)
   (corfu-cycle t) ;; allow cycling through candidates
-  (corfu-auto t) ;; enable auto completion
+  (corfu-seprator ?\s) ;; orderless field separator
   (corfu-quit-no-match 'separator) ;; or t
   (corfu-auto-delay 0.1)
-  (corfu-echo-documentation nil)
+  (corfu-scroll-margin 7)
   (corfu-popupinfo-delay '(0.3 . 0.15))
+  ;; enable corfu only for select modes
+  ;; :hook ((prog-mode . corfu-mode))
   :init
+  ;; enable corfu globally. Recommended since Dabbrev can be used
+  ;; globally (M-/).
   (global-corfu-mode)
   (corfu-popupinfo-mode))
 
@@ -497,12 +521,12 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
   (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block))
 
-  ;; (defun de/my-cape-tex-advice (orig-fun &rest args)
-  ;;   "Advice for cape-tex to allow single-character completion"
-  ;;   (let ((cape-tex-prefix-required nil))
-  ;;     (apply orig-fun args)))
+;; (defun de/my-cape-tex-advice (orig-fun &rest args)
+;;   "Advice for cape-tex to allow single-character completion"
+;;   (let ((cape-tex-prefix-required nil))
+;;     (apply orig-fun args)))
 
-  ;; (advice-add 'cape-tex :around #'de/my-cape-tex-advice))
+;; (advice-add 'cape-tex :around #'de/my-cape-tex-advice))
 
 #+end_src
 
@@ -516,7 +540,10 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
   :config
   (define-key python-ts-mode-map (kbd "s-[") 'python-indent-shift-left)
   (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
-  )
+  (setq python-indent-guess-indent-offset-verbose nil)
+  (when (treesit-ready-p 'python)
+    (setq major-mode-remap-alist
+	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
 
 (use-package micromamba
   :straight t
@@ -577,14 +604,12 @@ At the moment, editing org source block is broken because I'm using treesitter. 
 Also include some org-mode customization to accommodate jupyter
 #+begin_src emacs-lisp
 (use-package jupyter
-  :straight t (jupyter :type git :host github :repo "emacs-jupyter/jupyter")
+  :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
   :defer t
-  :bind (:map jupyter-repl-mode-map
-	      ("C-c C-k" . jupyter-repl-clear-cells))
   :custom
-  ;; (jupyter-eval-use-overlays t)
-  (jupyter-repl-echo-eval-p t)
-  (jupyter-repl-prompt-margin-width 7))
+  (jupyter-eval-use-overlays t)
+  ;; (jupyter-repl-echo-eval-p t)
+  (jupyter-repl-prompt-margin-width 5))
 
 (use-package gnuplot
   :defer t
@@ -710,93 +735,154 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
 
 * Theme and appearance
 
+** Doom themes
+
+# #+begin_src emacs-lisp
+# (use-package doom-themes
+#   :straight t
+#   :config
+#   (setq doom-themes-enable-bold t)
+#   (setq doom-themes-enable-italic t)
+#   (load-theme 'doom-nord-aurora t)
+#   (doom-themes-org-config))
+
+# ;; call these after init to avoid orderof-execution problems
+# (add-hook 'after-init-hook
+#           (lambda ()
+#             (menu-bar-mode -1)
+#             (tool-bar-mode -1)
+#             (scroll-bar-mode -1)))
+
+# ;; Set default font
+# (set-face-attribute 'default nil
+#                     :family "Roboto Mono"
+#                     :height 130
+#                     :weight 'light)
+
+# (set-face-attribute 'bold nil
+#                     :family "Roboto Mono"
+#                     :height 130
+#                     :weight 'regular)
+
+# ;; add "padding" for comfier editing experience
+# (set-fringe-mode 15)
+
+# ;; use doom modeline
+# (use-package doom-modeline
+#   :straight t
+#   :init (doom-modeline-mode 1))
+# #+end_src
+
+
+** Nicolas Rougier's NANO emacs
 Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
 using ~homebrew~ cask. =brew tap homebrew/cask-fonts= and =brew install
 font-roboto-mono= or =font-iosevka=.
 
-As of [2024-05-20 Mon], trying out Nicolas' update repos to rebuild nano-emacs piece-by-piece.
+Uncomment the source block to use NANO emacs.
 
+Note that for programming the font lock ~nano-salient~, which is used to style significant keywords comes from ~nano-light-salient~, which in light mode, is #673AB7. I'd like to keep this the same in the dark mode to keep things looking plain.
 #+begin_src emacs-lisp
-  (use-package nano-theme
-    :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
-    :init
-    (require 'nano-theme)
-    (nano-mode))
-  ;; :custom
-  ;; (nano-light-background "#F8F4ED")
-  ;; (nano-light-foreground "#2A2523")
-  ;; (nano-light-highlight "#E8E2D9")
-  ;; (nano-light-subtle "#D1C8B8")
-  ;; (nano-light-faded "#B8A898"))
-
-  ;; add the following to customize nano-theme
-  ;; :custom
-  ;; customize light them to with `ReMarkable` colors
+(use-package nano-theme
+  :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
+  :custom
   ;; (nano-light-background "#F8F4ED")
   ;; (nano-light-foreground "#2A2523")
   ;; (nano-light-highlight "#E8E2D9")
   ;; (nano-light-subtle "#D1C8B8")
   ;; (nano-light-faded "#B8A898")
+  (nano-dark-background "#282828")
+  (nano-dark-foreground "#ffb000")
+  (nano-dark-highlight "#372C12")
+  (nano-dark-subtle "#745A15")
+  (nano-dark-faded "#947114")
+  (nano-dark-salient "#ffcc00") ;; for dark mode make same as foreground
+  :init
+  (require 'nano-theme)
+  (nano-mode))
 
-  ;; load nano theme
-  ;; (custom-set-faces
-  ;;  '(nano-mono ((t (:family "Iosevka"
-  ;; 			  :height 130
-  ;; 			  :weight light)))))
+;; add the following to customize nano-theme
+;; customize light them to with `ReMarkable` colors
+;; :custom
+;; (nano-light-background "#F8F4ED")
+;; (nano-light-foreground "#2A2523")
+;; (nano-light-highlight "#E8E2D9")
+;; (nano-light-subtle "#D1C8B8")
+;; (nano-light-faded "#B8A898")
+;; (nano-dark-background "#1D1B16")
+;; (nano-dark-foreground "#FEC328")
+;; (nano-dark-highlight "#372C12")
+;; (nano-dark-subtle "#745A15")
+;; (nano-dark-faded "#947114")
+;; (nano-dark-salient "#FEC328")
+;; Uncomment below to customize font
+(custom-set-faces
+ '(nano-mono ((t (:family "Fragment Mono"
+			  :height 120
+			  :weight regular)))))
 
-  (load-theme 'nano t)
+(load-theme 'nano t)
 
-  ;; this function is a workaround for emacs-plus@29 where nano-theme "Roboto
-  ;; Mono" font with light weight is not rendered properly
-  ;; (defun de/set-custom-fonts (&optional frame)
-  ;;   "set custom fonts for current frame."
-  ;;   (with-selected-frame (or frame (selected-frame))
-  ;;     (set-face-attribute 'default nil :font default-fs)
-  ;;     (set-face-attribute 'nano-mono nil :font nano-mono-fs)
-  ;;     (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
+;; nano-modeline fix
+(defun de/nano-modeline-update (&rest _)
+  "Update nano-modeline active face."
+  (custom-set-faces
+   `(nano-modeline-active
+     ((t (:foreground ,(face-foreground 'default)
+		      :background ,(face-background 'header-line nil t)
+		      :box (:line-width 1 :color ,(face-background 'default)))))))
+  (custom-set-faces
+   `(nano-modeline-status
+     ((t (:foreground ,(face-foreground 'default)
+		      :background ,(face-background 'shadow nil t)
+		      :inherit bold))))))
+(add-hook 'enable-theme-functions #'de/nano-modeline-update)
 
-  ;; ;; for some reason, this is needed to render the fonts properly
-  ;; (add-hook 'window-setup-hook 'de/set-custom-fonts)
-  ;; (add-hook 'after-make-frame-functions 'de/set-custom-fonts)
+;; this function is a workaround for emacs-plus@29 where nano-theme "Roboto
+;; Mono" font with light weight is not rendered properly
+;; (defun de/set-custom-fonts (&optional frame)
+;;   "set custom fonts for current frame."
+;;   (with-selected-frame (or frame (selected-frame))
+;;     (set-face-attribute 'default nil :font default-fs)
+;;     (set-face-attribute 'nano-mono nil :font nano-mono-fs)
+;;     (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
 
-  ;; setup customization of nano colors via advice
-  (defun de/customize-nano-themes ()
-    (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
+;; ;; for some reason, this is needed to render the fonts properly
+;; (add-hook 'window-setup-hook 'de/set-custom-fonts)
+;; (add-hook 'after-make-frame-functions 'de/set-custom-fonts)
 
-  (defun de/advise-nano-themes ()
-    "Add advice to nano theme functions to set show-paren-match face."
-    (advice-add 'nano-dark :after #'de/customize-nano-themes)
-    (advice-add 'nano-light :after #'de/customize-nano-themes))
+;; setup customization of nano colors via advice
+(defun de/customize-nano-themes ()
+  (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
 
-  (de/advise-nano-themes)
+(defun de/advise-nano-themes ()
+  "Add advice to nano theme functions to set show-paren-match face."
+  (advice-add 'nano-dark :after #'de/customize-nano-themes)
+  (advice-add 'nano-light :after #'de/customize-nano-themes))
 
-  (use-package nano-modeline
-    :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
-    :hook
-    (text-mode-hook nano-modeline-text-mode)
-    (prog-mode-hook nano-modeline-prog-mode)
-    (org-mode-hook nano-modeline-org-mode))
+(de/advise-nano-themes)
 
-  ;; set nano-modeline as default
-  (require 'nano-modeline)
-  (nano-modeline-text-mode t)
+(use-package nano-modeline
+  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
+  :hook
+  (text-mode-hook nano-modeline-text-mode)
+  (prog-mode-hook nano-modeline-prog-mode)
+  (org-mode-hook nano-modeline-org-mode))
 
-  ;; hide the default modeline
-  (setq-default mode-line-format nil)
+;; set nano-modeline as default
+(require 'nano-modeline)
+(nano-modeline-text-mode t)
 
-  ;; set customization on emacs startup
-  (add-hook 'emacs-startup-hook #'de/customize-nano-themes)
+;; hide the default modeline
+(setq-default mode-line-format nil)
 
-  ;; customize cursor after all the nano stuff
-  (setq-default cursor-type '(hbar . 4))
+;; set customization on emacs startup
+(add-hook 'emacs-startup-hook #'de/customize-nano-themes)
+
+;; customize cursor after all the nano stuff
+(setq-default cursor-type '(bar . 2))
 
 #+end_src
-
-The nice thing about setting up nano this way, is that we can use any other theme that we want. For example, we can apply Prot's modus themes (built-in):
-
-# #+begin_src emacs-lisp
-#   (load-theme 'modus-operandi-tinted)
-# #+end_src
 
 Minimal aesthetics to look more modern
 #+begin_src emacs-lisp
@@ -874,6 +960,9 @@ Minor reconfiguration of ~org-mode~.
   (setq org-startup-with-inline-images t)
   ;; edit code block in current window rather than split in two by default
   (setq org-src-window-setup 'split-window-below)
+  ;; change the scale of LaTeX preview
+  (setq org-format-latex-options
+	(plist-put org-format-latex-options :scale 1.75))
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width t)
@@ -907,23 +996,6 @@ Minor reconfiguration of ~org-mode~.
 (add-to-list 'org-structure-template-alist '("sp" . "src python"))
 (add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
 
-;; add a customized dvisvgxelatex to the preview process
-(customize-set-variable
- 'org-preview-latex-process-alist
- (append org-preview-latex-process-alist
-	 '((dvisvgmx :programs
-		     ("xelatex" "dvisvgm")
-		     :description "xdv > svg" :message "you need to install the programs: latex and dvisvgm." :image-input-type "xdv" :image-output-type "svg" :image-size-adjust
-		     (1.7 . 1.5)
-		     :latex-compiler
-		     ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
-		     :image-converter
-		     ("dvisvgm %f --no-fonts --exact-bbox --scale=%S --output=%O")))))
-
-
-;; LaTeX preview rendering default to SVG instead of PNG
-(setq org-preview-latex-default-process 'dvisvgmx)
-
 ;; use engrave-faces to support fontifying source blocks in LaTeX exports
 (use-package engrave-faces
   :straight t
@@ -933,7 +1005,7 @@ Minor reconfiguration of ~org-mode~.
 
 (setq org-latex-engraved-theme 'nano)
 
-#+end_src
+  #+end_src
 
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
 
@@ -1137,13 +1209,13 @@ Generally, the notes are meant to be refiled so that it would show up when you r
 
 ;; set templates
 (setq org-capture-templates
-      '(("t" "TODO" entry (file+headline "~/Documents/org/tasks.org" "Tasks")
+      '(("t" "TODO" entry (file+headline "/Users/delnatan/Documents/org/tasks.org" "Tasks")
     	 "TODO %U %? \n  %i\n" :prepend t)
-  	("n" "Note" entry (file+headline "~/Documents/org/notes.org" "Notes")
+  	("n" "Note" entry (file+headline "/Users/delnatan/Documents/org/notes.org" "Notes")
   	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t)
-  	("m" "Meeting" entry (file+headline "~/Documents/org/meetings.org" "Meetings")
+  	("m" "Meeting" entry (file+headline "/Users/delnatan/Documents/org/meetings.org" "Meetings")
   	 "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t)
-  	("e" "Event" entry (file+headline "~/Documents/org/events.org" "Events")
+  	("e" "Event" entry (file+headline "/Users/delnatan/Documents/org/events.org" "Events")
   	 "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t)))
 
 (defun de/org-sort-entries-by-date ()
@@ -1237,122 +1309,25 @@ Finally, trying ~magit~!
   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
 #+end_src
 
+** LLM integration
 
-** LLM in Emacs
+I removed Ollama at the moment because I don't really use it... but when I did, gptel was nice.
 
 #+begin_src emacs-lisp
-(use-package ellama
-  :init
-  (setopt ellama-keymap-prefix "C-c e")
-  (require 'llm-ollama)
-  (setopt ellama-provider
-  	  (make-llm-ollama
-  	   :chat-model "llama3.1:latest"
-  	   :embedding-model "llama3.1:latest")))
-
+;; (use-package gptel
+;;   :straight t
+;;   :config
+;;   (setq gpt-model "gemma2:latest"
+;; 	gptel-backend (gptel-make-ollama "Ollama"
+;; 			:host "localhost:11434"
+;; 			:stream t
+;; 			:models '("gemma2:latest")))
+;;   (add-to-list 'gptel-directives
+;; 	       '(refine-writing . "You're a writing assistant. Improve the wording and grammar, if needed, to help me re-write the given text to maximize clarity. Ask more info if you need more context.")))
 #+end_src
 
 
 * E-mail setup
-
-** use-package & mu4e configuration
-#+begin_src emacs-lisp
-(use-package mu4e
-  :straight nil
-  :load-path "/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e"
-  :config
-  (require 'mu4e-contrib)
-  (require 'smtpmail)
-  
-  (setq mu4e-mu-binary (executable-find "mu"))
-  ;; this is the directory we created before:
-  (setq mu4e-maildir "~/.maildir")
-  ;; this command is called to sync imap servers:
-  (setq mu4e-get-mail-command (concat (executable-find "mbsync") " -a"))
-  ;; how often to call it in seconds:
-  (setq mu4e-update-interval 300)
-  ;; save attachment to desktop by default
-  ;; or another choice of yours:
-  (setq mu4e-attachment-dir "~/Downloads/MailAttachments/")
-  ;; rename files when moving - needed for mbsync:
-  (setq mu4e-change-filenames-when-moving t)
-  ;; list of your email adresses:
-  (setq mu4e-user-mail-address-list '("delnatan@gmail.com"
-				      "delnatan@ucdavis.edu"))
-  (setq mu4e-maildir-shortcuts
-	'(("/gmail/INBOX" . ?g)
-          ("/gmail/Sent" . ?G)
-	  ("/ucd/INBOX" . ?u)
-	  ("/ucd/Sent" . ?U)))
-
-  ;; add bookmark
-  ;; (add-to-list 'mu4e-bookmarks
-  ;; 	       (mu4e-bookmark-define
-  ;; 		"maildir:/gmail/INBOX"
-  ;; 		"Inbox - Gmail"
-  ;; 		?g))
-
-  (setq mu4e-contexts
-	`(,(make-mu4e-context
-            :name "gmail"
-            :enter-func
-            (lambda () (mu4e-message "Enter delnatan@gmail.com context"))
-            :leave-func
-            (lambda () (mu4e-message "Leave delnatan@gmail.com context"))
-            :match-func
-            (lambda (msg)
-              (when msg
-		(mu4e-message-contact-field-matches
-		 msg :to "delnatan@gmail.com")))
-            :vars '((user-mail-address . "delnatan@gmail.com")
-                    (user-full-name . "Daniel Elnatan")
-                    (mu4e-drafts-folder . "/gmail/Drafts")
-                    (mu4e-refile-folder . "/gmail/Archive")
-                    (mu4e-sent-folder . "/gmail/Sent")
-                    (mu4e-trash-folder . "/gmail/Trash")))
-	  ,(make-mu4e-context
-	    :name "UCD"
-	    :enter-func
-	    (lambda () (mu4e-message "Enter delnatan@ucdavis.edu context"))
-	    :leave-func
-	    (lambda () (mu4e-message "Leave delnatan@ucdavis.edu context"))
-	    :match-func
-	    (lambda (msg)
-	      (when msg
-		(mu4e-message-contact-field-matches
-		 msg :to "delnatan@ucdavis.edu")))
-	    :vars `((user-mail-address . "delnatan@ucdavis.edu")
-		    (user-full-name . "Daniel Elnatan")
-		    (mu4e-drafts-folder . "/ucd/Drafts")
-		    (mu4e-refile-folder . "/ucd/Archive")
-		    (mu4e-sent-folder . "/ucd/Sent")
-		    (mu4e-trash-folder . "/ucd/Deleted Items")))))
-  
-  ;; start with the first (default) context
-  (setq mu4e-context-policy 'pick-first)
-  ;; ask for context if no context matches
-  (setq mu4e-compose-context-policy 'ask)
-
-  ;; use smtp
-  (setq message-send-mail-function 'message-send-mail-with-sendmail)
-  (setq sendmail-program "msmtp")
-  )
-
-
-#+end_src
-
-Using Nicolas Rougier's ~mu4e-dashboard~
-
-#+begin_src emacs-lisp
-(use-package async
-  :straight t)
-
-(add-to-list 'load-path "~/Apps/emacs/mu4e-dashboard/")
-
-;; ensure that mu4e-dashboard is loaded after executing mu4e
-(with-eval-after-load 'mu4e (require 'mu4e-dashboard))
-#+end_src
-
 
 ** Notes on setting up ~isync~ and ~mu4~
 
@@ -1511,4 +1486,103 @@ tls_certcheck on
 ######################################################################
 account default : gmail
 #+end_example
+
+** use-package & mu4e configuration
+#+begin_src emacs-lisp
+(use-package mu4e
+  :straight nil
+  :load-path "/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e"
+  :config
+  (require 'mu4e-contrib)
+  (require 'smtpmail)
+  
+  (setq mu4e-mu-binary (executable-find "mu"))
+  ;; this is the directory we created before:
+  (setq mu4e-maildir "~/.maildir")
+  ;; this command is called to sync imap servers:
+  (setq mu4e-get-mail-command (concat (executable-find "mbsync") " -a"))
+  ;; how often to call it in seconds:
+  (setq mu4e-update-interval 300)
+  ;; save attachment to desktop by default
+  ;; or another choice of yours:
+  (setq mu4e-attachment-dir "~/Downloads/MailAttachments/")
+  ;; rename files when moving - needed for mbsync:
+  (setq mu4e-change-filenames-when-moving t)
+  ;; list of your email adresses:
+  (setq mu4e-user-mail-address-list '("delnatan@gmail.com"
+				      "delnatan@ucdavis.edu"))
+  (setq mu4e-maildir-shortcuts
+	'(("/gmail/INBOX" . ?g)
+          ("/gmail/Sent" . ?G)
+	  ("/ucd/INBOX" . ?u)
+	  ("/ucd/Sent" . ?U)))
+
+  ;; add bookmark
+  ;; (add-to-list 'mu4e-bookmarks
+  ;; 	       (mu4e-bookmark-define
+  ;; 		"maildir:/gmail/INBOX"
+  ;; 		"Inbox - Gmail"
+  ;; 		?g))
+
+  (setq mu4e-contexts
+	`(,(make-mu4e-context
+            :name "gmail"
+            :enter-func
+            (lambda () (mu4e-message "Enter delnatan@gmail.com context"))
+            :leave-func
+            (lambda () (mu4e-message "Leave delnatan@gmail.com context"))
+            :match-func
+            (lambda (msg)
+              (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@gmail.com")))
+            :vars '((user-mail-address . "delnatan@gmail.com")
+                    (user-full-name . "Daniel Elnatan")
+                    (mu4e-drafts-folder . "/gmail/Drafts")
+                    (mu4e-refile-folder . "/gmail/Archive")
+                    (mu4e-sent-folder . "/gmail/Sent")
+                    (mu4e-trash-folder . "/gmail/Trash")))
+	  ,(make-mu4e-context
+	    :name "UCD"
+	    :enter-func
+	    (lambda () (mu4e-message "Enter delnatan@ucdavis.edu context"))
+	    :leave-func
+	    (lambda () (mu4e-message "Leave delnatan@ucdavis.edu context"))
+	    :match-func
+	    (lambda (msg)
+	      (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@ucdavis.edu")))
+	    :vars `((user-mail-address . "delnatan@ucdavis.edu")
+		    (user-full-name . "Daniel Elnatan")
+		    (mu4e-drafts-folder . "/ucd/Drafts")
+		    (mu4e-refile-folder . "/ucd/Archive")
+		    (mu4e-sent-folder . "/ucd/Sent")
+		    (mu4e-trash-folder . "/ucd/Deleted Items")))))
+  
+  ;; start with the first (default) context
+  (setq mu4e-context-policy 'pick-first)
+  ;; ask for context if no context matches
+  (setq mu4e-compose-context-policy 'ask)
+
+  ;; use smtp
+  (setq message-send-mail-function 'message-send-mail-with-sendmail)
+  (setq sendmail-program "msmtp")
+  )
+
+
+#+end_src
+
+Using Nicolas Rougier's ~mu4e-dashboard~
+
+#+begin_src emacs-lisp
+(use-package async
+  :straight t)
+
+(add-to-list 'load-path "~/Apps/emacs/mu4e-dashboard/")
+
+;; ensure that mu4e-dashboard is loaded after executing mu4e
+(with-eval-after-load 'mu4e (require 'mu4e-dashboard))
+#+end_src
+
 
