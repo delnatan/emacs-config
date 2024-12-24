@@ -1,3 +1,4 @@
+
 #+TITLE: Current Emacs (v30) config
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
@@ -101,9 +102,6 @@ Patch until it's fixed
       (delete-frame)
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
-
-
-
 #+end_src
 
 Customize ~ibuffer~ to show things by groups. To disable filtering (remove all filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the saved filter group, do =/ R=.
@@ -243,6 +241,8 @@ Using ~dired-sidebar~ to conveniently go through files and folders in vertical m
            :map dired-mode-map
            ("<backtab>" . dired-dotfiles-toggle))
     :commands (dired-sidebar-toggle-sidebar)
+    :config
+    (setq dired-sidebar-width 30)
     :init
     (add-hook 'dired-sidebar-mode-hook
               (lambda ()
@@ -341,8 +341,9 @@ I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybind
 
 
 * Programming setup
-
-With claude.ai, it has become much easier to write both backend (using rust) and front-end (using TypeScript/Javascript) for a GUI application with tauri. 
+** General setup
+With claude.ai, it has become much easier to write both backend (using rust) 
+and front-end (using TypeScript/Javascript) for a GUI application with tauri. 
 
 Adding rust toolchain to my ~exec-path~ variable:
 #+begin_src emacs-lisp
@@ -361,8 +362,8 @@ Adding rust toolchain to my ~exec-path~ variable:
 Setup ~treesitter~ for several languages. To tell whether the current buffer is using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
-  (setq treesit-language-source-alist
-        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+(setq treesit-language-source-alist
+      '((bash "https://github.com/tree-sitter/tree-sitter-bash")
       	(c "https://github.com/tree-sitter/tree-sitter-c")
       	(cmake "https://github.com/uyha/tree-sitter-cmake")
       	(css "https://github.com/tree-sitter/tree-sitter-css")
@@ -370,6 +371,7 @@ Setup ~treesitter~ for several languages. To tell whether the current buffer is 
       	(html "https://github.com/tree-sitter/tree-sitter-html")
       	(javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
       	(json "https://github.com/tree-sitter/tree-sitter-json")
+	(julia "https://github.com/tree-sitter/tree-sitter-julia")
       	(make "https://github.com/alemuller/tree-sitter-make")
   	(rust "https://github.com/tree-sitter/tree-sitter-rust")
       	(markdown "https://github.com/ikatyang/tree-sitter-markdown")
@@ -521,14 +523,8 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
   (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block))
 
-;; (defun de/my-cape-tex-advice (orig-fun &rest args)
-;;   "Advice for cape-tex to allow single-character completion"
-;;   (let ((cape-tex-prefix-required nil))
-;;     (apply orig-fun args)))
-
-;; (advice-add 'cape-tex :around #'de/my-cape-tex-advice))
-
 #+end_src
+
 
 ** Python
 
@@ -580,7 +576,8 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
 (use-package code-cells
   :straight t
   :defer t
-  :hook ((python-ts-mode . code-cells-mode-maybe))
+  :hook ((python-ts-mode . code-cells-mode-maybe)
+	 (python-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
     	       '(python-ts-mode . python-shell-send-region) t)
@@ -599,6 +596,7 @@ Setup your MacOS Python environment with ~micromamba~ first and create a /defaul
 
 At the moment, editing org source block is broken because I'm using treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
 
+
 ** Jupyter setup
 
 Also include some org-mode customization to accommodate jupyter
@@ -607,8 +605,8 @@ Also include some org-mode customization to accommodate jupyter
   :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
   :defer t
   :custom
-  (jupyter-eval-use-overlays t)
-  ;; (jupyter-repl-echo-eval-p t)
+  ;; (jupyter-eval-use-overlays t)
+  (jupyter-repl-echo-eval-p t)
   (jupyter-repl-prompt-margin-width 5))
 
 (use-package gnuplot
@@ -817,9 +815,9 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 ;; (nano-dark-salient "#FEC328")
 ;; Uncomment below to customize font
 (custom-set-faces
- '(nano-mono ((t (:family "Fragment Mono"
+ '(nano-mono ((t (:family "Roboto Mono"
 			  :height 120
-			  :weight regular)))))
+			  :weight light)))))
 
 (load-theme 'nano t)
 
@@ -853,7 +851,7 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 
 ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
-  (set-face-attribute 'show-paren-match nil :background "#96ddcf"))
+  (set-face-attribute 'show-paren-match nil :background "#87c4bc"))
 
 (defun de/advise-nano-themes ()
   "Add advice to nano theme functions to set show-paren-match face."
@@ -886,13 +884,6 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 
 Minimal aesthetics to look more modern
 #+begin_src emacs-lisp
-;; call these after init to avoid orderof-execution problems
-;; (add-hook 'after-init-hook
-;;           (lambda ()
-;;             (menu-bar-mode -1)
-;;             (tool-bar-mode -1)
-;;             (scroll-bar-mode -1)))
-
 ;; Set default frame size
 (add-to-list 'default-frame-alist '(width . 80))
 (add-to-list 'default-frame-alist '(height . 40))
@@ -1048,6 +1039,21 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 #+end_src
 
 Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export??
+
+For convenience, let's just base64-encode images when exporting an org file to HTML
+#+begin_src emacs-lisp
+(defun org-org-html--format-image (source attributes info)
+  (format "<img src=\"data:image/%s+xml;base64,%s\"%s />"
+      (or (file-name-extension source) "")
+      (base64-encode-string
+       (with-temp-buffer
+        (insert-file-contents-literally source)
+        (buffer-string)))
+      (file-name-nondirectory source)))
+(advice-add #'org-html--format-image :override #'org-org-html--format-image)
+#+end_src
+
+
 
 To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c .. because that would close a window!)
 
@@ -1220,7 +1226,9 @@ Generally, the notes are meant to be refiled so that it would show up when you r
 
 (defun de/org-sort-entries-by-date ()
   "Sort entries in descending order by date"
-  (org-sort-entries t ?t))
+  (when (or (string= (buffer-name) "events.org")
+	    (string= (buffer-name) "meetings.org"))
+    (org-sort-entries nil ?T)))
 
 (add-hook 'org-capture-after-finalize-hook 'de/org-sort-entries-by-date)
 
