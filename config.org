@@ -27,9 +27,6 @@ Patch until it's fixed
 (add-hook 'prog-mode-hook 'visual-line-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
 
-;; use smooth scrolling like most modern apps
-(pixel-scroll-precision-mode)
-
 ;; show current line highlight
 ;; (global-hl-line-mode 1)
 
@@ -136,9 +133,32 @@ Customize ~ibuffer~ to show things by groups. To disable filtering (remove all f
             (lambda ()
               (ibuffer-switch-to-saved-filter-groups "default")))
 
+(setq ibuffer-formats
+      '((mark modified read-only " "
+              (name 30 30 :left :elide)
+              " "
+              (size 9 -1 :right)
+              " "
+              (mode 16 16 :left :elide)
+              " " filename-and-process)
+        (mark " "
+              (name 16 -1)
+              " " filename)))
+
   ;; Enable ibuffer auto-mode
   (setq ibuffer-expert t)
   (setq ibuffer-show-empty-filter-groups nil)
+#+end_src
+
+In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
+#+begin_src emacs-lisp
+(use-package ultra-scroll
+  :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
+  :init
+  (setq scroll-conservatively 101
+	scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
 #+end_src
 
 Use multiple cursors
@@ -605,8 +625,8 @@ Also include some org-mode customization to accommodate jupyter
   :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
   :defer t
   :custom
-  ;; (jupyter-eval-use-overlays t)
-  (jupyter-repl-echo-eval-p t)
+  (jupyter-eval-use-overlays t)
+  ;; (jupyter-repl-echo-eval-p t)
   (jupyter-repl-prompt-margin-width 5))
 
 (use-package gnuplot
@@ -698,78 +718,149 @@ As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering cor
 For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
 
 #+begin_src emacs-lisp
+
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
-  "Choose jupyter kernel to open/start new Python file associated to it
-    "
-  ;; ~interactive~ form only constructs a list of elements that
-  ;; correspond directly to the arguments of the function
+  "Choose jupyter kernel to open/start new Python file associated to it.
+With prefix argument (C-u), use the current buffer if it's a Python file."
   (interactive
-   (let ((file (read-file-name "Open Python file: " nil nil nil)))
-     (list
-      ;; first argument, kernel-name
-      (jupyter-kernelspec-name
-       (jupyter-completing-read-kernelspec nil current-prefix-arg))
-      ;; second argument, repl-name
-      (if current-prefix-arg ;; if user supplies REPL name, use it
-    	  (read-string "REPL name: ")
-    	(file-name-base file)) ;; otherwise, use base filename
-      ;; third argument, filename
-      file)))
-  
-  ;; this means you can interactively choose what gets passed as the
-  ;; arguments for the function
+   (let ((current-file (and (memq major-mode '(python-mode python-ts-mode))
+                            (buffer-file-name))))
+     (if current-prefix-arg
+         (if current-file
+             (list
+              (jupyter-kernelspec-name
+               (jupyter-completing-read-kernelspec nil current-prefix-arg))
+              (let ((input (read-string "REPL name (empty for default): " nil nil nil)))
+                (if (string-empty-p input)
+                    (file-name-base current-file)
+                  input))
+              current-file)
+           (error "Current buffer is not a Python file"))
+       ;; Original behavior when no prefix
+       (let ((file (read-file-name "Open Python file: " nil nil nil)))
+         (list
+          (jupyter-kernelspec-name
+           (jupyter-completing-read-kernelspec nil current-prefix-arg))
+          (if current-prefix-arg
+              (read-string "REPL name: ")
+            (file-name-base file))
+          file)))))
 
-  ;; open or create the Python file
-  (find-file filename)
+  ;; open or create the Python file if needed
+  (unless (equal (buffer-file-name) filename)
+    (find-file filename))
 
   ;; start the jupyter REPL and store the client symbol
   (let ((client (jupyter-run-repl kernel-name repl-name)))
     ;; wait for REPL to start and then associate the buffer
     (sleep-for 1.0)
     (jupyter-repl-associate-buffer client)))
+
 #+end_src
 
 
 * Theme and appearance
 
+I really like Nicolas Rougier's nano-modeline, so we'll set that up independent of whatever theme I end up using. 
+
+#+begin_src emacs-lisp
+(use-package nano-modeline
+  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
+  :hook
+  ((text-mode . nano-modeline-text-mode)
+   (prog-mode . nano-modeline-prog-mode)
+   (org-mode . nano-modeline-org-mode)))
+
+;; nano-modeline fix for co;; lor (theme) changes
+;; (defun de/nano-modeline-update (&rest _)
+;;   "Update nano-modeline active face."
+;;   (custom-set-faces
+;;    `(nano-modeline-active
+;;      ((t (:foreground ,(face-foreground 'default)
+;; 		      :background ,(face-background 'header-line nil t)
+;; 		      :box (:line-width 1 :color ,(face-background 'default)))))))
+;;   (custom-set-faces
+;;    `(nano-modeline-status
+;;      ((t (:foreground ,(face-foreground 'default)
+;; 		      :background ,(face-background 'shadow nil t)
+;; 		      :inherit bold))))))
+;; (add-hook 'enable-theme-functions #'de/nano-modeline-update)
+
+;; hide the default modeline
+(setq-default mode-line-format nil)
+
+#+end_src
+
+Below, if you want to use Prot's default themes which come with modern Emacs.
+#+begin_src emacs-lisp
+;; ;; optionally, using Prot's modus theme
+;; ;; (load-theme 'modus-operandi)
+
+;; ;; call these after init to avoid orderof-execution problems
+;; (add-hook 'after-init-hook
+;;           (lambda ()
+;;             (menu-bar-mode -1)
+;;             (tool-bar-mode -1)
+;;             (scroll-bar-mode -1)))
+
+;; Set default font
+;; (set-face-attribute 'default nil
+;;                     :family "Roboto Mono"
+;;                     :height 140
+;;                     :weight 'light)
+
+;; (set-face-attribute 'bold nil
+;;                     :family "Roboto Mono"
+;;                     :height 140
+;;                     :weight 'regular)
+
+;; ;; unset background color for fringes
+;; (set-face-attribute 'fringe nil :background nil)
+;; ;; add "padding" for comfier editing experience
+;; (set-fringe-mode 10)
+
+#+end_src
+
 ** Doom themes
 
-# #+begin_src emacs-lisp
-# (use-package doom-themes
-#   :straight t
-#   :config
-#   (setq doom-themes-enable-bold t)
-#   (setq doom-themes-enable-italic t)
-#   (load-theme 'doom-nord-aurora t)
-#   (doom-themes-org-config))
+If you want to use doom themes, which are convenient, and nice for switching things up.
+#+begin_src emacs-lisp
+;; (use-package doom-themes
+;;   :straight t
+;;   :config
+;;   (setq doom-themes-enable-bold t)
+;;   (setq doom-themes-enable-italic t)
+;;   (load-theme 'doom-nord-light t)
+;;   (doom-themes-org-config))
 
-# ;; call these after init to avoid orderof-execution problems
-# (add-hook 'after-init-hook
-#           (lambda ()
-#             (menu-bar-mode -1)
-#             (tool-bar-mode -1)
-#             (scroll-bar-mode -1)))
+;; ;; call these after init to avoid orderof-execution problems
+;; (add-hook 'after-init-hook
+;;           (lambda ()
+;;             (menu-bar-mode -1)
+;;             (tool-bar-mode -1)
+;;             (scroll-bar-mode -1)))
 
-# ;; Set default font
-# (set-face-attribute 'default nil
-#                     :family "Roboto Mono"
-#                     :height 130
-#                     :weight 'light)
+;; ;; Set default font
+;; (set-face-attribute 'default nil
+;;                     :family "Roboto Mono"
+;;                     :height 140
+;;                     :weight 'light)
 
-# (set-face-attribute 'bold nil
-#                     :family "Roboto Mono"
-#                     :height 130
-#                     :weight 'regular)
+;; (set-face-attribute 'bold nil
+;;                     :family "Roboto Mono"
+;;                     :height 140
+;;                     :weight 'regular)
 
-# ;; add "padding" for comfier editing experience
-# (set-fringe-mode 15)
+;; ;; add "padding" for comfier editing experience
+;; (set-fringe-mode 15)
 
-# ;; use doom modeline
-# (use-package doom-modeline
-#   :straight t
-#   :init (doom-modeline-mode 1))
-# #+end_src
+;; ;; use doom modeline
+;; (use-package doom-modeline
+;;   :straight t
+;;   :init (doom-modeline-mode 1))
+
+#+end_src
 
 
 ** Nicolas Rougier's NANO emacs
@@ -780,15 +871,11 @@ font-roboto-mono= or =font-iosevka=.
 Uncomment the source block to use NANO emacs.
 
 Note that for programming the font lock ~nano-salient~, which is used to style significant keywords comes from ~nano-light-salient~, which in light mode, is #673AB7. I'd like to keep this the same in the dark mode to keep things looking plain.
+
 #+begin_src emacs-lisp
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :custom
-  ;; (nano-light-background "#F8F4ED")
-  ;; (nano-light-foreground "#2A2523")
-  ;; (nano-light-highlight "#E8E2D9")
-  ;; (nano-light-subtle "#D1C8B8")
-  ;; (nano-light-faded "#B8A898")
   (nano-dark-background "#282828")
   (nano-dark-foreground "#ffb000")
   (nano-dark-highlight "#372C12")
@@ -814,42 +901,14 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 ;; (nano-dark-faded "#947114")
 ;; (nano-dark-salient "#FEC328")
 ;; Uncomment below to customize font
-(custom-set-faces
- '(nano-mono ((t (:family "Roboto Mono"
-			  :height 120
-			  :weight light)))))
+;; (custom-set-faces
+;;  '(nano-mono ((t (:family "Roboto Mono"
+;; 			  :height 140
+;; 			  :weight light)))))
 
 (load-theme 'nano t)
 
-;; nano-modeline fix
-(defun de/nano-modeline-update (&rest _)
-  "Update nano-modeline active face."
-  (custom-set-faces
-   `(nano-modeline-active
-     ((t (:foreground ,(face-foreground 'default)
-		      :background ,(face-background 'header-line nil t)
-		      :box (:line-width 1 :color ,(face-background 'default)))))))
-  (custom-set-faces
-   `(nano-modeline-status
-     ((t (:foreground ,(face-foreground 'default)
-		      :background ,(face-background 'shadow nil t)
-		      :inherit bold))))))
-(add-hook 'enable-theme-functions #'de/nano-modeline-update)
-
-;; this function is a workaround for emacs-plus@29 where nano-theme "Roboto
-;; Mono" font with light weight is not rendered properly
-;; (defun de/set-custom-fonts (&optional frame)
-;;   "set custom fonts for current frame."
-;;   (with-selected-frame (or frame (selected-frame))
-;;     (set-face-attribute 'default nil :font default-fs)
-;;     (set-face-attribute 'nano-mono nil :font nano-mono-fs)
-;;     (set-face-attribute 'nano-italic nil :font nano-italic-fs)))
-
-;; ;; for some reason, this is needed to render the fonts properly
-;; (add-hook 'window-setup-hook 'de/set-custom-fonts)
-;; (add-hook 'after-make-frame-functions 'de/set-custom-fonts)
-
-;; setup customization of nano colors via advice
+;; ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
   (set-face-attribute 'show-paren-match nil :background "#87c4bc"))
 
@@ -860,25 +919,11 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 
 (de/advise-nano-themes)
 
-(use-package nano-modeline
-  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
-  :hook
-  (text-mode-hook nano-modeline-text-mode)
-  (prog-mode-hook nano-modeline-prog-mode)
-  (org-mode-hook nano-modeline-org-mode))
-
-;; set nano-modeline as default
-(require 'nano-modeline)
-(nano-modeline-text-mode t)
-
-;; hide the default modeline
-(setq-default mode-line-format nil)
-
-;; set customization on emacs startup
+;; ;; set customization on emacs startup
 (add-hook 'emacs-startup-hook #'de/customize-nano-themes)
 
-;; customize cursor after all the nano stuff
-(setq-default cursor-type '(bar . 2))
+;; ;; customize cursor after all the nano stuff
+;; (setq-default cursor-type '(bar . 3))
 
 #+end_src
 
@@ -1265,7 +1310,7 @@ For reading pdfs, let's try out pdf-tools, which has a nice 'midnight' mode.
   :config
   (pdf-tools-install)
   (setq-default pdf-view-display-size 'fit-width)
-  (setq pdf-view-midnight-colors '("#2a2523" . "#f8f4ed")))
+  (setq pdf-view-midnight-colors '("#cdcdcd" . "#101217")))
 
 #+end_src
 
@@ -1441,6 +1486,7 @@ As for the oauth2ms configuration, make sure you (requests are subject to approv
 #+end_src
 
 The port number is arbitrary, I just chose something that I don't typically use.
+For some reason, this stopped working for my outlook e-mail!
 
 Once done, run ~mbsync -aV~. Then, initialize ~mu~ by running:
 
