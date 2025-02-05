@@ -396,6 +396,8 @@ Silence eglot progress (in the *Messages* buffer)
 
 I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed up LSP via ~eglot-booster~.
 
+Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
+
 #+begin_src emacs-lisp
 (use-package eglot
   :defer t
@@ -406,7 +408,18 @@ I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to spee
   :hook ((python-base-mode . eglot-ensure)
   	 (rust-mode . eglot-ensure))
   :custom
-  (eglot-autoshutdown t))
+  (eglot-autoshutdown t)
+  :config
+  (setq-default
+   eglot-workspace-configuration
+   '(:basedpyright (
+		    :typeCheckingMode "standard"
+		    :reportMissingTypeArgument "none"
+		    )
+		   :basedpyright.analysis
+		   (:inlayHints (:callArgumentNames :json-false)))
+   ))
+
 
 (use-package eglot-booster
   :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
@@ -548,11 +561,13 @@ Use ~pet~ to manage Python environments.
   (defun change-inferior-python ()
   (let ((jupyter-path (expand-file-name "bin/jupyter" venv-manager-current-venv)))
     (when (file-exists-p jupyter-path)
-      (setq python-shell-interpreter "python3"
+      (setq python-shell-interpreter "ipython3"
             python-shell-interpreter-args "--simple-prompt"))))
   :hook
   (venv-manager-postactivate . change-inferior-python))
 
+;; set the default python to 'utils' (remember to create this!)
+(activate-venv "utils")
 #+end_src
 
 #+begin_src emacs-lisp
@@ -782,7 +797,6 @@ I really like Nicolas Rougier's nano-modeline, so we'll set that up independent 
 
 ;; hide the default modeline
 (setq-default mode-line-format nil)
-
 #+end_src
 
 Below, if you want to use Prot's default themes which come with modern Emacs.
@@ -884,7 +898,7 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
   (nano-dark-highlight "#0f2f0f")     ; Dark green for selection/highlight
   (nano-dark-subtle "#206020")        ; Medium green for secondary elements
   (nano-dark-faded "#2d8c2d")         ; Muted green for less important elements
-  (nano-dark-salient "#33ff33")
+  (nano-dark-salient "#9E73E7")
   ;; end CRT phosphorgreen
 
   :init
@@ -902,7 +916,7 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 
 ;; Uncomment below to customize font
 (custom-set-faces
- '(nano-mono ((t (:family "Red Hat Mono"
+ '(nano-mono ((t (:family "Roboto Mono"
 			  :height 140
 			  :weight light)))))
 
@@ -1043,8 +1057,35 @@ Minor reconfiguration of ~org-mode~.
 
 (setq org-latex-engraved-theme 'nano)
 
-  #+end_src
+#+end_src
 
+Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience writing LaTeX in org documents.
+#+begin_src emacs-lisp
+(use-package org-modern
+  :straight t
+  :after org
+  :config
+  (setq org-auto-align-tags nil
+        org-tags-column 0
+        org-catch-invisible-edits 'show-and-error
+        org-special-ctrl-a/e t
+        org-insert-heading-respect-content t
+        org-hide-emphasis-markers t
+        org-pretty-entities nil
+        org-agenda-tags-column 0
+        org-ellipsis "…")
+
+  ;; Set the face attribute for org-ellipsis
+  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
+  
+  ;; Enable org-modern globally
+  (global-org-modern-mode))
+
+(use-package org-fragtog
+  :straight t
+  :hook (org-mode . org-fragtog-mode))
+#+end_src
+  
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
 
 For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX fragments within an org document whenever the org file is in any of my Dropbox folder. So here I'm trying to see if changing the temporary directory to be in an absolute local folder instead of a relative one helps. This didn't solve the problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox= does!
