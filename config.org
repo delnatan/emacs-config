@@ -4,7 +4,8 @@
 
 Running ~emacs-plus@30~ installed via ~homebrew~.
 
-Patch until it's fixed
+With version 30, something is wrong and Emacs does not do the usual PATH injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
+
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
   :straight (exec-path-from-shell
@@ -14,6 +15,7 @@ Patch until it's fixed
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 #+end_src
+
 * Basic settings
 
 #+begin_src emacs-lisp
@@ -72,6 +74,9 @@ Patch until it's fixed
 
 ;; enable automatic parenthesis pairing
 (electric-pair-mode 1)
+
+;; default input mode to 'TeX', so can easily C-\ for inserting symbols
+(setq default-input-method "TeX")
 
 ;; create a new frame with *scratch* buffer
 (defun new-frame ()
@@ -868,19 +873,24 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :init
   (custom-set-faces
-   '(nano-mono ((t (:family "JetBrains Mono"
+   '(nano-mono ((t (:family "Roboto Mono"
 			    :height 150
 			    :weight light)))))
   (require 'nano-theme)
   (nano-mode)
   :custom
+  ;; change highlight colors
   (nano-light-highlight "#fff5b4")
   (nano-dark-highlight "#fff5b4")
   :config
   ;; override org-block background to allow my custom highlighting
   (custom-set-faces
    '(org-block ((((background light)) (:background "#FAFAFA"))
-		(((background dark)) (:background "#3b4252"))))))
+		(((background dark)) (:background "#3b4252"))))
+   ;; change variable pitch to the serif version
+   `(variable-pitch ((t (:weight  ,(face-attribute 'nano-serif :weight)
+                         :height  160
+                         :family  ,(face-attribute 'nano-serif :family)))))))
 
 ;; add the following to customize nano-theme
 ;; customize light them to with `ReMarkable` colors
@@ -977,6 +987,18 @@ Minor reconfiguration of ~org-mode~.
 (use-package org
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
+  ;; use variable pitch 
+  (add-hook 'org-mode-hook 'variable-pitch-mode)
+  ;; but keep everything else fixed
+  (custom-set-faces
+   '(org-block ((t (:inherit nano-mono))))
+   '(org-code ((t (:inherit nano-mono))))
+   '(org-table ((t (:inherit nano-mono))))
+   '(org-verbatim ((t (:inherit nano-mono))))
+   '(org-special-keyword ((t (:inherit nano-mono))))
+   '(org-meta-line ((t (:inherit nano-mono))))
+   '(org-checkbox ((t (:inherit nano-mono)))))
+  
   (setq org-confirm-babel-evaluate nil)
   ;; native syntax highlighting in source blocks
   (setq org-src-fontify-natively t)
