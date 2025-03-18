@@ -111,18 +111,18 @@ Customize ~ibuffer~ to show things by groups. To disable filtering (remove all f
 (setq ibuffer-saved-filter-groups
       '(("default"
          ("Dired" (mode . dired-mode))
-     ("Web" (or (mode . tsx-ts-mode)
-          (mode . js-ts-mode)
-          (mode . js-json-mode)))
+	 ("Web" (or (mode . tsx-ts-mode)
+		    (mode . js-ts-mode)
+		    (mode . js-json-mode)))
          ("Python" (or (mode . python-mode)
                        (mode . python-ts-mode)))
-     ("Rust" (mode . rust-ts-mode))
+	 ("Rust" (mode . rust-ts-mode))
          ("Org" (mode . org-mode))
          ("Jupyter" (mode . jupyter-repl-mode))
          ("Emacs" (or (name . "^\\*scratch\\*$")
                       (name . "^\\*Messages\\*$")))
-     ("Document" (or (mode . pdf-view-mode)
-         (mode . doc-view-mode)))
+	 ("Document" (or (mode . pdf-view-mode)
+			 (mode . doc-view-mode)))
          ("Help" (or (name . "^\\*Help\\*$")
                      (name . "^\\*Apropos\\*$")
                      (name . "^\\*info\\*$"))))))
@@ -155,7 +155,7 @@ In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
   (setq scroll-conservatively 101
-  scroll-margin 0)
+	scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 #+end_src
@@ -166,7 +166,7 @@ Use multiple cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-     ("C-c C-<" . mc/mark-all-like-this)
+	 ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
@@ -543,7 +543,7 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
 
 ** Python
 
-Use ~pet~ to manage Python environments.
+Simple Python setup using venv for managing environments.
 
 #+begin_src emacs-lisp
 (use-package pythonic)
@@ -621,9 +621,24 @@ Use ~pet~ to manage Python environments.
 
 At the moment, editing org source block is broken because I'm using treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
 
+
+** Julia
+
+#+begin_src emacs-lisp
+(use-package julia-ts-mode
+  :straight t
+  :interpreter "julia"
+  :mode "\\.jl$")
+
+(use-package eglot-jl
+  :straight t)
+#+end_src
+
+
+
 ** Jupyter setup
 
-Also include some org-mode customization to accommodate jupyter
+I'm using my own form of 
 #+begin_src emacs-lisp
 (use-package jupyter
   :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
@@ -852,8 +867,20 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :init
+  (custom-set-faces
+   '(nano-mono ((t (:family "JetBrains Mono"
+			    :height 150
+			    :weight light)))))
   (require 'nano-theme)
-  (nano-mode))
+  (nano-mode)
+  :custom
+  (nano-light-highlight "#fff5b4")
+  (nano-dark-highlight "#fff5b4")
+  :config
+  ;; override org-block background to allow my custom highlighting
+  (custom-set-faces
+   '(org-block ((((background light)) (:background "#FAFAFA"))
+		(((background dark)) (:background "#3b4252"))))))
 
 ;; add the following to customize nano-theme
 ;; customize light them to with `ReMarkable` colors
@@ -863,12 +890,6 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 ;; (nano-light-highlight "#E8E2D9")
 ;; (nano-light-subtle "#D1C8B8")
 ;; (nano-light-faded "#B8A898")
-
-;; Uncomment below to customize font
-(custom-set-faces
- '(nano-mono ((t (:family "Inconsolata"
-        :height 160
-        :weight light)))))
 
 (load-theme 'nano t)
 
@@ -906,13 +927,17 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 #+end_src
 
 
-* Rougier's ~notes-list~
+* Rougier's wonderful tools
 
 #+begin_src emacs-lisp
 ;; add emacs ~app~ folder to load-path
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 (add-to-list 'load-path "~/Apps/emacs/nano-tools")
+
+;; use Rougier's writer mode for a nicer org-mode
+(require 'nano-writer)
+(add-to-list 'major-mode-remap-alist '(org-mode . writer-mode))
 
 (use-package svg-lib
   :defer t
@@ -964,7 +989,7 @@ Minor reconfiguration of ~org-mode~.
   (setq org-src-window-setup 'split-window-below)
   ;; change the scale of LaTeX preview
   (setq org-format-latex-options
-	(plist-put org-format-latex-options :scale 1.75))
+	(plist-put org-format-latex-options :scale 1.6))
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width nil)
@@ -1011,26 +1036,6 @@ Minor reconfiguration of ~org-mode~.
 
 Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience writing LaTeX in org documents.
 #+begin_src emacs-lisp
-(use-package org-modern
-  :straight t
-  :after org
-  :config
-  (setq org-auto-align-tags nil
-        org-tags-column 0
-        org-catch-invisible-edits 'show-and-error
-        org-special-ctrl-a/e t
-        org-insert-heading-respect-content t
-        org-hide-emphasis-markers t
-        org-pretty-entities nil
-        org-agenda-tags-column 0
-        org-ellipsis "…")
-
-  ;; Set the face attribute for org-ellipsis
-  (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
-  
-  ;; Enable org-modern globally
-  (global-org-modern-mode))
-
 (use-package org-fragtog
   :straight t
   :hook (org-mode . org-fragtog-mode))
@@ -1303,7 +1308,7 @@ For reading pdfs, let's try out pdf-tools, which has a nice 'midnight' mode.
   :config
   (pdf-tools-install)
   (setq-default pdf-view-display-size 'fit-width)
-  (setq pdf-view-midnight-colors '("#cdcdcd" . "#101217")))
+  (setq pdf-view-midnight-colors '("#e5e9f0" . "#2e3440")))
 
 #+end_src
 
@@ -1333,6 +1338,7 @@ Using magit for git project management.
   :init
   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
 #+end_src
+
 
 * E-mail setup
 
