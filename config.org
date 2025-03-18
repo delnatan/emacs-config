@@ -872,27 +872,34 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :init
-  (custom-set-faces
-   '(nano-mono ((t (:family "Roboto Mono"
-			    :height 150
-			    :weight light)))))
   (require 'nano-theme)
   (nano-mode)
   :custom
-  ;; change highlight colors
-  (nano-light-highlight "#fff5b4")
-  (nano-dark-highlight "#fff5b4")
+  (nano-light-highlight "#d8c7ff")
+  (nano-dark-highlight "#d8c7ff")
   :config
-  ;; override org-block background to allow my custom highlighting
+  ;; define a function to set org-block background
+  (defun de/set-org-block-background()
+    "Set org-block face background based on current theme mode."
+    (with-eval-after-load 'org
+      (set-face-background 'org-block
+			   (if (eq (frame-parameter nil 'background-mode) 'light)
+			       "#f0eef5"
+			     "#3b4252"))))
+  ;; run it initially to set the background
+  (de/set-org-block-background)
+
+  ;; Add advice to nano-light and nano-dark functions
+  (advice-add 'nano-light :after #'de/set-org-block-background)
+  (advice-add 'nano-dark :after #'de/set-org-block-background)
+  
+  ;; Override the org-block face
   (custom-set-faces
-   '(org-block ((((background light)) (:background "#FAFAFA"))
-		(((background dark)) (:background "#3b4252"))))
    ;; change variable pitch to the serif version
    `(variable-pitch ((t (:weight  ,(face-attribute 'nano-serif :weight)
-                         :height  160
-                         :family  ,(face-attribute 'nano-serif :family)))))))
+				  :height  160
+				  :family  ,(face-attribute 'nano-serif :family)))))))
 
-;; add the following to customize nano-theme
 ;; customize light them to with `ReMarkable` colors
 ;; :custom
 ;; (nano-light-background "#F8F4ED")
