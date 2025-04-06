@@ -6,6 +6,11 @@ Running ~emacs-plus@30~ installed via ~homebrew~.
 
 With version 30, something is wrong and Emacs does not do the usual PATH injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
 
+[2025-04-05 Sat] a patch for PATH issues
+You need to replace the existing signature by running
+
+~codesign --force --deep --sign - /opt/homebrew/opt/emacs-plus@30/Emacs.app~
+
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
   :straight (exec-path-from-shell
@@ -116,18 +121,18 @@ Customize ~ibuffer~ to show things by groups. To disable filtering (remove all f
 (setq ibuffer-saved-filter-groups
       '(("default"
          ("Dired" (mode . dired-mode))
-	 ("Web" (or (mode . tsx-ts-mode)
-		    (mode . js-ts-mode)
-		    (mode . js-json-mode)))
+  	 ("Web" (or (mode . tsx-ts-mode)
+  		    (mode . js-ts-mode)
+  		    (mode . js-json-mode)))
          ("Python" (or (mode . python-mode)
                        (mode . python-ts-mode)))
-	 ("Rust" (mode . rust-ts-mode))
+  	 ("Rust" (mode . rust-ts-mode))
          ("Org" (mode . org-mode))
          ("Jupyter" (mode . jupyter-repl-mode))
          ("Emacs" (or (name . "^\\*scratch\\*$")
                       (name . "^\\*Messages\\*$")))
-	 ("Document" (or (mode . pdf-view-mode)
-			 (mode . doc-view-mode)))
+  	 ("Document" (or (mode . pdf-view-mode)
+  			 (mode . doc-view-mode)))
          ("Help" (or (name . "^\\*Help\\*$")
                      (name . "^\\*Apropos\\*$")
                      (name . "^\\*info\\*$"))))))
@@ -160,7 +165,7 @@ In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
   (setq scroll-conservatively 101
-	scroll-margin 0)
+  	scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 #+end_src
@@ -171,7 +176,7 @@ Use multiple cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-	 ("C-c C-<" . mc/mark-all-like-this)
+  	 ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
@@ -367,22 +372,27 @@ I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybind
 * Programming setup
 ** General setup
 
+In general, I prefer a tab width of 4:
+#+begin_src emacs-lisp
+(setq tab-width 4)
+#+end_src
+
 Setup ~treesitter~ for several languages. To tell whether the current buffer is using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
 (setq treesit-language-source-alist
       '((bash "https://github.com/tree-sitter/tree-sitter-bash")
         (c "https://github.com/tree-sitter/tree-sitter-c")
-  (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+  	(cpp "https://github.com/tree-sitter/tree-sitter-cpp")
         (cmake "https://github.com/uyha/tree-sitter-cmake")
         (css "https://github.com/tree-sitter/tree-sitter-css")
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
         (html "https://github.com/tree-sitter/tree-sitter-html")
         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
         (json "https://github.com/tree-sitter/tree-sitter-json")
-  (julia "https://github.com/tree-sitter/tree-sitter-julia")
+  	(julia "https://github.com/tree-sitter/tree-sitter-julia")
         (make "https://github.com/alemuller/tree-sitter-make")
-    (rust "https://github.com/tree-sitter/tree-sitter-rust")
+  	(rust "https://github.com/tree-sitter/tree-sitter-rust")
         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
         (python "https://github.com/tree-sitter/tree-sitter-python")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
@@ -411,18 +421,18 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
               ("C-c C-d" . eldoc)
               ("C-c C-f" . eglot-format-buffer))
   :hook ((python-base-mode . eglot-ensure)
-     (rust-mode . eglot-ensure))
+  	 (rust-mode . eglot-ensure))
   :custom
   (eglot-autoshutdown t)
   :config
   (setq-default
    eglot-workspace-configuration
    '(:basedpyright (
-        :typeCheckingMode "standard"
-        :reportMissingTypeArgument "none"
-        )
-       :basedpyright.analysis
-       (:inlayHints (:callArgumentNames :json-false)))
+  		    :typeCheckingMode "standard"
+  		    :reportMissingTypeArgument "none"
+  		    )
+  		   :basedpyright.analysis
+  		   (:inlayHints (:callArgumentNames :json-false)))
    ))
 
 
@@ -482,20 +492,20 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
   :config
   ;; supress auto-revert warnings
   (setq apheleia-inhibit-functions
-  (cons #'buffer-modified-p apheleia-inhibit-functions))
+  	(cons #'buffer-modified-p apheleia-inhibit-functions))
   ;; define formatters
   (setf (alist-get 'ruff apheleia-formatters)
         '("ruff" "format" "--verbose" "--line-length" "79"
-    "--stdin-filename" filepath))
+  	  "--stdin-filename" filepath))
   (setf (alist-get 'prettier-typescript apheleia-formatters)
-  '("prettier" "--use-tabs=false" "--print-width" "80"
-    "--stdin-filename" filepath "--parser=typescript"))
+  	'("prettier" "--use-tabs=false" "--print-width" "80"
+  	  "--stdin-filename" filepath "--parser=typescript"))
   (setf (alist-get 'prettier-json apheleia-formatters)
-  '("prettier" "--use-tabs=false" "--print-width" "80"
-    "--stdin-filename" filepath "--parser=json"))
+  	'("prettier" "--use-tabs=false" "--print-width" "80"
+  	  "--stdin-filename" filepath "--parser=json"))
   (setf (alist-get 'prettier-javascript apheleia-formatters)
-  '("prettier" "--use-tabs=false" "--print-width" "80"
-    "--stdin-filename" filepath "--parser=babel-flow"))
+  	'("prettier" "--use-tabs=false" "--print-width" "80"
+  	  "--stdin-filename" filepath "--parser=babel-flow"))
   ;; define commands for each mode
   (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
   (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
@@ -530,13 +540,13 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
 (use-package cape
   :straight t
   :bind (("C-c p p" . completion-at-point)
-       ("C-c p \\" . cape-tex)
-       ("C-c p _" . cape-tex)
-       ("C-c p ^" . cape-tex)
-       ("C-c p f" . cape-file)
-       ("C-c p d" . cape-dabbrev)
-       ("C-c p s" . cape-elisp-symbol)
-       ("C-c p e" . cape-elisp-block))
+  	 ("C-c p \\" . cape-tex)
+  	 ("C-c p _" . cape-tex)
+  	 ("C-c p ^" . cape-tex)
+  	 ("C-c p f" . cape-file)
+  	 ("C-c p d" . cape-dabbrev)
+  	 ("C-c p s" . cape-elisp-symbol)
+  	 ("C-c p e" . cape-elisp-block))
   :init
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -564,10 +574,10 @@ Simple Python setup using venv for managing environments.
   (venv-manager-directories '("~/envs"))
   :config
   (defun change-inferior-python ()
-  (let ((jupyter-path (expand-file-name "bin/jupyter" venv-manager-current-venv)))
-    (when (file-exists-p jupyter-path)
-      (setq python-shell-interpreter "ipython3"
-            python-shell-interpreter-args "--simple-prompt"))))
+    (let ((jupyter-path (expand-file-name "bin/jupyter" venv-manager-current-venv)))
+      (when (file-exists-p jupyter-path)
+  	(setq python-shell-interpreter "ipython3"
+              python-shell-interpreter-args "--simple-prompt"))))
   :hook
   (venv-manager-postactivate . change-inferior-python))
 
@@ -584,7 +594,7 @@ Simple Python setup using venv for managing environments.
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
-    (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
+  	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
 
 #+end_src
 
@@ -593,24 +603,24 @@ Simple Python setup using venv for managing environments.
   "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-       (python-shell-restart)))
+  	 (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-      (end (cadr (code-cells--bounds))))
+  	(end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
   :straight t
   :defer t
   :hook ((python-ts-mode . code-cells-mode-maybe)
-   (python-mode . code-cells-mode-maybe))
+  	 (python-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
-             '(python-ts-mode . python-shell-send-region) t)
+               '(python-ts-mode . python-shell-send-region) t)
   :bind
   (:map
    code-cells-mode-map
@@ -633,7 +643,12 @@ At the moment, editing org source block is broken because I'm using treesitter. 
 (use-package julia-ts-mode
   :straight t
   :interpreter "julia"
-  :mode "\\.jl$")
+  :mode "\\.jl$"
+  :config
+  (add-hook 'julia-ts-mode-hook
+  	    (lambda ()
+  	      (setq-local tab-width 4)
+  	      (setq-local julia-indent-offset 4))))
 
 (use-package eglot-jl
   :straight t)
@@ -679,7 +694,7 @@ I'm using my own form of
 ;; so we remove that, then add our own with 'python-ts'
 (setq org-src-lang-modes
       (cons '("jupyter-python" . python-ts)
-        (assq-delete-all "jupyter-python" org-src-lang-modes)))
+            (assq-delete-all "jupyter-python" org-src-lang-modes)))
 #+end_src
 
 A typical workflow in org-mode is to use source blocks with the following tag (after running =micromamba-activate=!):
@@ -698,7 +713,7 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 #+begin_src emacs-lisp
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
-    Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
+      Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
   (interactive)
   (unless (executable-find "jupyter")
     (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
@@ -707,14 +722,14 @@ To make life a bit simpler, I've made a function to insert this snippet with the
       (let* ((kernelspec (jupyter-completing-read-kernelspec))
              (kernel-name (jupyter-kernelspec-name kernelspec))
              (kernel-display-name
-          (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
+              (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
              (insertion-point (point-min))
              (properties
-          (format
-           "#+PROPERTY: header-args:jupyter-python :session py
-,#+PROPERTY: header-args:jupyter-python+ :async yes
-,#+PROPERTY: header-args:jupyter-python+ :eval never-export
-,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
+              (format
+               "#+PROPERTY: header-args:jupyter-python :session py
+  ,#+PROPERTY: header-args:jupyter-python+ :async yes
+  ,#+PROPERTY: header-args:jupyter-python+ :eval never-export
+  ,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -735,8 +750,8 @@ As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering cor
   "Fixes kernel output in emacs-jupyter"
   (ansi-color-apply-on-region (point-min) (point-max)))
 (add-hook 'org-mode-hook
-        (lambda ()
-          (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+          (lambda ()
+            (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
 #+end_src
 
 For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
@@ -745,7 +760,7 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
   "Choose jupyter kernel to open/start new Python file associated to it.
-With prefix argument (C-u), use the current buffer if it's a Python file."
+  With prefix argument (C-u), use the current buffer if it's a Python file."
   (interactive
    (let ((current-file (and (memq major-mode '(python-mode python-ts-mode))
                             (buffer-file-name))))
@@ -790,7 +805,7 @@ I really like Nicolas Rougier's nano-modeline, so we'll set that up independent 
 #+begin_src emacs-lisp
 (use-package nano-modeline
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline"
-         :branch "rewrite")
+  			   :branch "rewrite")
   :hook
   ((text-mode . nano-modeline-text-mode)
    (prog-mode . nano-modeline-prog-mode)
@@ -805,13 +820,13 @@ I really like Nicolas Rougier's nano-modeline, so we'll set that up independent 
   (custom-set-faces
    `(nano-modeline-active
      ((t (:foreground ,(face-foreground 'default)
-          :background ,(face-background 'header-line nil t)
-          :box (:line-width 1 :color ,(face-background 'default)))))))
+  		      :background ,(face-background 'header-line nil t)
+  		      :box (:line-width 1 :color ,(face-background 'default)))))))
   (custom-set-faces
    `(nano-modeline-status
      ((t (:foreground ,(face-foreground 'default)
-          :background ,(face-background 'shadow nil t)
-          :inherit bold))))))
+  		      :background ,(face-background 'shadow nil t)
+  		      :inherit bold))))))
 (add-hook 'enable-theme-functions #'de/nano-modeline-update)
 
 ;; hide the default modeline
@@ -873,6 +888,18 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :init
   (require 'nano-theme)
+  
+  ;; customize fonts for NANO theme
+  (custom-set-faces
+   ;; change the sans face
+   '(nano-sans ((t :family "Barlow"
+		   :height 150
+		   :weight light)))
+   ;; change monospace font
+   '(nano-mono ((t (:family "Brass Mono Code"
+			    :height 150
+			    :weight regular)))))
+
   (nano-mode)
   :custom
   (nano-light-highlight "#d8c7ff")
@@ -883,22 +910,23 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
     "Set org-block face background based on current theme mode."
     (with-eval-after-load 'org
       (set-face-background 'org-block
-			   (if (eq (frame-parameter nil 'background-mode) 'light)
-			       "#f0eef5"
-			     "#3b4252"))))
+  			   (if (eq (frame-parameter nil 'background-mode) 'light)
+  			       "#f8f7fa"
+  			     "#3b4252"))))
   ;; run it initially to set the background
   (de/set-org-block-background)
 
   ;; Add advice to nano-light and nano-dark functions
   (advice-add 'nano-light :after #'de/set-org-block-background)
   (advice-add 'nano-dark :after #'de/set-org-block-background)
-  
+
+  ;; to use `variable-pitch` org-mode using nano-sans
   ;; Override the org-block face
   (custom-set-faces
    ;; change variable pitch to the serif version
-   `(variable-pitch ((t (:weight  ,(face-attribute 'nano-serif :weight)
-				  :height  160
-				  :family  ,(face-attribute 'nano-serif :family)))))))
+   `(variable-pitch ((t (:weight ,(face-attribute 'nano-sans :weight)
+  				 :height 160
+  				 :family ,(face-attribute 'nano-sans :family)))))))
 
 ;; customize light them to with `ReMarkable` colors
 ;; :custom
@@ -907,11 +935,11 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
 ;; (nano-light-highlight "#E8E2D9")
 ;; (nano-light-subtle "#D1C8B8")
 ;; (nano-light-faded "#B8A898")
-
 (load-theme 'nano t)
 
 ;; ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
+  ;; change background color for parenthesis match 
   (set-face-attribute 'show-paren-match nil :background "#87c4bc"))
 
 (defun de/advise-nano-themes ()
