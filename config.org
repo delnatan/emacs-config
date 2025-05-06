@@ -807,12 +807,10 @@ I really like Nicolas Rougier's nano-modeline, so we'll set that up independent 
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline"
   			   :branch "rewrite")
   :hook
-  ((text-mode . nano-modeline-text-mode)
-   (prog-mode . nano-modeline-prog-mode)
-   (org-mode . nano-modeline-org-mode))
-  :config
-  (nano-modeline-text-mode t))
-
+  (text-mode . nano-modeline)
+  (prog-mode . nano-modeline)
+  (org-mode . nano-modeline)
+  (lisp-interaction-mode . nano-modeline))
 
 ;; nano-modeline fix for co;; lor (theme) changes
 (defun de/nano-modeline-update (&rest _)
@@ -883,23 +881,42 @@ Uncomment the source block to use NANO emacs.
 
 Note that for programming the font lock ~nano-salient~, which is used to style significant keywords comes from ~nano-light-salient~, which in light mode, is #673AB7. I'd like to keep this the same in the dark mode to keep things looking plain.
 
+For some time, I've customized NANO to use different fonts in org-mode via `variable-pitch` mode. The key for doing this customization is to set the variable under ~:init~ in use-package:
+
+#+begin_quote
+;; customize fonts for NANO theme
+(custom-set-faces
+;; change the sans face
+'(nano-sans ((t :family "Barlow"
+:height 150
+:weight light)))
+;; change monospace font
+'(nano-mono ((t (:family "Brass Mono Code"
+:height 150
+:weight regular)))))
+#+end_quote
+
+Then under ~:config~, we customize the =variable-pitch=:
+#+begin_quote
+;; to use `variable-pitch` org-mode using nano-sans
+;; Override the org-block face
+(custom-set-faces
+;; change variable pitch to the serif version
+`(variable-pitch ((t (:weight ,(face-attribute 'nano-sans :weight)
+:height 160
+:family ,(face-attribute 'nano-sans :family))))))
+#+end_quote
+
 #+begin_src emacs-lisp
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
   :init
   (require 'nano-theme)
-  
-  ;; customize fonts for NANO theme
-  (custom-set-faces
-   ;; change the sans face
-   '(nano-sans ((t :family "Barlow"
-		   :height 150
-		   :weight light)))
-   ;; change monospace font
-   '(nano-mono ((t (:family "Brass Mono Code"
-			    :height 150
-			    :weight regular)))))
-
+  ;; customize font
+  ;; (custom-set-faces
+  ;;  '(nano-mono ((t (:family "JetBrains Mono"
+  ;; 			    :height 140
+  ;; 			    :weight light)))))
   (nano-mode)
   :custom
   (nano-light-highlight "#d8c7ff")
@@ -915,18 +932,9 @@ Note that for programming the font lock ~nano-salient~, which is used to style s
   			     "#3b4252"))))
   ;; run it initially to set the background
   (de/set-org-block-background)
-
   ;; Add advice to nano-light and nano-dark functions
   (advice-add 'nano-light :after #'de/set-org-block-background)
-  (advice-add 'nano-dark :after #'de/set-org-block-background)
-
-  ;; to use `variable-pitch` org-mode using nano-sans
-  ;; Override the org-block face
-  (custom-set-faces
-   ;; change variable pitch to the serif version
-   `(variable-pitch ((t (:weight ,(face-attribute 'nano-sans :weight)
-  				 :height 160
-  				 :family ,(face-attribute 'nano-sans :family)))))))
+  (advice-add 'nano-dark :after #'de/set-org-block-background))
 
 ;; customize light them to with `ReMarkable` colors
 ;; :custom
@@ -982,7 +990,7 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 ;; use Rougier's writer mode for a nicer org-mode
 (require 'nano-writer)
-(add-to-list 'major-mode-remap-alist '(org-mode . writer-mode))
+;; (add-to-list 'major-mode-remap-alist '(org-mode . writer-mode))
 
 (use-package svg-lib
   :defer t
@@ -993,7 +1001,6 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
   :straight t)
 
 (require 'notes-list)
-(require 'nano-box) ;; from nano-tools/nano-box.el
 
 (defun de/insert-org-note-properties ()
   "Insert common Org properties at the beginning of the document."
@@ -1012,27 +1019,26 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c i p") 'de/insert-org-note-properties))
+
 #+end_src
 
-
-* Org-mode customization
-
 Minor reconfiguration of ~org-mode~.
+
 #+begin_src emacs-lisp
 (use-package org
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
   ;; use variable pitch 
-  (add-hook 'org-mode-hook 'variable-pitch-mode)
-  ;; but keep everything else fixed
-  (custom-set-faces
-   '(org-block ((t (:inherit nano-mono))))
-   '(org-code ((t (:inherit nano-mono))))
-   '(org-table ((t (:inherit nano-mono))))
-   '(org-verbatim ((t (:inherit nano-mono))))
-   '(org-special-keyword ((t (:inherit nano-mono))))
-   '(org-meta-line ((t (:inherit nano-mono))))
-   '(org-checkbox ((t (:inherit nano-mono)))))
+  ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+  ;; but keep everything else fixed (bad idea to use nano-mono for all; match nano-theme-support.el)
+  ;; (custom-set-faces
+  ;;  '(org-block ((t (:inherit nano-mono))))
+  ;;  '(org-code ((t (:inherit nano-mono))))
+  ;;  '(org-table ((t (:inherit nano-mono))))
+  ;;  '(org-verbatim ((t (:inherit nano-mono))))
+  ;;  '(org-special-keyword ((t (:inherit nano-mono))))
+  ;;  '(org-meta-line ((t (:inherit nano-mono))))
+  ;;  '(org-checkbox ((t (:inherit nano-mono)))))
   
   (setq org-confirm-babel-evaluate nil)
   ;; native syntax highlighting in source blocks
@@ -1088,14 +1094,34 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-engraved-theme 'nano)
-
 #+end_src
 
 Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience writing LaTeX in org documents.
+
 #+begin_src emacs-lisp
+;; (use-package org-modern
+;;   :straight t
+;;   :hook ((org-mode . org-modern-mode)
+;;          (org-agenda-finalize . org-modern-agenda))
+;;   :config
+;;   (setq org-auto-align-tags nil
+;;         org-tags-column 0
+;;         org-catch-invisible-edits 'show-and-error
+;;         org-special-ctrl-a/e t
+;;         org-insert-heading-respect-content t
+;;         org-hide-emphasis-markers t
+;;         org-ellipsis "…"
+;;         org-agenda-tags-column 0)
+;;   ;; Optional: Customize appearance further if desired.
+;;   ;; Example: Set fonts for a modern look
+;;   ;; (set-face-attribute 'default nil :family "Iosevka")
+;;   ;; (set-face-attribute 'variable-pitch nil :family "Iosevka Aile")
+;;   )
+
 (use-package org-fragtog
   :straight t
   :hook (org-mode . org-fragtog-mode))
+
 #+end_src
   
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
