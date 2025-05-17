@@ -678,6 +678,7 @@ I'm using my own form of
  '((emacs-lisp . t)
    (awk . t)
    (sed . t)
+   (sqlite . t)
    (shell . t)
    (gnuplot . t)
    (python . t)
@@ -914,35 +915,14 @@ Then under ~:config~, we customize the =variable-pitch=:
   (require 'nano-theme)
   ;; customize font
   ;; (custom-set-faces
-  ;;  '(nano-mono ((t (:family "JetBrains Mono"
-  ;; 			    :height 140
+  ;;  '(nano-sans ((t :family "Barlow"
+  ;; 		   :height 160
+  ;; 		   :weight light)))
+  ;;  '(nano-mono ((t (:family "SF Mono"
+  ;; 			    :height 130
   ;; 			    :weight light)))))
-  (nano-mode)
-  :custom
-  (nano-light-highlight "#d8c7ff")
-  (nano-dark-highlight "#d8c7ff")
-  :config
-  ;; define a function to set org-block background
-  (defun de/set-org-block-background()
-    "Set org-block face background based on current theme mode."
-    (with-eval-after-load 'org
-      (set-face-background 'org-block
-  			   (if (eq (frame-parameter nil 'background-mode) 'light)
-  			       "#f8f7fa"
-  			     "#3b4252"))))
-  ;; run it initially to set the background
-  (de/set-org-block-background)
-  ;; Add advice to nano-light and nano-dark functions
-  (advice-add 'nano-light :after #'de/set-org-block-background)
-  (advice-add 'nano-dark :after #'de/set-org-block-background))
+  (nano-mode))
 
-;; customize light them to with `ReMarkable` colors
-;; :custom
-;; (nano-light-background "#F8F4ED")
-;; (nano-light-foreground "#2A2523")
-;; (nano-light-highlight "#E8E2D9")
-;; (nano-light-subtle "#D1C8B8")
-;; (nano-light-faded "#B8A898")
 (load-theme 'nano t)
 
 ;; ;; setup customization of nano colors via advice
@@ -987,6 +967,8 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 (add-to-list 'load-path "~/Apps/emacs/nano-tools")
+(add-to-list 'load-path "~/Apps/emacs/de-tools")
+(require 'protein-diagrams)
 
 ;; use Rougier's writer mode for a nicer org-mode
 (require 'nano-writer)
@@ -1178,8 +1160,6 @@ For convenience, let's just base64-encode images when exporting an org file to H
       (file-name-nondirectory source)))
 (advice-add #'org-html--format-image :override #'org-org-html--format-image)
 #+end_src
-
-
 
 To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c .. because that would close a window!)
 
