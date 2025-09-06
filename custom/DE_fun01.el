@@ -212,3 +212,43 @@ Used to make neat table-of-content style dotted spaces
 		 (message "replacing '~' in %s with %s" line dots)
 		 (replace-regexp-in-string "~" dots line)))
 	     lines))))
+
+
+(defun de/find-sequence-in-region (query)
+  "Search for QUERY string in the selected region, ignoring non-alphabetic characters
+
+This is written to help with finding the start and end index of a QUERY commonly
+encountered when looking at a subsequence in a biopolymer.
+
+returns (start end) and prints the message with the same information
+"
+  (interactive "sQuery sequence:")
+  (if (not (use-region-p))
+      (message "No region selected")
+    (let* ((beg (region-beginning))
+	   (end (region-end))
+	   (region-text (buffer-substring-no-properties beg end))
+	   (cleaned-region (replace-regexp-in-string "[^a-zA-Z]" "" region-text))
+	   (cleaned-query  (replace-regexp-in-string "[^a-zA-Z]" "" query)))
+      (if (zerop (length cleaned-query))
+	  (message "Query is empty after removing non-alphabetic characters.")
+	(let ((match-start (string-match (upcase cleaned-query) (upcase cleaned-region))))
+	  (if (not match-start)
+	      (message "Query sequence not found in selected region.")
+	    (let ((start-index (1+ match-start))
+		  (end-index (+ match-start (length cleaned-query))))
+	      (message "Found '%s' at (%d %d)" cleaned-query start-index end-index)
+	      (list start-index end-index))))))))
+
+
+
+
+
+(defun de/calculate-and-append-result (start end)
+  "Calculate the arithmetic expression in the region and append the result. The result is appended on the same line, separate by ' = '."
+  (interactive "r")
+  (let* ((expression (buffer-substring-no-properties start end))
+	 (cleaned-expr (string-trim expression))
+	 (result (calc-eval cleaned-expr)))
+    (goto-char end)
+    (insert (format " = %s" result))))

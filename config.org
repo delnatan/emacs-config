@@ -12,6 +12,9 @@ You need to replace the existing signature by running
 ~codesign --force --deep --sign - /opt/homebrew/opt/emacs-plus@30/Emacs.app~
 
 #+begin_src emacs-lisp
+;; toggle this to debug issues
+;; (setq debug-on-error t)
+
 (use-package exec-path-from-shell
   :straight (exec-path-from-shell
              :type git :host github
@@ -31,7 +34,8 @@ You need to replace the existing signature by running
 
 ;; use visual-line-mode only when programming or in org-mode
 (add-hook 'prog-mode-hook 'visual-line-mode)
-(add-hook 'org-mode-hook 'visual-line-mode)
+;; (add-hook 'org-mode-hook 'visual-line-mode)
+(add-hook 'org-mode-hook 'auto-fill-mode)
 
 ;; show current line highlight
 ;; (global-hl-line-mode 1)
@@ -445,12 +449,6 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't' uses a timer to type some characters, and 'l' for going to a specific line.
 
 #+begin_src emacs-lisp
-(use-package treesit-auto
-  :straight (treesit-auto :type git :host github :repo "renzmann/treesit-auto")
-  :config
-  (setq treesit-auto-install 'prompt)
-  (global-treesit-auto-mode))
-
 (use-package avy
   :straight t)
 
@@ -703,7 +701,6 @@ A typical workflow in org-mode is to use source blocks with the following tag (a
   #+PROPERTY: header-args:python :session py
   #+PROPERTY: header-args:python+ :async yes
   #+PROPERTY: header-args:python+ :kernel GEManalysis
-
   #+begin_src python :session py :kernel GEManalysis :async yes
   <python code goes here>
   #+end_src
@@ -832,6 +829,14 @@ I really like Nicolas Rougier's nano-modeline, so we'll set that up independent 
 (setq-default mode-line-format nil)
 #+end_src
 
+To use mixed fonts for better reading experience use the `mixed-pitch` package.
+
+#+begin_src emacs-lisp
+;; (use-package mixed-pitch
+;;   :hook
+;;   (org-mode . mixed-pitch-mode)
+;;   (writer-mode . mixed-pitch-mode))
+#+end_src
 ** Doom themes
 
 If you want to use doom themes, which are convenient, and nice for switching things up.
@@ -908,22 +913,30 @@ Then under ~:config~, we customize the =variable-pitch=:
 :family ,(face-attribute 'nano-sans :family))))))
 #+end_quote
 
+
 #+begin_src emacs-lisp
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
+  :custom
+  (nano-window-divider-show nil)
   :init
   (require 'nano-theme)
   ;; customize font
   ;; (custom-set-faces
-  ;;  '(nano-sans ((t :family "Barlow"
-  ;; 		   :height 160
-  ;; 		   :weight light)))
-  ;;  '(nano-mono ((t (:family "SF Mono"
-  ;; 			    :height 130
-  ;; 			    :weight light)))))
-  (nano-mode))
+   ;; '(nano-mono ((t (:family "Roboto Mono" :height 140)))))
+  (nano-mode)
+  ;; override font weights
+  :config
+  ;; (set-face-attribute 'default nil :weight 'regular)
+  ;; (set-face-attribute 'bold nil :weight 'bold)
+  ;; (set-face-attribute 'bold-italic nil :weight 'bold)
+  ;; (set-face-attribute 'nano-strong nil :weight 'bold)  
 
-(load-theme 'nano t)
+  ;; load theme
+  (load-theme 'nano t)
+  ;; my preference, set the global font size
+  (set-face-attribute 'default nil :height 135)
+  )
 
 ;; ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
@@ -1171,6 +1184,18 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :straight t)
 #+end_src
 
+** buffer-box for borders around frames
+
+#+begin_src emacs-lisp
+(use-package buffer-box
+  :straight nil
+  :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
+  :config
+  (setq buffer-box-default-style 'rounded)
+  :bind
+  ("C-c b" . buffer-box))
+#+end_src
+
 
 * Custom functions
 
@@ -1322,13 +1347,13 @@ Generally, the notes are meant to be refiled so that it would show up when you r
 ;; set templates
 (setq org-capture-templates
       '(("t" "TODO" entry (file+headline "/Users/delnatan/Documents/org/tasks.org" "Tasks")
-    	 "TODO %U %? \n  %i\n" :prepend t)
+    	 "TODO %U %? \n  %i\n" :prepend t :empty-lines 1)
   	("n" "Note" entry (file+headline "/Users/delnatan/Documents/org/notes.org" "Notes")
-  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t)
+  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t :empty-lines 1)
   	("m" "Meeting" entry (file+headline "/Users/delnatan/Documents/org/meetings.org" "Meetings")
-  	 "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t)
+  	 "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t :empty-lines 1)
   	("e" "Event" entry (file+headline "/Users/delnatan/Documents/org/events.org" "Events")
-  	 "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t)))
+  	 "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t :empty-lines 1)))
 
 (defun de/org-sort-entries-by-date ()
   "Sort entries in descending order by date"
