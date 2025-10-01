@@ -1,10 +1,11 @@
-#+TITLE: Current Emacs (v30) config
++TITLE: Current Emacs (v30) config
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
 
 Running ~emacs-plus@30~ installed via ~homebrew~.
 
-With version 30, something is wrong and Emacs does not do the usual PATH injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
+With version 30, something is wrong and Emacs does not do the usual PATH
+injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
 
 [2025-04-05 Sat] a patch for PATH issues
 You need to replace the existing signature by running
@@ -114,7 +115,9 @@ You need to replace the existing signature by running
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
 #+end_src
 
-Customize ~ibuffer~ to show things by groups. To disable filtering (remove all filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the saved filter group, do =/ R=.
+Customize ~ibuffer~ to show things by groups. To disable filtering (remove all
+filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the
+saved filter group, do =/ R=.
 
 #+begin_src emacs-lisp
 ;; Enable ibuffer
@@ -198,7 +201,10 @@ Emacs will automatically create backup files in the same folder as the current d
       version-control t)
 #+end_src
 
-Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]] (reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so the standard =C-s= and =C-r= keybinding is replaced here with its corresponding version in swiper.
+Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]]
+(reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so
+the standard =C-s= and =C-r= keybinding is replaced here with its corresponding
+version in swiper.
 
 #+begin_src emacs-lisp
 (use-package swiper
@@ -240,7 +246,8 @@ Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how
 
 ** Enhancements
 
-Using ~dired-sidebar~ to conveniently go through files and folders in vertical minibuffer
+Using ~dired-sidebar~ to conveniently go through files and folders in vertical
+minibuffer
 #+begin_src emacs-lisp
 ;; this was taken from https://www.emacswiki.org/emacs/DiredOmitMode
 (defun dired-dotfiles-toggle ()
@@ -320,7 +327,8 @@ Customize keybindings for outline-minor-mode when editing structured texts.
 #+end_src
 
 
-I'd like to be able to toggle horizontal/vertical split when I have 2 windows open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
+I'd like to be able to toggle horizontal/vertical split when I have 2 windows
+open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
 
 #+begin_src emacs-lisp
 (defun de/toggle-split-direction ()
@@ -354,7 +362,9 @@ I'd like to be able to toggle horizontal/vertical split when I have 2 windows op
 
 ** Navigation
 
-I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybindings to custom functions that scrolls half-page up/down & keep things in the center for easier viewing:
+I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these
+keybindings to custom functions that scrolls half-page up/down & keep things in
+the center for easier viewing:
 #+begin_src emacs-lisp
 (defun de/scroll-half-page-down ()
   (interactive)
@@ -381,7 +391,8 @@ In general, I prefer a tab width of 4:
 (setq tab-width 4)
 #+end_src
 
-Setup ~treesitter~ for several languages. To tell whether the current buffer is using the ~ts~ mode is by running =M-x major-mode=.
+Setup ~treesitter~ for several languages. To tell whether the current buffer is
+using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
 (setq treesit-language-source-alist
@@ -406,16 +417,19 @@ Setup ~treesitter~ for several languages. To tell whether the current buffer is 
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
 
-At the moment, you'll have to build treesitter grammars for TypeScript manually because of some issue with creating a new temporary directory!? 
+At the moment, you'll have to build treesitter grammars for TypeScript manually
+because of some issue with creating a new temporary directory!?
 
 Silence eglot progress (in the *Messages* buffer)
 #+begin_src emacs-lisp
 (setq eglot-report-progress nil)
 #+end_src
 
-I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed up LSP via ~eglot-booster~.
+I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed
+up LSP via ~eglot-booster~.
 
-Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
+Since eglot is the LSP client, you can also configure each LSP settings
+'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
 
 #+begin_src emacs-lisp
 (use-package eglot
@@ -446,7 +460,8 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
   :config (eglot-booster-mode))
 #+end_src
 
-Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't' uses a timer to type some characters, and 'l' for going to a specific line.
+Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
+uses a timer to type some characters, and 'l' for going to a specific line.
 
 #+begin_src emacs-lisp
 (use-package avy
@@ -480,7 +495,9 @@ Use `treesit-fold` for code folding
 
 #+end_src
 
-For general code formatting I use ~apheleia~. Python code formatting uses =ruff= installed via homebrew. Doing so will obviate installing a formatter for every Python environment.
+For general code formatting I use ~apheleia~. Python code formatting uses =ruff=
+installed via homebrew. Doing so will obviate installing a formatter for every
+Python environment.
 
 For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
 
@@ -513,7 +530,11 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
 (require 'apheleia)
 #+end_src
 
-Use ~corfu~ for autocompletion. You can use multiple words to filter your search by using a separator, which is bound to the key =M-<space>= when a pop-up box is on the screen. Sometimes the partial match can get in the way of doing things, like choosing to rename your file to something else that is a sub/superset of the string. Do =M-<enter>= to enter the literal entry, rather than the match.
+Use ~corfu~ for autocompletion. You can use multiple words to filter your search
+by using a separator, which is bound to the key =M-<space>= when a pop-up box is
+on the screen. Sometimes the partial match can get in the way of doing things,
+like choosing to rename your file to something else that is a sub/superset of
+the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 
 #+begin_src emacs-lisp
 (use-package corfu
@@ -557,6 +578,12 @@ Use ~corfu~ for autocompletion. You can use multiple words to filter your search
 ** Python
 
 Simple Python setup using venv for managing environments.
+
+I've been using `uv` to manage my Python environments and `venv` for creating
+separate environments. You can simply run:
+
+~uv venv my-new-env --python 3.11~ to create a new environment
+
 
 #+begin_src emacs-lisp
 (use-package pythonic)
@@ -632,7 +659,9 @@ Simple Python setup using venv for managing environments.
    ("C-c C-c" . code-cells-eval)))
 #+end_src
 
-At the moment, editing org source block is broken because I'm using treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
+At the moment, editing org source block is broken because I'm using
+treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is
+mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
 
 
 ** Julia
@@ -656,7 +685,13 @@ At the moment, editing org source block is broken because I'm using treesitter. 
 
 ** Jupyter setup
 
-I'm using my own form of 
+I'm using my own fork of the jupyter package because I don't like the default
+behavior of the jupyter-display buffer when using a jupyter kernel. A new frame
+would be made, rather than being re-used, if the window associated with the
+kernel does not belong to the same frame. This became annoying when I use a
+second monitor to have a separate frame for displaying plots and text output
+from the jupyter kernel.
+
 #+begin_src emacs-lisp
 (use-package jupyter
   :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
@@ -668,7 +703,12 @@ I'm using my own form of
 
 (use-package gnuplot
   :defer t
-  :straight t)
+  :straight t
+  :config
+  (add-hook 'gnuplot-mode-hook
+            (lambda ()
+              (set (make-local-variable 'compile-command)
+                   (concat "gnuplot " buffer-file-name)))))
 
 ;; enable languages for org-babel
 (org-babel-do-load-languages
@@ -696,7 +736,8 @@ I'm using my own form of
             (assq-delete-all "jupyter-python" org-src-lang-modes)))
 #+end_src
 
-A typical workflow in org-mode is to use source blocks with the following tag (after running =micromamba-activate=!):
+A typical workflow in org-mode is to use source blocks with the following tag
+(after running =activate-venv=!):
 #+begin_example
   #+PROPERTY: header-args:python :session py
   #+PROPERTY: header-args:python+ :async yes
@@ -740,9 +781,11 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 (add-hook 'org-mode-hook 'de/org-jupyter-setup())
 #+end_src
 
-You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for next/previous blocks.
+You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for
+next/previous blocks.
 
-As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering correctly. This is a workaround found in the ~emacs-jupyter~ issues list:
+As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering
+correctly. This is a workaround found in the ~emacs-jupyter~ issues list:
 #+begin_src emacs-lisp
 (defun patch/display-ansi-colors ()
   "Fixes kernel output in emacs-jupyter"
@@ -752,7 +795,9 @@ As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering cor
             (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
 #+end_src
 
-For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
+For prototyping a lot of code, I typically open a Python file and associate a
+jupyter console to it. Since I do this a lot, I decided to simplify this into a
+function:
 
 #+begin_src emacs-lisp
 (defun de/python-with-jupyter-repl
@@ -798,7 +843,8 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
 
 * Theme and appearance
 
-I really like Nicolas Rougier's nano-modeline, so we'll set that up independent of whatever theme I end up using. 
+I really like Nicolas Rougier's nano-modeline, so we'll set that up independent
+of whatever theme I end up using.
 
 #+begin_src emacs-lisp
 (use-package nano-modeline
@@ -839,7 +885,8 @@ To use mixed fonts for better reading experience use the `mixed-pitch` package.
 #+end_src
 ** Doom themes
 
-If you want to use doom themes, which are convenient, and nice for switching things up.
+If you want to use doom themes, which are convenient, and nice for switching
+things up.
 #+begin_src emacs-lisp
 ;; (use-package doom-themes
 ;;   :straight t
@@ -885,9 +932,14 @@ font-roboto-mono= or =font-iosevka=.
 
 Uncomment the source block to use NANO emacs.
 
-Note that for programming the font lock ~nano-salient~, which is used to style significant keywords comes from ~nano-light-salient~, which in light mode, is #673AB7. I'd like to keep this the same in the dark mode to keep things looking plain.
+Note that for programming the font lock ~nano-salient~, which is used to style
+significant keywords comes from ~nano-light-salient~, which in light mode, is
+#673AB7. I'd like to keep this the same in the dark mode to keep things looking
+plain.
 
-For some time, I've customized NANO to use different fonts in org-mode via `variable-pitch` mode. The key for doing this customization is to set the variable under ~:init~ in use-package:
+For some time, I've customized NANO to use different fonts in org-mode via
+`variable-pitch` mode. The key for doing this customization is to set the
+variable under ~:init~ in use-package:
 
 #+begin_quote
 ;; customize fonts for NANO theme
@@ -922,20 +974,20 @@ Then under ~:config~, we customize the =variable-pitch=:
   :init
   (require 'nano-theme)
   ;; customize font
-  ;; (custom-set-faces
-   ;; '(nano-mono ((t (:family "Roboto Mono" :height 140)))))
+  (custom-set-faces
+   '(nano-mono ((t (:family "Berkeley Mono" :height 130)))))
   (nano-mode)
   ;; override font weights
   :config
-  ;; (set-face-attribute 'default nil :weight 'regular)
-  ;; (set-face-attribute 'bold nil :weight 'bold)
-  ;; (set-face-attribute 'bold-italic nil :weight 'bold)
-  ;; (set-face-attribute 'nano-strong nil :weight 'bold)  
+  (set-face-attribute 'default nil :weight 'regular)
+  (set-face-attribute 'bold nil :weight 'bold)
+  (set-face-attribute 'bold-italic nil :weight 'bold)
+  (set-face-attribute 'nano-strong nil :weight 'bold)  
 
   ;; load theme
   (load-theme 'nano t)
   ;; my preference, set the global font size
-  (set-face-attribute 'default nil :height 135)
+  (set-face-attribute 'default nil :height 130)
   )
 
 ;; ;; setup customization of nano colors via advice
@@ -1091,7 +1143,8 @@ Minor reconfiguration of ~org-mode~.
 (setq org-latex-engraved-theme 'nano)
 #+end_src
 
-Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience writing LaTeX in org documents.
+Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
+writing LaTeX in org documents.
 
 #+begin_src emacs-lisp
 ;; (use-package org-modern
@@ -1119,9 +1172,15 @@ Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience 
 
 #+end_src
   
-A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
+A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to
+show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
 
-For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX fragments within an org document whenever the org file is in any of my Dropbox folder. So here I'm trying to see if changing the temporary directory to be in an absolute local folder instead of a relative one helps. This didn't solve the problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox= does!
+For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX
+fragments within an org document whenever the org file is in any of my Dropbox
+folder. So here I'm trying to see if changing the temporary directory to be in
+an absolute local folder instead of a relative one helps. This didn't solve the
+problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox=
+does!
 
 #+begin_src emacs-lisp
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
@@ -1129,7 +1188,9 @@ For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX frag
 (setq temporary-file-directory (file-truename "~/.emacs.d/tmp"))
 #+end_src
 
-To preview images =C-c C-x C-v= or invoke =org-toggle-inline-images=. Images are inserted like regular links, just enclose a path to an image file with =[[<path_to_image>]]=.
+To preview images =C-c C-x C-v= or invoke =org-toggle-inline-images=. Images are
+inserted like regular links, just enclose a path to an image file with
+=[[<path_to_image>]]=.
 
 To export org files to HTML use ~htmlize~
 #+begin_src emacs-lisp
@@ -1159,7 +1220,8 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 (add-hook 'org-export-before-processing-hook 'de/my-org-inline-css-hook)
 #+end_src
 
-Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export??
+Please note that at the moment, there doesn't seem to be a good way to include
+an SVG file in the HTML export??
 
 For convenience, let's just base64-encode images when exporting an org file to HTML
 #+begin_src emacs-lisp
@@ -1174,7 +1236,8 @@ For convenience, let's just base64-encode images when exporting an org file to H
 (advice-add #'org-html--format-image :override #'org-org-html--format-image)
 #+end_src
 
-To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c .. because that would close a window!)
+To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c
+.. because that would close a window!)
 
 For citations, I want to use csl styles, so I'll need the ~citeproc~ package
 #+begin_src emacs-lisp
@@ -1190,10 +1253,10 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
 (use-package buffer-box
   :straight nil
   :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
-  :config
-  (setq buffer-box-default-style 'rounded)
   :bind
-  ("C-c b" . buffer-box))
+  ("C-c b" . buffer-box)
+  :hook
+  (after-change-major-mode . buffer-box))
 #+end_src
 
 

@@ -252,3 +252,39 @@ returns (start end) and prints the message with the same information
 	 (result (calc-eval cleaned-expr)))
     (goto-char end)
     (insert (format " = %s" result))))
+
+
+(defun de/convert-seconds-to-mmss (seconds-float)
+  "Convert a floating-point number of SECONDS-FLOAT to a \"minute:second\" string.
+The seconds are rounded to the nearest whole number before conversion.
+The seconds part of the output is always zero-padded to two digits."
+  (interactive "nSeconds: ")
+  (let* ((rounded-seconds (round seconds-float))
+         (minutes (floor (/ rounded-seconds 60)))
+         (seconds (mod rounded-seconds 60)))
+    (format "%d:%02d" minutes seconds)))
+
+
+(defun de/dna-calc-volume-from-fmoles (dna-size-bp concentration-ng-ul amount-fmoles)
+  "Calculate the required volume of dsDNA solution.
+
+Arguments:
+DNA-SIZE-BP -- The size of the double-stranded DNA in basepairs.
+CONCENTRATION-NG-UL -- The concentration of the DNA solution in nanograms per microliter.
+AMOUNT-FMOLES -- The desired amount of DNA in femtomoles.
+
+Returns the required volume in microliters ($\mu L$)."
+  (interactive "nDNA size (basepairs): \nnConcentration (ng/uL): \nnAmount (femtomoles): ")
+  (let* ((molar-mass-g-mol (+ (* dna-size-bp 617.96) 36.04))
+         (amount-moles (* amount-fmoles 1e-15))
+         (mass-g (* amount-moles molar-mass-g-mol))
+         (concentration-g-ul (* concentration-ng-ul 1e-9))
+         (volume-ul (/ mass-g concentration-g-ul)))
+
+    (if (= concentration-g-ul 0)
+        (progn
+          (error "Concentration cannot be zero."))
+      (message "Required volume for %.2f fmol is %.2f uL."
+               amount-fmoles
+               volume-ul)
+      volume-ul)))
