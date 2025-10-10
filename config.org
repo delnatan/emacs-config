@@ -1,6 +1,8 @@
-+TITLE: Current Emacs (v30) config
+#+TITLE: Current Emacs (v30) config
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
+
+* Preamble
 
 Running ~emacs-plus@30~ installed via ~homebrew~.
 
@@ -24,6 +26,7 @@ You need to replace the existing signature by running
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 #+end_src
+
 
 * Basic settings
 
@@ -360,6 +363,15 @@ open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-spl
 
 #+end_src
 
+I often use fill-region or org-fill-paragraph when not using visual-line-mode,
+but there's no native function that would do the inverse of these
+operations. The unfill package does just that.
+
+#+begin_src emacs-lisp
+(use-package unfill
+  :straight t)
+#+end_src
+
 ** Navigation
 
 I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these
@@ -445,13 +457,15 @@ Since eglot is the LSP client, you can also configure each LSP settings
   :config
   (setq-default
    eglot-workspace-configuration
-   '(:basedpyright (
-  		    :typeCheckingMode "standard"
-  		    :reportMissingTypeArgument "none"
-  		    )
-  		   :basedpyright.analysis
-  		   (:inlayHints (:callArgumentNames :json-false)))
-   ))
+   '(;; Configuration for basedpyright (Python)
+     :basedpyright
+     (:typeCheckingMode "standard"
+			:reportMissingTypeArgument "none"
+			:analysis
+			(:inlayHints (:callArgumentNames :json-false
+							 :variableTypes :json-false
+							 :functionReturnTypes :json-false)))
+     )))
 
 
 (use-package eglot-booster
@@ -699,8 +713,15 @@ from the jupyter kernel.
   :custom
   (jupyter-eval-use-overlays t)
   ;; (jupyter-repl-echo-eval-p t)
-  (jupyter-repl-prompt-margin-width 5))
+  (jupyter-repl-prompt-margin-width 5)
+  :config
+  (add-to-list 'display-buffer-alist
+	       '("\\*jupyter-output\\*"
+		 (display-buffer-reuse-window
+		  display-buffer-pop-up-window)
+		 (reusable-frames . t))))
 
+;; for using gnuplot
 (use-package gnuplot
   :defer t
   :straight t
@@ -846,43 +867,39 @@ function:
 I really like Nicolas Rougier's nano-modeline, so we'll set that up independent
 of whatever theme I end up using.
 
+The ~(&rest _)~ trick is used here to ignore any arguments that is passed to the
+function (it can be called with any number of arguments, but they will be
+ignored). ~enable-theme-functions~ calls its functions with one argument. My
+function works without using any, so I will just ignore the argument.
+
 #+begin_src emacs-lisp
+(defun de/update-nano-faces (&rest _)
+  "update nano-modeline default and primary faces based on current theme"
+  ;; set default face
+  (set-face-attribute 'nano-modeline-face-default nil
+		      :foreground (face-attribute 'default :foreground))
+  (set-face-attribute 'nano-modeline-face-primary nil
+		      :foreground (face-attribute 'default :foreground)))
+
 (use-package nano-modeline
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline"
   			   :branch "rewrite")
+  ;; fix to update nano-modeline font color
+  :config
+  (add-to-list 'enable-theme-functions #'de/update-nano-faces)
+  ;; run my update once immediately to set correct face on startup
+  (de/update-nano-faces)
   :hook
   (text-mode . nano-modeline)
   (prog-mode . nano-modeline)
   (org-mode . nano-modeline)
   (lisp-interaction-mode . nano-modeline))
 
-;; nano-modeline fix for co;; lor (theme) changes
-(defun de/nano-modeline-update (&rest _)
-  "Update nano-modeline active face."
-  (custom-set-faces
-   `(nano-modeline-active
-     ((t (:foreground ,(face-foreground 'default)
-  		      :background ,(face-background 'header-line nil t)
-  		      :box (:line-width 1 :color ,(face-background 'default)))))))
-  (custom-set-faces
-   `(nano-modeline-status
-     ((t (:foreground ,(face-foreground 'default)
-  		      :background ,(face-background 'shadow nil t)
-  		      :inherit bold))))))
-(add-hook 'enable-theme-functions #'de/nano-modeline-update)
-
 ;; hide the default modeline
 (setq-default mode-line-format nil)
 #+end_src
 
-To use mixed fonts for better reading experience use the `mixed-pitch` package.
 
-#+begin_src emacs-lisp
-;; (use-package mixed-pitch
-;;   :hook
-;;   (org-mode . mixed-pitch-mode)
-;;   (writer-mode . mixed-pitch-mode))
-#+end_src
 ** Doom themes
 
 If you want to use doom themes, which are convenient, and nice for switching
@@ -968,32 +985,16 @@ Then under ~:config~, we customize the =variable-pitch=:
 
 #+begin_src emacs-lisp
 (use-package nano-theme
-  :straight (nano-theme :type git :host github :repo "rougier/nano-theme")
-  :custom
-  (nano-window-divider-show nil)
+  :straight (:type git :host github :repo "rougier/nano-theme")
   :init
   (require 'nano-theme)
-  ;; customize font
-  (custom-set-faces
-   '(nano-mono ((t (:family "Berkeley Mono" :height 130)))))
   (nano-mode)
-  ;; override font weights
-  :config
-  (set-face-attribute 'default nil :weight 'regular)
-  (set-face-attribute 'bold nil :weight 'bold)
-  (set-face-attribute 'bold-italic nil :weight 'bold)
-  (set-face-attribute 'nano-strong nil :weight 'bold)  
-
-  ;; load theme
-  (load-theme 'nano t)
-  ;; my preference, set the global font size
-  (set-face-attribute 'default nil :height 130)
-  )
+  (load-theme 'nano t))
 
 ;; ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
   ;; change background color for parenthesis match 
-  (set-face-attribute 'show-paren-match nil :background "#87c4bc"))
+  (set-face-attribute 'show-paren-match nil :background "#ffd354"))
 
 (defun de/advise-nano-themes ()
   "Add advice to nano theme functions to set show-paren-match face."
@@ -1075,18 +1076,6 @@ Minor reconfiguration of ~org-mode~.
 (use-package org
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
-  ;; use variable pitch 
-  ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
-  ;; but keep everything else fixed (bad idea to use nano-mono for all; match nano-theme-support.el)
-  ;; (custom-set-faces
-  ;;  '(org-block ((t (:inherit nano-mono))))
-  ;;  '(org-code ((t (:inherit nano-mono))))
-  ;;  '(org-table ((t (:inherit nano-mono))))
-  ;;  '(org-verbatim ((t (:inherit nano-mono))))
-  ;;  '(org-special-keyword ((t (:inherit nano-mono))))
-  ;;  '(org-meta-line ((t (:inherit nano-mono))))
-  ;;  '(org-checkbox ((t (:inherit nano-mono)))))
-  
   (setq org-confirm-babel-evaluate nil)
   ;; native syntax highlighting in source blocks
   (setq org-src-fontify-natively t)
@@ -1227,12 +1216,12 @@ For convenience, let's just base64-encode images when exporting an org file to H
 #+begin_src emacs-lisp
 (defun org-org-html--format-image (source attributes info)
   (format "<img src=\"data:image/%s+xml;base64,%s\"%s />"
-      (or (file-name-extension source) "")
-      (base64-encode-string
-       (with-temp-buffer
-        (insert-file-contents-literally source)
-        (buffer-string)))
-      (file-name-nondirectory source)))
+	  (or (file-name-extension source) "")
+	  (base64-encode-string
+	   (with-temp-buffer
+             (insert-file-contents-literally source)
+             (buffer-string)))
+	  (file-name-nondirectory source)))
 (advice-add #'org-html--format-image :override #'org-org-html--format-image)
 #+end_src
 
@@ -1247,6 +1236,14 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :straight t)
 #+end_src
 
+to use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org
+document pointing to the relevant files (CSL file and bibliography exported
+from zotero or manually constructed).
+
+invoke ~org-cite-insert~, select the citation from the mini-buffer. Note that a
+single citation can cite more than one references. When done do =M-<return>=.
+
+
 ** buffer-box for borders around frames
 
 #+begin_src emacs-lisp
@@ -1255,8 +1252,9 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
   :bind
   ("C-c b" . buffer-box)
-  :hook
-  (after-change-major-mode . buffer-box))
+  ;; :hook
+  ;; (after-change-major-mode . buffer-box)
+  )
 #+end_src
 
 
@@ -1273,7 +1271,8 @@ Convenient function to reload Emacs config
 
 #+end_src
 
-When programming, I often want to move lines/regions up or down, bound to =Super-<up>/<down>=. 
+When programming, I often want to move lines/regions up or down, bound to
+=Super-<up>/<down>=.
 
 #+begin_src emacs-lisp
 (defun de/move-text-internal (arg)
@@ -1368,7 +1367,8 @@ When exporting an org document to PDF or HTML there are lots of settings that on
 
 
 * Org-agenda
-I've started using org-mode for scheduling stuff. For now, I'll just keep any agenda items in my main todo-list.
+I've started using org-mode for scheduling stuff. For now, I'll just keep any
+agenda items in my main todo-list.
 
 #+begin_src emacs-lisp
 ;; setup org-agenda keybinding to `C-c a`
@@ -1386,6 +1386,24 @@ I've started using org-mode for scheduling stuff. For now, I'll just keep any ag
       )
 
 #+end_src
+
+A convenient aspect of the org calendar system is that you can do arithmetic
+very easily. When you invoke a calendar minibuffer (e.g. via =C-c != or =C-c .=)
+you can simply just do ~+4w~ to set a date 4-weeks from today.
+
+The syntax for relative dates is:
++N unit or -N unit
+
+Where:
+    + or - : Specifies addition or subtraction from the current date/time.
+    N      : Is the number of units.
+    unit   : Is a letter for the time unit:
+    
+        h for hours (relative to current time)
+        d for days (relative to today at midnight)
+        w for weeks (relative to today at midnight)
+        m for months (relative to today at midnight)
+        y for years (relative to today at midnight)
 
 
 * Org-capture setup
