@@ -37,7 +37,9 @@ You need to replace the existing signature by running
 (column-number-mode)
 
 ;; use visual-line-mode only when programming or in org-mode
+(add-hook 'text-mode-hook 'visual-line-mode)
 (add-hook 'prog-mode-hook 'visual-line-mode)
+
 ;; (add-hook 'org-mode-hook 'visual-line-mode)
 (add-hook 'org-mode-hook 'auto-fill-mode)
 
@@ -131,18 +133,20 @@ saved filter group, do =/ R=.
 (setq ibuffer-saved-filter-groups
       '(("default"
          ("Dired" (mode . dired-mode))
-  	 ("Web" (or (mode . tsx-ts-mode)
-  		    (mode . js-ts-mode)
-  		    (mode . js-json-mode)))
+  	     ("Web" (or (mode . tsx-ts-mode)
+  		            (mode . js-ts-mode)
+  		            (mode . js-json-mode)))
          ("Python" (or (mode . python-mode)
                        (mode . python-ts-mode)))
-  	 ("Rust" (mode . rust-ts-mode))
+         ("Elisp" (or (mode . emacs-lisp-mode)))
+  	     ("Rust" (mode . rust-ts-mode))
          ("Org" (mode . org-mode))
          ("Jupyter" (mode . jupyter-repl-mode))
          ("Emacs" (or (name . "^\\*scratch\\*$")
-                      (name . "^\\*Messages\\*$")))
-  	 ("Document" (or (mode . pdf-view-mode)
-  			 (mode . doc-view-mode)))
+                      (name . "^\\*Messages\\*$")
+                      (name . "^\\*Warnings\\*$")))
+  	     ("Document" (or (mode . pdf-view-mode)
+  			             (mode . doc-view-mode)))
          ("Help" (or (name . "^\\*Help\\*$")
                      (name . "^\\*Apropos\\*$")
                      (name . "^\\*info\\*$"))))))
@@ -175,7 +179,7 @@ In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
   (setq scroll-conservatively 101
-  	scroll-margin 0)
+  	    scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 #+end_src
@@ -186,7 +190,7 @@ Use multiple cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-  	 ("C-c C-<" . mc/mark-all-like-this)
+  	     ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
@@ -232,6 +236,8 @@ version in swiper.
 ;; A few more useful configurations...
 (use-package emacs
   :custom
+  (indent-tabs-mode nil)
+  (tab-width 4)
   (tab-always-indent 'complete)
   (text-mode-ispell-word-completion nil)
   (read-extended-command-predicate #'command-completion-default-include-p))
@@ -372,6 +378,7 @@ operations. The unfill package does just that.
   :straight t)
 #+end_src
 
+
 ** Navigation
 
 I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these
@@ -410,16 +417,16 @@ using the ~ts~ mode is by running =M-x major-mode=.
 (setq treesit-language-source-alist
       '((bash "https://github.com/tree-sitter/tree-sitter-bash")
         (c "https://github.com/tree-sitter/tree-sitter-c")
-  	(cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+  	    (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
         (cmake "https://github.com/uyha/tree-sitter-cmake")
         (css "https://github.com/tree-sitter/tree-sitter-css")
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
         (html "https://github.com/tree-sitter/tree-sitter-html")
         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
         (json "https://github.com/tree-sitter/tree-sitter-json")
-  	(julia "https://github.com/tree-sitter/tree-sitter-julia")
+  	    (julia "https://github.com/tree-sitter/tree-sitter-julia")
         (make "https://github.com/alemuller/tree-sitter-make")
-  	(rust "https://github.com/tree-sitter/tree-sitter-rust")
+  	    (rust "https://github.com/tree-sitter/tree-sitter-rust")
         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
         (python "https://github.com/tree-sitter/tree-sitter-python")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
@@ -451,7 +458,7 @@ Since eglot is the LSP client, you can also configure each LSP settings
               ("C-c C-d" . eldoc)
               ("C-c C-f" . eglot-format-buffer))
   :hook ((python-base-mode . eglot-ensure)
-  	 (rust-mode . eglot-ensure))
+  	     (rust-mode . eglot-ensure))
   :custom
   (eglot-autoshutdown t)
   :config
@@ -460,11 +467,11 @@ Since eglot is the LSP client, you can also configure each LSP settings
    '(;; Configuration for basedpyright (Python)
      :basedpyright
      (:typeCheckingMode "standard"
-			:reportMissingTypeArgument "none"
-			:analysis
-			(:inlayHints (:callArgumentNames :json-false
-							 :variableTypes :json-false
-							 :functionReturnTypes :json-false)))
+			            :reportMissingTypeArgument "none"
+			            :analysis
+			            (:inlayHints (:callArgumentNames :json-false
+							                             :variableTypes :json-false
+							                             :functionReturnTypes :json-false)))
      )))
 
 
@@ -521,20 +528,20 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
   :config
   ;; supress auto-revert warnings
   (setq apheleia-inhibit-functions
-  	(cons #'buffer-modified-p apheleia-inhibit-functions))
+  	    (cons #'buffer-modified-p apheleia-inhibit-functions))
   ;; define formatters
   (setf (alist-get 'ruff apheleia-formatters)
         '("ruff" "format" "--verbose" "--line-length" "79"
-  	  "--stdin-filename" filepath))
+  	      "--stdin-filename" filepath))
   (setf (alist-get 'prettier-typescript apheleia-formatters)
-  	'("prettier" "--use-tabs=false" "--print-width" "80"
-  	  "--stdin-filename" filepath "--parser=typescript"))
+  	    '("prettier" "--use-tabs=false" "--print-width" "80"
+  	      "--stdin-filename" filepath "--parser=typescript"))
   (setf (alist-get 'prettier-json apheleia-formatters)
-  	'("prettier" "--use-tabs=false" "--print-width" "80"
-  	  "--stdin-filename" filepath "--parser=json"))
+  	    '("prettier" "--use-tabs=false" "--print-width" "80"
+  	      "--stdin-filename" filepath "--parser=json"))
   (setf (alist-get 'prettier-javascript apheleia-formatters)
-  	'("prettier" "--use-tabs=false" "--print-width" "80"
-  	  "--stdin-filename" filepath "--parser=babel-flow"))
+  	    '("prettier" "--use-tabs=false" "--print-width" "80"
+  	      "--stdin-filename" filepath "--parser=babel-flow"))
   ;; define commands for each mode
   (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
   (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
@@ -573,13 +580,13 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 (use-package cape
   :straight t
   :bind (("C-c p p" . completion-at-point)
-  	 ("C-c p \\" . cape-tex)
-  	 ("C-c p _" . cape-tex)
-  	 ("C-c p ^" . cape-tex)
-  	 ("C-c p f" . cape-file)
-  	 ("C-c p d" . cape-dabbrev)
-  	 ("C-c p s" . cape-elisp-symbol)
-  	 ("C-c p e" . cape-elisp-block))
+  	     ("C-c p \\" . cape-tex)
+  	     ("C-c p _" . cape-tex)
+  	     ("C-c p ^" . cape-tex)
+  	     ("C-c p f" . cape-file)
+  	     ("C-c p d" . cape-dabbrev)
+  	     ("C-c p s" . cape-elisp-symbol)
+  	     ("C-c p e" . cape-elisp-block))
   :init
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -615,7 +622,7 @@ separate environments. You can simply run:
   (defun change-inferior-python ()
     (let ((jupyter-path (expand-file-name "bin/jupyter" venv-manager-current-venv)))
       (when (file-exists-p jupyter-path)
-  	(setq python-shell-interpreter "ipython3"
+  	    (setq python-shell-interpreter "ipython3"
               python-shell-interpreter-args "--simple-prompt"))))
   :hook
   (venv-manager-postactivate . change-inferior-python))
@@ -630,10 +637,11 @@ separate environments. You can simply run:
   :config
   (define-key python-ts-mode-map (kbd "s-[") 'python-indent-shift-left)
   (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
+  (setq python-indent-guess-indent-offset t)
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
-  	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
+  	      (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
 
 #+end_src
 
@@ -642,21 +650,21 @@ separate environments. You can simply run:
   "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-  	 (python-shell-restart)))
+  	     (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-  	(end (cadr (code-cells--bounds))))
+  	    (end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
   :straight t
   :defer t
   :hook ((python-ts-mode . code-cells-mode-maybe)
-  	 (python-mode . code-cells-mode-maybe))
+  	     (python-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
                '(python-ts-mode . python-shell-send-region) t)
@@ -678,25 +686,6 @@ treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" i
 mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
 
 
-** Julia
-
-#+begin_src emacs-lisp
-(use-package julia-ts-mode
-  :straight t
-  :interpreter "julia"
-  :mode "\\.jl$"
-  :config
-  (add-hook 'julia-ts-mode-hook
-  	    (lambda ()
-  	      (setq-local tab-width 4)
-  	      (setq-local julia-indent-offset 4))))
-
-(use-package eglot-jl
-  :straight t)
-#+end_src
-
-
-
 ** Jupyter setup
 
 I'm using my own fork of the jupyter package because I don't like the default
@@ -716,10 +705,10 @@ from the jupyter kernel.
   (jupyter-repl-prompt-margin-width 5)
   :config
   (add-to-list 'display-buffer-alist
-	       '("\\*jupyter-output\\*"
-		 (display-buffer-reuse-window
-		  display-buffer-pop-up-window)
-		 (reusable-frames . t))))
+	           '("\\*jupyter-output\\*"
+		         (display-buffer-reuse-window
+		          display-buffer-pop-up-window)
+		         (reusable-frames . t))))
 
 ;; for using gnuplot
 (use-package gnuplot
@@ -877,13 +866,13 @@ function works without using any, so I will just ignore the argument.
   "update nano-modeline default and primary faces based on current theme"
   ;; set default face
   (set-face-attribute 'nano-modeline-face-default nil
-		      :foreground (face-attribute 'default :foreground))
+		              :foreground (face-attribute 'default :foreground))
   (set-face-attribute 'nano-modeline-face-primary nil
-		      :foreground (face-attribute 'default :foreground)))
+		              :foreground (face-attribute 'default :foreground)))
 
 (use-package nano-modeline
   :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline"
-  			   :branch "rewrite")
+  			               :branch "rewrite")
   ;; fix to update nano-modeline font color
   :config
   (add-to-list 'enable-theme-functions #'de/update-nano-faces)
@@ -899,6 +888,13 @@ function works without using any, so I will just ignore the argument.
 (setq-default mode-line-format nil)
 #+end_src
 
+** Font setup
+When using nano-theme, you can set your own font by telling nano to no use its
+default fonts.
+
+#+begin_src emacs-lisp :results silent
+;; (set-face-attribute 'default nil :family "Iosevka" :height 140)
+#+end_src
 
 ** Doom themes
 
@@ -954,42 +950,23 @@ significant keywords comes from ~nano-light-salient~, which in light mode, is
 #673AB7. I'd like to keep this the same in the dark mode to keep things looking
 plain.
 
-For some time, I've customized NANO to use different fonts in org-mode via
-`variable-pitch` mode. The key for doing this customization is to set the
-variable under ~:init~ in use-package:
-
-#+begin_quote
-;; customize fonts for NANO theme
-(custom-set-faces
-;; change the sans face
-'(nano-sans ((t :family "Barlow"
-:height 150
-:weight light)))
-;; change monospace font
-'(nano-mono ((t (:family "Brass Mono Code"
-:height 150
-:weight regular)))))
-#+end_quote
-
-Then under ~:config~, we customize the =variable-pitch=:
-#+begin_quote
-;; to use `variable-pitch` org-mode using nano-sans
-;; Override the org-block face
-(custom-set-faces
-;; change variable pitch to the serif version
-`(variable-pitch ((t (:weight ,(face-attribute 'nano-sans :weight)
-:height 160
-:family ,(face-attribute 'nano-sans :family))))))
-#+end_quote
-
-
 #+begin_src emacs-lisp
 (use-package nano-theme
   :straight (:type git :host github :repo "rougier/nano-theme")
-  :init
-  (require 'nano-theme)
+  :config
+  (setq nano-fonts-use t)
+  ;; apply theme and settings to the initial Emacs frame.
+  (nano-light)
   (nano-mode)
-  (load-theme 'nano t))
+  
+  :hook (
+         after-make-frame-functions .
+         (lambda (frame)
+           (with-selected-frame frame
+             (if (eq frame-background-mode 'light)
+                 (nano-light)
+               (nano-dark)))))                                    
+  )
 
 ;; ;; setup customization of nano colors via advice
 (defun de/customize-nano-themes ()
@@ -1038,7 +1015,6 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 ;; use Rougier's writer mode for a nicer org-mode
 (require 'nano-writer)
-;; (add-to-list 'major-mode-remap-alist '(org-mode . writer-mode))
 
 (use-package svg-lib
   :defer t
@@ -1070,12 +1046,28 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 #+end_src
 
+** buffer-box for borders around frames
+
+#+begin_src emacs-lisp
+(use-package buffer-box
+  :straight nil
+  :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
+  :bind
+  ("C-c b" . buffer-box)
+  ;; :hook
+  ;; (after-change-major-mode . buffer-box)
+  )
+#+end_src
+
+
+* org-mode configuration
 Minor reconfiguration of ~org-mode~.
 
 #+begin_src emacs-lisp
 (use-package org
   :config
   (add-hook 'org-mode-hook 'org-indent-mode)
+  (setq org-startup-indented t)
   (setq org-confirm-babel-evaluate nil)
   ;; native syntax highlighting in source blocks
   (setq org-src-fontify-natively t)
@@ -1088,7 +1080,7 @@ Minor reconfiguration of ~org-mode~.
   (setq org-src-window-setup 'split-window-below)
   ;; change the scale of LaTeX preview
   (setq org-format-latex-options
-	(plist-put org-format-latex-options :scale 1.6))
+	(plist-put org-format-latex-options :scale 1.1))
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width nil)
@@ -1111,10 +1103,6 @@ Minor reconfiguration of ~org-mode~.
 	       ("C-x v l" . org-toggle-link-display)))
 
 ;; remove under/over line in org source block header/footer
-(custom-set-faces
- '(org-block-begin-line ((t (:underline nil))))
- '(org-block-end-line ((t (:overline nil)))))
-
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
 ;; shortcut to insert source block
@@ -1136,31 +1124,32 @@ Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
 writing LaTeX in org documents.
 
 #+begin_src emacs-lisp
-;; (use-package org-modern
-;;   :straight t
-;;   :hook ((org-mode . org-modern-mode)
-;;          (org-agenda-finalize . org-modern-agenda))
-;;   :config
-;;   (setq org-auto-align-tags nil
-;;         org-tags-column 0
-;;         org-catch-invisible-edits 'show-and-error
-;;         org-special-ctrl-a/e t
-;;         org-insert-heading-respect-content t
-;;         org-hide-emphasis-markers t
-;;         org-ellipsis "…"
-;;         org-agenda-tags-column 0)
-;;   ;; Optional: Customize appearance further if desired.
-;;   ;; Example: Set fonts for a modern look
-;;   ;; (set-face-attribute 'default nil :family "Iosevka")
-;;   ;; (set-face-attribute 'variable-pitch nil :family "Iosevka Aile")
-;;   )
+(use-package org-modern
+  :straight t
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda))
+  :config
+  (setq org-auto-align-tags nil
+        org-tags-column 0
+        org-catch-invisible-edits 'show-and-error
+        org-special-ctrl-a/e t
+        org-insert-heading-respect-content t
+        org-hide-emphasis-markers t
+        org-ellipsis "…"
+        org-agenda-tags-column 0)
+  )
+
+(use-package org-modern-indent
+  :straight (org-modern-indent :type git :host github :repo "jdtsmith/org-modern-indent")
+  :config
+  (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
 (use-package org-fragtog
   :straight t
   :hook (org-mode . org-fragtog-mode))
 
 #+end_src
-  
+
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to
 show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
 
@@ -1169,7 +1158,7 @@ fragments within an org document whenever the org file is in any of my Dropbox
 folder. So here I'm trying to see if changing the temporary directory to be in
 an absolute local folder instead of a relative one helps. This didn't solve the
 problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox=
-does!
+doesn't!
 
 #+begin_src emacs-lisp
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
@@ -1243,19 +1232,39 @@ from zotero or manually constructed).
 invoke ~org-cite-insert~, select the citation from the mini-buffer. Note that a
 single citation can cite more than one references. When done do =M-<return>=.
 
+** org document export to PDF
 
-** buffer-box for borders around frames
+The custom LaTeX template is stored in the ~texmf~ directory locally, to figure out where it is do:
+#+begin_src zsh
+kpsewhich -var-value TEXMFHOME
+#+end_src
+
+For example, I store org-notes-template.cls in ~$TEXMFHOME/tex/latex/org-notes-template/~
+
+If you put new templates in there, update the LaTeX database by running ~texhash~.
 
 #+begin_src emacs-lisp
-(use-package buffer-box
-  :straight nil
-  :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
-  :bind
-  ("C-c b" . buffer-box)
-  ;; :hook
-  ;; (after-change-major-mode . buffer-box)
-  )
+(unless (boundp 'org-latex-classes)
+  (setq org-latex-classes nil))
+
+(add-to-list 'org-latex-classes
+             '("org-notes-template"
+               "\\documentclass[%C]{org-notes-template}"
+               ("\\section{%s}" . "\\section*{%s}")
+               ("\\subsection{%s}" . "\\subsection*{%s}")
+               ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+               ("\\paragraph{%s}" . "\\paragraph*{%s}")
+               ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+
 #+end_src
+
+To use the template you just put this at the top of your org document:
+#+begin_example
+#+LATEX_CLASS: org-notes-template
+#+LATEX_CLASS_OPTIONS: [10pt]
+#+LATEX_HEADER: \usepackage[inkscapelatex=false]{svg}
+#+end_example
+Use the svg package when exporting svg images or graphs into PDF.
 
 
 * Custom functions
@@ -1341,23 +1350,6 @@ Load my custom functions
 When exporting an org document to PDF or HTML there are lots of settings that one can use. I've arrived to a particular set of settings that suits my needs at the moment and I put the properties in a single function to conveniently add them at the top of the org document:
 
 #+begin_src emacs-lisp
-(defun de/insert-org-export-properties ()
-  "Insert common Org properties at the beginning of the document."
-  (interactive)
-  ;; go to the top of the document
-  (goto-char (point-min))
-  (insert "#+OPTIONS: html-postamble:nil\n")
-  (insert "#+OPTIONS: ^:nil") ;; disable sub/superscript
-  (insert "#+LATEX_CLASS: article\n")
-  (insert "#+LATEX_CLASS_OPTIONS: [letterpaper]\n")
-  (insert "#+LATEX_HEADER: \\usepackage[inkscapelatex=false]{svg}\n")
-  (insert "#+LATEX_HEADER: \\usepackage{fontspec}\n")
-  (insert "#+LATEX_HEADER: \\usepackage{float}\n")
-  (insert "#+LATEX_HEADER: \\setmainfont{Helvetica}\n")
-  (insert "#+LATEX_HEADER: \\setsansfont{Helvetica}\n")
-  (insert "#+LATEX_HEADER: \\setmonofont{Courier New}\n")
-  (insert "#+LATEX_HEADER: \\usepackage[margin=1in]{geometry}\n"))
-
 ;; place cursor within the top of the python source block
 (defun de/insert-inline-svg-matplotlib ()
   (interactive)
