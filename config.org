@@ -4,7 +4,7 @@
 
 * Preamble
 
-Running ~emacs-plus@30~ installed via ~homebrew~.
+Running ~emacs-plus@30~ ([[https://github.com/d12frosted/homebrew-emacs-plus]]) installed via ~homebrew~.
 
 With version 30, something is wrong and Emacs does not do the usual PATH
 injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
@@ -896,47 +896,6 @@ default fonts.
 ;; (set-face-attribute 'default nil :family "Iosevka" :height 140)
 #+end_src
 
-** Doom themes
-
-If you want to use doom themes, which are convenient, and nice for switching
-things up.
-#+begin_src emacs-lisp
-;; (use-package doom-themes
-;;   :straight t
-;;   :config
-;;   (setq doom-themes-enable-bold t)
-;;   (setq doom-themes-enable-italic t)
-;;   (load-theme 'doom-nord-light t)
-;;   (doom-themes-org-config))
-
-;; ;; call these after init to avoid orderof-execution problems
-;; (add-hook 'after-init-hook
-;;           (lambda ()
-;;             (menu-bar-mode -1)
-;;             (tool-bar-mode -1)
-;;             (scroll-bar-mode -1)))
-
-;; ;; Set default font
-;; (set-face-attribute 'default nil
-;;                     :family "Roboto Mono"
-;;                     :height 140
-;;                     :weight 'light)
-
-;; (set-face-attribute 'bold nil
-;;                     :family "Roboto Mono"
-;;                     :height 140
-;;                     :weight 'regular)
-
-;; ;; add "padding" for comfier editing experience
-;; (set-fringe-mode 15)
-
-;; ;; use doom modeline
-;; (use-package doom-modeline
-;;   :straight t
-;;   :init (doom-modeline-mode 1))
-
-#+end_src
-
 
 ** Nicolas Rougier's NANO emacs
 Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
@@ -978,13 +937,11 @@ plain.
   (advice-add 'nano-dark :after #'de/customize-nano-themes)
   (advice-add 'nano-light :after #'de/customize-nano-themes))
 
+;; call function to setup advice function: de/customize-nano-themes
 (de/advise-nano-themes)
 
 ;; ;; set customization on emacs startup
 (add-hook 'emacs-startup-hook #'de/customize-nano-themes)
-
-;; ;; customize cursor after all the nano stuff
-;; (setq-default cursor-type '(bar . 3))
 
 #+end_src
 
@@ -1504,7 +1461,6 @@ Using magit for git project management.
 * E-mail setup
 
 To save some clutter, I've stopped using mu4e for now... maybe until my next computer setup.
-
 
 ** Notes on setting up ~isync~ and ~mu4~
 
