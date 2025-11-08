@@ -107,7 +107,7 @@ saved filter group, do =/ R=.
 (require 'ibuffer)
 
 ;; map C-x C-b to `ibuffer`
-;; (define-key ctl-x-map "\C-b" 'ibuffer)
+(define-key ctl-x-map "\C-b" 'ibuffer)
 
 ;; Define custom groups for ibuffer
 ;; add commonly used modes below
@@ -197,11 +197,6 @@ the standard =C-s= and =C-r= keybinding is replaced here with its corresponding
 version in swiper.
 
 #+begin_src emacs-lisp
-(use-package swiper
-  :straight t
-  :bind (("C-s" . swiper)
-         ("C-r" . swiper)))
-
 (use-package vertico
   :straight t
   :init (vertico-mode))
@@ -235,7 +230,9 @@ version in swiper.
         completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package consult
-  :bind (("C-x b" . consult-buffer)))
+  :bind (("C-x b" . consult-buffer)
+         ("C-s" . consult-line)
+         ("C-r" . consult-line)))
 #+end_src
 
 ** Enhancements
