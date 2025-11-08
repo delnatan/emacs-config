@@ -3,28 +3,20 @@
 #+STARTUP: overview
 
 * Preamble
-
-Running ~emacs-plus@30~ ([[https://github.com/d12frosted/homebrew-emacs-plus]]) installed via ~homebrew~.
-
-With version 30, something is wrong and Emacs does not do the usual PATH
-injection. This is a patch using ~exec-path-from-shell~, until it's fixed.
-
-[2025-04-05 Sat] a patch for PATH issues
-You need to replace the existing signature by running
-
-~codesign --force --deep --sign - /opt/homebrew/opt/emacs-plus@30/Emacs.app~
+[2025-11-07 Fri] this is fixed in the emacs-plus@30 build when I tried as of
+today. So this block is commented out.
 
 #+begin_src emacs-lisp
-;; toggle this to debug issues
-;; (setq debug-on-error t)
+  ;; (use-package exec-path-from-shell
+  ;;   :straight (exec-path-from-shell
+  ;;              :type git :host github
+  ;;              :repo "purcell/exec-path-from-shell")
+  ;;   :init
+  ;;   (when (memq window-system '(mac ns x))
+  ;;     (exec-path-from-shell-initialize)))
 
-(use-package exec-path-from-shell
-  :straight (exec-path-from-shell
-             :type git :host github
-             :repo "purcell/exec-path-from-shell")
-  :init
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+  ;; toggle this to debug issues
+  (setq debug-on-error t)
 #+end_src
 
 
@@ -34,72 +26,49 @@ You need to replace the existing signature by running
 (set-default-coding-systems 'utf-8)
 (setq inhibit-startup-message t)
 (setq custom-safe-themes t)
-(column-number-mode)
-
-;; use visual-line-mode only when programming or in org-mode
-(add-hook 'text-mode-hook 'visual-line-mode)
-(add-hook 'prog-mode-hook 'visual-line-mode)
-
-;; (add-hook 'org-mode-hook 'visual-line-mode)
-(add-hook 'org-mode-hook 'auto-fill-mode)
-
-;; show current line highlight
-;; (global-hl-line-mode 1)
-
-;; new in emacs 30, enable which-key-mode
-(which-key-mode)
-
 ;; enable global auto revert (refresh buffer if there's file changes)
 (global-auto-revert-mode 1)
 (setq make-backup-files nil)
 (setq auto-revert-verbose nil)
-
 ;; use y/n for yes-or-no
-;; since Emacs 29 `yes-or-no-p` will use `y-or-n-p`
 (setq use-short-answers t)
+;; for programming set fill to 80 columns and display column indicator
+(setq-default fill-column 79)
+;; enable recent-file mode
+(recentf-mode 1)
+(setq recentf-max-saved-items 40)
+;; refresh dired if file is changed on disk
+(setq dired-auto-revert-buffer t)
+;; enable side scrolling with mouse wheel
+(setq mouse-wheel-tilt-scroll t)
+;; reverse mouse direction for a more natural swipe feel
+(setq mouse-wheel-flip-direction t)
 
+;; hooks to customize behavior of specific modes
+(add-hook 'text-mode-hook 'visual-line-mode)
+(add-hook 'prog-mode-hook 'visual-line-mode)
+(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'org-mode-hook 'visual-line-mode)
+(add-hook 'org-mode-hook 'auto-fill-mode)
 
 ;; keep things tidy
 (use-package no-littering
   :straight t)
 
-;; for programming set fill to 80 columns and display column indicator
-(setq-default fill-column 79)
-(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
-
-;; enable recent-file mode
-(recentf-mode 1)
-(setq recentf-max-saved-items 30)
+;; new in emacs 30, enable which-key-mode
+(which-key-mode)
+(column-number-mode)
 
 ;; Open recent files
 (global-set-key (kbd "C-c r") 'recentf-open-files)
-
-;; map C-x C-b to `ibuffer`
-(define-key ctl-x-map "\C-b" 'ibuffer)
-
-;; refresh dired if file is changed on disk
-(setq dired-auto-revert-buffer t)
-
-;; enable side scrolling with mouse wheel
-(setq mouse-wheel-tilt-scroll t)
-;; reverse mouse direction for a more natural swipe feel
-(setq mouse-wheel-flip-direction t)
 
 ;; enable automatic parenthesis pairing
 (electric-pair-mode 1)
 
 ;; default input mode to 'TeX', so can easily C-\ for inserting symbols
 (setq default-input-method "TeX")
-
-;; create a new frame with *scratch* buffer
-(defun new-frame ()
-  (interactive)
-  (select-frame (make-frame))
-  (switch-to-buffer "*scratch*"))
-(global-set-key (kbd "M-s-n") 'new-frame)
-(global-set-key (kbd "M-`") 'other-frame)
 
 ;; Kill current buffer (instead of asking first buffer name)
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
@@ -118,15 +87,27 @@ You need to replace the existing signature by running
       (delete-frame)
     (save-buffers-kill-terminal)))
 (global-set-key (kbd "C-x C-c") 'de/delete-frame-or-kill-emacs)
+
+;; create a new frame with *scratch* buffer
+(defun de/new-frame ()
+  "make a new frame with scratch buffer and switch to that buffer."
+  (interactive)
+  (select-frame (make-frame))
+  (switch-to-buffer "*scratch*"))
+
+(global-set-key (kbd "M-s-n") 'de/new-frame)
+(global-set-key (kbd "M-`") 'other-frame)
 #+end_src
 
 Customize ~ibuffer~ to show things by groups. To disable filtering (remove all
 filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the
 saved filter group, do =/ R=.
-
 #+begin_src emacs-lisp
 ;; Enable ibuffer
 (require 'ibuffer)
+
+;; map C-x C-b to `ibuffer`
+;; (define-key ctl-x-map "\C-b" 'ibuffer)
 
 ;; Define custom groups for ibuffer
 ;; add commonly used modes below
@@ -197,6 +178,8 @@ Use multiple cursors
 
 Emacs will automatically create backup files in the same folder as the current directory, but this creates a lot of clutter, so let's just move all the files into a hidden folder
 #+begin_src emacs-lisp
+;; Ensure the backup/auto-save directory exists
+(make-directory (expand-file-name "~/.emacs.d/bak") t)
 (setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
 
 (setq auto-save-file-name-transforms
@@ -251,6 +234,8 @@ version in swiper.
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
+(use-package consult
+  :bind (("C-x b" . consult-buffer)))
 #+end_src
 
 ** Enhancements
@@ -405,6 +390,13 @@ the center for easier viewing:
 * Programming setup
 ** General setup
 
+Using magit for git project management.
+#+begin_src emacs-lisp
+(use-package magit
+  :straight (magit :type git :host github :repo "magit/magit")
+  :bind (("C-x g" . magit-status)))
+#+end_src
+
 In general, I prefer a tab width of 4:
 #+begin_src emacs-lisp
 (setq tab-width 4)
@@ -414,23 +406,8 @@ Setup ~treesitter~ for several languages. To tell whether the current buffer is
 using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
-(setq treesit-language-source-alist
-      '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-        (c "https://github.com/tree-sitter/tree-sitter-c")
-  	    (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-        (cmake "https://github.com/uyha/tree-sitter-cmake")
-        (css "https://github.com/tree-sitter/tree-sitter-css")
-        (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-        (html "https://github.com/tree-sitter/tree-sitter-html")
-        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-        (json "https://github.com/tree-sitter/tree-sitter-json")
-  	    (julia "https://github.com/tree-sitter/tree-sitter-julia")
-        (make "https://github.com/alemuller/tree-sitter-make")
-  	    (rust "https://github.com/tree-sitter/tree-sitter-rust")
-        (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-        (python "https://github.com/tree-sitter/tree-sitter-python")
-        (toml "https://github.com/tree-sitter/tree-sitter-toml")
-        (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+(add-to-list 'treesit-language-source-alist
+	         '(python . ("https://github.com/tree-sitter/tree-sitter-python")))
 
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
@@ -453,7 +430,7 @@ Since eglot is the LSP client, you can also configure each LSP settings
 #+begin_src emacs-lisp
 (use-package eglot
   :defer t
-  :straight (:type built-in)
+   :straight (:type built-in)
   :bind (:map eglot-mode-map
               ("C-c C-d" . eldoc)
               ("C-c C-f" . eglot-format-buffer))
@@ -563,7 +540,7 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   :custom
   (completion-cycle-threshold nil)
   (corfu-cycle t) ;; allow cycling through candidates
-  (corfu-seprator ?\s) ;; orderless field separator
+  (corfu-separator ?\s) ;; orderless field separator
   (corfu-quit-no-match 'separator) ;; or t
   (corfu-auto-delay 0.1)
   (corfu-scroll-margin 7)
@@ -862,94 +839,41 @@ ignored). ~enable-theme-functions~ calls its functions with one argument. My
 function works without using any, so I will just ignore the argument.
 
 #+begin_src emacs-lisp
-(defun de/update-nano-faces (&rest _)
-  "update nano-modeline default and primary faces based on current theme"
-  ;; set default face
-  (set-face-attribute 'nano-modeline-face-default nil
-		              :foreground (face-attribute 'default :foreground))
-  (set-face-attribute 'nano-modeline-face-primary nil
-		              :foreground (face-attribute 'default :foreground)))
-
 (use-package nano-modeline
-  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline"
-  			               :branch "rewrite")
-  ;; fix to update nano-modeline font color
+  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
   :config
-  (add-to-list 'enable-theme-functions #'de/update-nano-faces)
-  ;; run my update once immediately to set correct face on startup
-  (de/update-nano-faces)
-  :hook
-  (text-mode . nano-modeline)
-  (prog-mode . nano-modeline)
-  (org-mode . nano-modeline)
-  (lisp-interaction-mode . nano-modeline))
+  ;; enable modeline globally
+  (nano-modeline-text-mode t))
 
-;; hide the default modeline
 (setq-default mode-line-format nil)
 #+end_src
 
-** Font setup
-When using nano-theme, you can set your own font by telling nano to no use its
-default fonts.
-
-#+begin_src emacs-lisp :results silent
-;; (set-face-attribute 'default nil :family "Iosevka" :height 140)
-#+end_src
-
-
 ** Nicolas Rougier's NANO emacs
 Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
-using ~homebrew~ cask. =brew tap homebrew/cask-fonts= and =brew install
-font-roboto-mono= or =font-iosevka=.
-
-Uncomment the source block to use NANO emacs.
-
-Note that for programming the font lock ~nano-salient~, which is used to style
-significant keywords comes from ~nano-light-salient~, which in light mode, is
-#673AB7. I'd like to keep this the same in the dark mode to keep things looking
-plain.
+using ~homebrew~.
 
 #+begin_src emacs-lisp
 (use-package nano-theme
-  :straight (:type git :host github :repo "rougier/nano-theme")
+  :straight (nano-theme :type git :local-repo "/Users/delnatan/Apps/emacs/nano-theme/")
+  :init
+  (setq nano-fonts-use nil)  ; Use your own fonts, NOT NANO fonts
   :config
-  (setq nano-fonts-use t)
-  ;; apply theme and settings to the initial Emacs frame.
-  (nano-light)
+  ;; call nano-mode to get all UI tweaks
   (nano-mode)
+  ;; override nano-fonts-use back to nil
+  (setq nano-fonts-use nil)
+  ;; now set your own fonts
+  (set-face-attribute 'default nil 
+                      :family "Iosevka"
+                      :height 140
+                      :weight 'light)
   
-  :hook (
-         after-make-frame-functions .
-         (lambda (frame)
-           (with-selected-frame frame
-             (if (eq frame-background-mode 'light)
-                 (nano-light)
-               (nano-dark)))))                                    
-  )
-
-;; ;; setup customization of nano colors via advice
-(defun de/customize-nano-themes ()
-  ;; change background color for parenthesis match 
-  (set-face-attribute 'show-paren-match nil :background "#ffd354"))
-
-(defun de/advise-nano-themes ()
-  "Add advice to nano theme functions to set show-paren-match face."
-  (advice-add 'nano-dark :after #'de/customize-nano-themes)
-  (advice-add 'nano-light :after #'de/customize-nano-themes))
-
-;; call function to setup advice function: de/customize-nano-themes
-(de/advise-nano-themes)
-
-;; ;; set customization on emacs startup
-(add-hook 'emacs-startup-hook #'de/customize-nano-themes)
-
-#+end_src
-
-Minimal aesthetics to look more modern
-#+begin_src emacs-lisp
-;; Set default frame size
-(add-to-list 'default-frame-alist '(width . 80))
-(add-to-list 'default-frame-alist '(height . 40))
+  (set-face-attribute 'italic nil
+                      :family "Iosevka"
+                      :slant 'italic
+                      :height 140)
+  ;; finally, load the theme
+  (nano-light))
 #+end_src
 
 I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~.
@@ -1018,6 +942,9 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 
 * org-mode configuration
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 Minor reconfiguration of ~org-mode~.
 
 #+begin_src emacs-lisp
@@ -1037,13 +964,13 @@ Minor reconfiguration of ~org-mode~.
   (setq org-src-window-setup 'split-window-below)
   ;; change the scale of LaTeX preview
   (setq org-format-latex-options
-	(plist-put org-format-latex-options :scale 1.1))
+	    (plist-put org-format-latex-options :scale 1.1))
   ;; hide emphasis markers
   (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width nil)
   ;; add svg file for exporting inline svg images during export
   (setq org-export-default-inline-image-rule
-	'(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\)\\'")))
+	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\)\\'")))
   ;; preserve indentation on export
   (setq org-src-preserve-indentation t)
   ;; I disabled this to make underscores appear proper
@@ -1053,11 +980,11 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-compiler "xelatex")
   ;; added `-shell-escape` to support minted package
   (setq org-latex-pdf-process
-	(list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+	    (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
   :bind  (:map org-mode-map
-	       ("C-c l" . org-store-link)
-	       ("C-c C-l" . org-insert-link)
-	       ("C-x v l" . org-toggle-link-display)))
+	           ("C-c l" . org-store-link)
+	           ("C-c C-l" . org-insert-link)
+	           ("C-x v l" . org-toggle-link-display)))
 
 ;; remove under/over line in org source block header/footer
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -1075,7 +1002,7 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-engraved-theme 'nano)
-#+end_src
+  #+end_src
 
 Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
 writing LaTeX in org documents.
@@ -1162,12 +1089,12 @@ For convenience, let's just base64-encode images when exporting an org file to H
 #+begin_src emacs-lisp
 (defun org-org-html--format-image (source attributes info)
   (format "<img src=\"data:image/%s+xml;base64,%s\"%s />"
-	  (or (file-name-extension source) "")
-	  (base64-encode-string
-	   (with-temp-buffer
+	      (or (file-name-extension source) "")
+	      (base64-encode-string
+	       (with-temp-buffer
              (insert-file-contents-literally source)
              (buffer-string)))
-	  (file-name-nondirectory source)))
+	      (file-name-nondirectory source)))
 (advice-add #'org-html--format-image :override #'org-org-html--format-image)
 #+end_src
 
@@ -1224,18 +1151,12 @@ To use the template you just put this at the top of your org document:
 Use the svg package when exporting svg images or graphs into PDF.
 
 
+
 * Custom functions
-
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 All custom functions are preceded by the prefix ~de/~. All other custom functions that can be called interactively is placed under ~~/Apps/emacs-config/custom~.
-
-Convenient function to reload Emacs config
-#+begin_src emacs-lisp
-(defun de/reload-emacs-config()
-  (interactive)
-  "convenient function to reload config file"
-  (org-babel-load-file "~/Apps/emacs-config/config.org"))
-
-#+end_src
 
 When programming, I often want to move lines/regions up or down, bound to
 =Super-<up>/<down>=.
@@ -1316,6 +1237,9 @@ When exporting an org document to PDF or HTML there are lots of settings that on
 
 
 * Org-agenda
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 I've started using org-mode for scheduling stuff. For now, I'll just keep any
 agenda items in my main todo-list.
 
@@ -1324,16 +1248,12 @@ agenda items in my main todo-list.
 (global-set-key (kbd "C-c a") 'org-agenda)
 
 (setq org-agenda-files
-      '(
-  	"/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
-  	"/Users/delnatan/Documents/org/tasks.org"
-  	"/Users/delnatan/StarrLuxtonLab/org/schedules.org"
-	"/Users/delnatan/Library/CloudStorage/Dropbox/org/notes/random_notes.org"
-  	"/Users/delnatan/Documents/org/meetings.org"
-  	"/Users/delnatan/Documents/org/events.org"
-  	)
-      )
-
+      '("/Users/delnatan/Library/CloudStorage/Dropbox/org/todo.org"
+  	    "/Users/delnatan/Documents/org/tasks.org"
+  	    "/Users/delnatan/Documents/org/meetings.org"
+  	    "/Users/delnatan/Documents/org/events.org"
+  	    "/Users/delnatan/Work/org/schedules.org"
+        ))
 #+end_src
 
 A convenient aspect of the org calendar system is that you can do arithmetic
@@ -1356,6 +1276,9 @@ Where:
 
 
 * Org-capture setup
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 
 In the templates here's what each placeholder means:
 ~%?~ is where the cursor will be placed for you to start typing
@@ -1420,14 +1343,13 @@ Sometimes I work with a lot of CSV files when doing data processing using Python
 #+end_src
 
 For reading pdfs, let's try out pdf-tools, which has a nice 'midnight' mode.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp 
 (use-package pdf-tools
   :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
   :config
-  (pdf-tools-install)
+  (pdf-tools-install :no-query)
   (setq-default pdf-view-display-size 'fit-width)
   (setq pdf-view-midnight-colors '("#e5e9f0" . "#2e3440")))
-
 #+end_src
 
 I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to match a literal dot in the file name. You need to declare and escape and then ~\.~ to match a dot (because a dot matches any character in regex). The ~\\'~ just means the 'end of string'.
@@ -1436,29 +1358,24 @@ I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.[jt]sx\\'" . tsx-ts-mode))
-
 (add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
 (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
 #+end_src
 
-Using magit for git project management.
-#+begin_src emacs-lisp
-(use-package magit
-  :straight t
-  :bind (("C-x g" . magit-status)))
-#+end_src
-
 ** Snippets
 #+begin_src emacs-lisp
-(use-package yasnippet
-  :straight t
-  :hook ((org-mode prog-mode) . yas-minor-mode-on)
-  :init
-  (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
+;; (use-package yasnippet
+;;   :straight t
+;;   :hook ((org-mode prog-mode) . yas-minor-mode-on)
+;;   :init
+;;   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
 #+end_src
 
 
 * E-mail setup
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 
 To save some clutter, I've stopped using mu4e for now... maybe until my next computer setup.
 
