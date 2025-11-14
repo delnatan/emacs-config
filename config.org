@@ -16,13 +16,17 @@ today. So this block is commented out.
   ;;     (exec-path-from-shell-initialize)))
 
   ;; toggle this to debug issues
-  (setq debug-on-error t)
+  ;; (setq debug-on-error t)
 #+end_src
 
 
 * Basic settings
 
 #+begin_src emacs-lisp
+;; keep things tidy
+(use-package no-littering
+  :straight t)
+
 (set-default-coding-systems 'utf-8)
 (setq inhibit-startup-message t)
 (setq custom-safe-themes t)
@@ -35,8 +39,8 @@ today. So this block is commented out.
 ;; for programming set fill to 80 columns and display column indicator
 (setq-default fill-column 79)
 ;; enable recent-file mode
+(setq recentf-max-saved-items 50)
 (recentf-mode 1)
-(setq recentf-max-saved-items 40)
 ;; refresh dired if file is changed on disk
 (setq dired-auto-revert-buffer t)
 ;; enable side scrolling with mouse wheel
@@ -53,9 +57,6 @@ today. So this block is commented out.
 (add-hook 'org-mode-hook 'visual-line-mode)
 (add-hook 'org-mode-hook 'auto-fill-mode)
 
-;; keep things tidy
-(use-package no-littering
-  :straight t)
 
 ;; new in emacs 30, enable which-key-mode
 (which-key-mode)
@@ -220,14 +221,21 @@ version in swiper.
   (text-mode-ispell-word-completion nil)
   (read-extended-command-predicate #'command-completion-default-include-p))
 
+(use-package helpful
+  :straight t
+  :bind
+  (("C-h f" . helpful-callable)
+   ("C-h v" . helpful-variable)
+   ("C-h k" . helpful-key)
+   ("C-h x" . helpful-command)
+   ;; Lookup the current symbol at point
+   ("C-c C-d" . helpful-at-point)))
+
 (use-package orderless
-  :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-  (setq completion-styles '(orderless basic)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-category-defaults nil))
 
 (use-package consult
   :bind (("C-x b" . consult-buffer)
@@ -235,7 +243,17 @@ version in swiper.
          ("C-r" . consult-line)))
 #+end_src
 
+
 ** Enhancements
+
+The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
+#+begin_src emacs-lisp
+;; (global-set-key (kbd "M-o") 'other-window)
+(use-package ace-window
+  :straight t
+  :bind
+  (("M-o" . ace-window)))
+#+end_src
 
 Using ~dired-sidebar~ to conveniently go through files and folders in vertical
 minibuffer
@@ -304,9 +322,6 @@ Customize keybindings for outline-minor-mode when editing structured texts.
              (outline-hide-sublevels 1))
     (message "Outline minor mode is not enabled.")))
 
-;; enable outline-minor-mode when programming
-;; (add-hook 'prog-mode-hook 'outline-minor-mode)
-
 ;; remap some of the terrible default keybindings
 (let ((kmap outline-minor-mode-map))
   (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
@@ -316,7 +331,6 @@ Customize keybindings for outline-minor-mode when editing structured texts.
   (define-key kmap (kbd "C-s-s") 'outline-show-all))
 
 #+end_src
-
 
 I'd like to be able to toggle horizontal/vertical split when I have 2 windows
 open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
@@ -410,9 +424,6 @@ using the ~ts~ mode is by running =M-x major-mode=.
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
 
-At the moment, you'll have to build treesitter grammars for TypeScript manually
-because of some issue with creating a new temporary directory!?
-
 Silence eglot progress (in the *Messages* buffer)
 #+begin_src emacs-lisp
 (setq eglot-report-progress nil)
@@ -457,7 +468,6 @@ Since eglot is the LSP client, you can also configure each LSP settings
 
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
 uses a timer to type some characters, and 'l' for going to a specific line.
-
 #+begin_src emacs-lisp
 (use-package avy
   :straight t)
@@ -577,8 +587,7 @@ Simple Python setup using venv for managing environments.
 I've been using `uv` to manage my Python environments and `venv` for creating
 separate environments. You can simply run:
 
-~uv venv my-new-env --python 3.11~ to create a new environment
-
+~uv venv my-new-env --python 3.11~ to create a new environment.
 
 #+begin_src emacs-lisp
 (use-package pythonic)
@@ -824,6 +833,15 @@ function:
 
 #+end_src
 
+Convenience function to insert matplotlib plots in svg rather than the basic PNG.
+#+begin_src emacs-lisp
+;; place cursor within the top of the python source block
+(defun de/insert-inline-svg-matplotlib ()
+  (interactive)
+  (insert "import matplotlib_inline\n")
+  (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
+#+end_src
+
 
 * Theme and appearance
 
@@ -859,19 +877,45 @@ using ~homebrew~.
   (nano-mode)
   ;; override nano-fonts-use back to nil
   (setq nano-fonts-use nil)
+  
   ;; now set your own fonts
   (set-face-attribute 'default nil 
-                      :family "Iosevka"
-                      :height 140
-                      :weight 'light)
-  
+                      :family "Roboto Mono"
+                      :height 130)
   (set-face-attribute 'italic nil
-                      :family "Iosevka"
+                      :family "Victor Mono"
                       :slant 'italic
+                      :height 125)  
+  (set-face-attribute 'fixed-pitch nil
+                      :family "Roboto Mono")
+  (set-face-attribute 'variable-pitch nil
+                      :family "Merriweather"
                       :height 140)
+
   ;; finally, load the theme
-  (nano-light))
-#+end_src
+  (nano-light)
+
+  ;; Override org faces to support mixed variable/fixed pitch
+  ;; while preserving nano-theme's styling (backgrounds, colors, etc.)
+  (with-eval-after-load 'org
+    ;; Keep highlight background but use fixed-pitch font
+    (set-face-attribute 'org-block nil :inherit '(highlight fixed-pitch))
+    (set-face-attribute 'org-code nil :inherit '(nano-salient fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(nano-popout fixed-pitch))
+    (set-face-attribute 'org-table nil :inherit '(nano-faded fixed-pitch))
+    (set-face-attribute 'org-checkbox nil :inherit '(nano-faded fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(nano-faded fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(nano-faded fixed-pitch))
+    
+    ;; Headings with variable-pitch, keeping nano-strong styling
+    (set-face-attribute 'org-document-title nil :inherit '(nano-strong variable-pitch) :height 1.6)
+    (set-face-attribute 'org-level-1 nil :inherit '(nano-strong variable-pitch) :height 1.4)
+    (set-face-attribute 'org-level-2 nil :inherit '(nano-strong variable-pitch) :height 1.2)
+    (set-face-attribute 'org-level-3 nil :inherit '(nano-strong variable-pitch) :height 1.1)
+    (set-face-attribute 'org-level-4 nil :inherit '(nano-strong variable-pitch) :height 1.05)
+    (set-face-attribute 'org-level-5 nil :inherit '(nano-strong variable-pitch) :height 1.0)))
+
+                      #+end_src
 
 I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~.
 #+begin_src emacs-lisp
@@ -888,11 +932,8 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 (add-to-list 'load-path "~/Apps/emacs/nano-tools")
-(add-to-list 'load-path "~/Apps/emacs/de-tools")
-(require 'protein-diagrams)
-
-;; use Rougier's writer mode for a nicer org-mode
 (require 'nano-writer)
+;; use Rougier's writer mode for a nicer org-mode
 
 (use-package svg-lib
   :defer t
@@ -947,41 +988,32 @@ Minor reconfiguration of ~org-mode~.
 #+begin_src emacs-lisp
 (use-package org
   :config
+  ;; Your existing configuration
   (add-hook 'org-mode-hook 'org-indent-mode)
   (setq org-startup-indented t)
   (setq org-confirm-babel-evaluate nil)
-  ;; native syntax highlighting in source blocks
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-display-inline-images t)
-  ;; don't add extra spaces in the source blocks
   (setq org-edit-src-content-indentation 0)
   (setq org-startup-with-inline-images t)
-  ;; edit code block in current window rather than split in two by default
   (setq org-src-window-setup 'split-window-below)
-  ;; change the scale of LaTeX preview
   (setq org-format-latex-options
 	    (plist-put org-format-latex-options :scale 1.1))
-  ;; hide emphasis markers
-  (setq org-hide-emphasis-markers t)
   (setq org-image-actual-width nil)
-  ;; add svg file for exporting inline svg images during export
   (setq org-export-default-inline-image-rule
-	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\)\\'")))
-  ;; preserve indentation on export
+	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
   (setq org-src-preserve-indentation t)
-  ;; I disabled this to make underscores appear proper
-  ;; (setq org-pretty-entities t)
-  ;; set default compiler to "xelatex" to handle unicode characters
-  ;; must be available via $PATH, I installed `mactex` via homebrew on MacOS
   (setq org-latex-compiler "xelatex")
-  ;; added `-shell-escape` to support minted package
   (setq org-latex-pdf-process
 	    (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
-  :bind  (:map org-mode-map
-	           ("C-c l" . org-store-link)
-	           ("C-c C-l" . org-insert-link)
-	           ("C-x v l" . org-toggle-link-display)))
+  :bind (:map org-mode-map
+	          ("C-c l" . org-store-link)
+	          ("C-c C-l" . org-insert-link)
+	          ("C-x v l" . org-toggle-link-display)))
+
+;; Enable variable-pitch-mode in org buffers
+(add-hook 'org-mode-hook 'variable-pitch-mode)
 
 ;; remove under/over line in org source block header/footer
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -999,36 +1031,25 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-engraved-theme 'nano)
-  #+end_src
+#+end_src
 
 Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
 writing LaTeX in org documents.
 
 #+begin_src emacs-lisp
-(use-package org-modern
-  :straight t
-  :hook ((org-mode . org-modern-mode)
-         (org-agenda-finalize . org-modern-agenda))
-  :config
-  (setq org-auto-align-tags nil
-        org-tags-column 0
-        org-catch-invisible-edits 'show-and-error
-        org-special-ctrl-a/e t
-        org-insert-heading-respect-content t
-        org-hide-emphasis-markers t
-        org-ellipsis "…"
-        org-agenda-tags-column 0)
-  )
-
-(use-package org-modern-indent
-  :straight (org-modern-indent :type git :host github :repo "jdtsmith/org-modern-indent")
-  :config
-  (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
-
 (use-package org-fragtog
   :straight t
   :hook (org-mode . org-fragtog-mode))
 
+;; makes editing emphasized text easier
+(use-package org-appear
+  :commands (org-appear-mode)
+  :hook     (org-mode . org-appear-mode)
+  :config
+  (setq org-hide-emphasis-markers t)  ; Must be activated for org-appear to work
+  (setq org-appear-autoemphasis   t   ; Show bold, italics, verbatim, etc.
+        org-appear-autolinks      t   ; Show links
+		org-appear-autosubmarkers t)) ; Show sub- and superscripts
 #+end_src
 
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to
@@ -1149,7 +1170,7 @@ Use the svg package when exporting svg images or graphs into PDF.
 
 
 
-* Custom functions
+* Personal customizations
 :PROPERTIES:
 :header-args: :tangle yes
 :END:
@@ -1205,31 +1226,15 @@ Resizing windows is counter intuitive, so I'd like up/down/left/right to resize 
 (global-set-key (kbd "s-C-<up>") 'enlarge-window)
 #+end_src
 
-The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
-#+begin_src emacs-lisp
-;; (global-set-key (kbd "M-o") 'other-window)
-(use-package ace-window
-  :straight t
-  :bind
-  (("M-o" . ace-window)))
-#+end_src
-
 Load my custom functions
 #+begin_src emacs-lisp
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 #+end_src
 
-
-** Exporting org files
-
-When exporting an org document to PDF or HTML there are lots of settings that one can use. I've arrived to a particular set of settings that suits my needs at the moment and I put the properties in a single function to conveniently add them at the top of the org document:
-
+Simple protein diagram program using svg.
 #+begin_src emacs-lisp
-;; place cursor within the top of the python source block
-(defun de/insert-inline-svg-matplotlib ()
-  (interactive)
-  (insert "import matplotlib_inline\n")
-  (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
+(add-to-list 'load-path "~/Apps/emacs/de-tools")
+(require 'protein-diagrams)
 #+end_src
 
 
@@ -1324,6 +1329,9 @@ To refile the captured notes and todo lists, do =C-c C-w=, entries can be refile
 
 
 * Miscellaneous support
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 
 I use OpenSCAD for 3D printing, so editing the files in Emacs is nice
 #+begin_src emacs-lisp
