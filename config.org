@@ -612,7 +612,7 @@ separate environments. You can simply run:
 
 ;; set the default python to 'utils' (remember to create this!)
 (activate-venv "utils")
-#+end_src
+  #+end_src
 
 #+begin_src emacs-lisp
 ;; use treesitter
@@ -865,7 +865,7 @@ function works without using any, so I will just ignore the argument.
 
 ** Nicolas Rougier's NANO emacs
 Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
-using ~homebrew~.
+using ~homebrew~.  
 
 #+begin_src emacs-lisp
 (use-package nano-theme
@@ -873,47 +873,71 @@ using ~homebrew~.
   :init
   (setq nano-fonts-use nil)  ; Use your own fonts, NOT NANO fonts
   :config
-  ;; call nano-mode to get all UI tweaks
-  (nano-mode)
-  ;; override nano-fonts-use back to nil
-  (setq nano-fonts-use nil)
-  
-  ;; now set your own fonts
-  (set-face-attribute 'default nil 
-                      :family "Roboto Mono"
-                      :height 130)
-  (set-face-attribute 'italic nil
-                      :family "Victor Mono"
-                      :slant 'italic
-                      :height 125)  
-  (set-face-attribute 'fixed-pitch nil
-                      :family "Roboto Mono")
-  (set-face-attribute 'variable-pitch nil
-                      :family "Merriweather"
-                      :height 140)
+  ;; define a function to set custom faces
+  (defun de/nano-theme-overrides (&rest _)
+    "Apply custom font and face overrides for nano-theme."
+    ;; -- Global Font Settings --
+    (set-face-attribute 'default nil 
+                        :family "Berkeley Mono"
+                        :height 125
+                        :weight 'light)
+    (set-face-attribute 'italic nil
+                        :family "Victor Mono"
+                        :slant 'italic
+                        :height 130)  
+    (set-face-attribute 'fixed-pitch nil
+                        :family "Berkeley Mono"
+                        :height 125)
+    (set-face-attribute 'variable-pitch nil
+                        :family "Merriweather"
+                        :height 135)
 
-  ;; finally, load the theme
-  (nano-light)
-
-  ;; Override org faces to support mixed variable/fixed pitch
-  ;; while preserving nano-theme's styling (backgrounds, colors, etc.)
-  (with-eval-after-load 'org
-    ;; Keep highlight background but use fixed-pitch font
-    (set-face-attribute 'org-block nil :inherit '(highlight fixed-pitch))
-    (set-face-attribute 'org-code nil :inherit '(nano-salient fixed-pitch))
-    (set-face-attribute 'org-verbatim nil :inherit '(nano-popout fixed-pitch))
-    (set-face-attribute 'org-table nil :inherit '(nano-faded fixed-pitch))
-    (set-face-attribute 'org-checkbox nil :inherit '(nano-faded fixed-pitch))
-    (set-face-attribute 'org-special-keyword nil :inherit '(nano-faded fixed-pitch))
-    (set-face-attribute 'org-meta-line nil :inherit '(nano-faded fixed-pitch))
+    ;; nano-modeline theme-switching fix
+    (when (featurep 'nano-modeline)
+      (set-face-attribute 'nano-modeline-active nil
+                          :background nil
+                          :foreground nil
+                          :inherit 'nano-subtle)
+      (set-face-attribute 'nano-modeline-inactive nil
+                          :background nil
+                          :foreground nil
+                          :inherit 'nano-faded)
+      (force-mode-line-update t))
     
-    ;; Headings with variable-pitch, keeping nano-strong styling
-    (set-face-attribute 'org-document-title nil :inherit '(nano-strong variable-pitch) :height 1.6)
-    (set-face-attribute 'org-level-1 nil :inherit '(nano-strong variable-pitch) :height 1.4)
-    (set-face-attribute 'org-level-2 nil :inherit '(nano-strong variable-pitch) :height 1.2)
-    (set-face-attribute 'org-level-3 nil :inherit '(nano-strong variable-pitch) :height 1.1)
-    (set-face-attribute 'org-level-4 nil :inherit '(nano-strong variable-pitch) :height 1.05)
-    (set-face-attribute 'org-level-5 nil :inherit '(nano-strong variable-pitch) :height 1.0)))
+    ;; org mode customization
+    (when (featurep 'org) 
+      ;; Keep highlight background but use fixed-pitch font
+      (set-face-attribute 'org-block nil :inherit '(highlight fixed-pitch))
+      (set-face-attribute 'org-code nil :inherit '(nano-salient fixed-pitch))
+      (set-face-attribute 'org-block-begin-line nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'org-block-end-line nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'org-verbatim nil :inherit '(nano-popout fixed-pitch))
+      (set-face-attribute 'org-table nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'org-checkbox nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'org-special-keyword nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'org-meta-line nil :inherit '(nano-faded fixed-pitch))
+      (set-face-attribute 'corfu-default nil :inherit '(nano-subtle fixed-pitch))
+      
+      ;; Headings with variable-pitch, keeping nano-strong styling
+      (set-face-attribute 'org-document-title nil :inherit '(nano-strong variable-pitch) :height 1.4)
+      (set-face-attribute 'org-level-1 nil :inherit '(nano-strong variable-pitch) :height 1.2)
+      (set-face-attribute 'org-level-2 nil :inherit '(nano-strong variable-pitch) :height 1.1)
+      (set-face-attribute 'org-level-3 nil :inherit '(nano-strong variable-pitch) :height 1.05)
+      (set-face-attribute 'org-level-4 nil :inherit '(nano-strong variable-pitch) :height 1.0)
+      (set-face-attribute 'org-level-5 nil :inherit '(nano-strong variable-pitch) :height 1.0)))
+
+  (advice-add 'nano-light :after #'de/nano-theme-overrides)
+  (advice-add 'nano-dark :after #'de/nano-theme-overrides)
+  
+  (with-eval-after-load 'org (de/nano-theme-overrides))
+  (with-eval-after-load 'nano-modeline (de/nano-theme-overrides))
+
+  ;; initial setup
+  (nano-mode)
+  ;; reset this again just to be safe
+  (setq nano-fonts-use nil)
+  ;; load initial theme as light
+  (nano-light))
 
                       #+end_src
 
@@ -1031,6 +1055,16 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-engraved-theme 'nano)
+#+end_src
+
+For a nicer org source block experience, trying ~corg.el~. You can trigger
+completion at point to see what's available. Typically I prefer just invoking
+~complete-symbol~ via `M-<tab>`.
+
+#+begin_src emacs-lisp
+(use-package corg
+  :straight (corg :host github :repo "isamert/corg.el")
+  :hook (org-mode . corg-setup))
 #+end_src
 
 Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
