@@ -55,8 +55,6 @@ today. So this block is commented out.
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
-(add-hook 'org-mode-hook 'auto-fill-mode)
-
 
 ;; new in emacs 30, enable which-key-mode
 (which-key-mode)
@@ -878,19 +876,21 @@ using ~homebrew~.
     "Apply custom font and face overrides for nano-theme."
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
-                        :family "Berkeley Mono"
-                        :height 125
+                        :family "Roboto Mono"
+                        :height 120
                         :weight 'light)
     (set-face-attribute 'italic nil
                         :family "Victor Mono"
                         :slant 'italic
-                        :height 130)  
+                        :height 125)  
     (set-face-attribute 'fixed-pitch nil
-                        :family "Berkeley Mono"
-                        :height 125)
+                        :family "Roboto Mono"
+                        :height 120
+                        :weight 'light)
     (set-face-attribute 'variable-pitch nil
-                        :family "Merriweather"
-                        :height 135)
+                        :family "Roboto Slab"
+                        :height 125
+                        :weight 'light)                        
 
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
@@ -913,6 +913,8 @@ using ~homebrew~.
       (set-face-attribute 'org-block-end-line nil :inherit '(nano-faded fixed-pitch))
       (set-face-attribute 'org-verbatim nil :inherit '(nano-popout fixed-pitch))
       (set-face-attribute 'org-table nil :inherit '(nano-faded fixed-pitch))
+      ;; keep org-hide hidden when switching theme
+      (set-face-attribute 'org-hide nil :foreground (face-attribute 'default :background))
       (set-face-attribute 'org-checkbox nil :inherit '(nano-faded fixed-pitch))
       (set-face-attribute 'org-special-keyword nil :inherit '(nano-faded fixed-pitch))
       (set-face-attribute 'org-meta-line nil :inherit '(nano-faded fixed-pitch))
@@ -1015,10 +1017,13 @@ Minor reconfiguration of ~org-mode~.
   ;; Your existing configuration
   (add-hook 'org-mode-hook 'org-indent-mode)
   (setq org-startup-indented t)
+  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
   (setq org-confirm-babel-evaluate nil)
+  (setq org-display-inline-images t)
+  (setq org-adapt-indentation t)
+  (setq org-hide-leading-stars t)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
-  (setq org-display-inline-images t)
   (setq org-edit-src-content-indentation 0)
   (setq org-startup-with-inline-images t)
   (setq org-src-window-setup 'split-window-below)
@@ -1269,6 +1274,86 @@ Simple protein diagram program using svg.
 #+begin_src emacs-lisp
 (add-to-list 'load-path "~/Apps/emacs/de-tools")
 (require 'protein-diagrams)
+#+end_src
+
+** Molecular Biology work
+Added [2025-11-19 Wed]
+
+Some tasks in wet lab is repetitive (like setting up a PCR). I decided to use ~dynamic blocks~ to try out how this can make my life a bit easier.
+
+#+begin_src emacs-lisp
+(defun de/pcr-format-time (seconds)
+  "Converts seconds into a MM:SS string."
+  (let* ((sec (ceiling seconds))
+         (m (/ sec 60))
+         (s (% sec 60)))
+    (format "%d:%02d" m s)))
+
+(defun org-dblock-write:pcr-protocol (params)
+  "Generates a PCR protocol based on PARAMS.
+PARAMS should include :polymerase, :length-bp, and :tm."
+  (let* ((polymerase (plist-get params :polymerase))
+         (length-bp  (plist-get params :length-bp))
+         (ncycles    (plist-get params :ncycles))
+         (tm         (plist-get params :tm))
+
+         ;; polymerase type
+         (is-taq     (string-match-p "taq" polymerase))
+         (is-hifi    (or (string-match-p "q5" polymerase)
+                         (string-match-p "phusion" polymerase)))
+         (is-q5      (string-match-p "q5" polymerase))
+
+         ;; figure out temperatures
+         ;; taq uses 95 for denaturation and 68 for extension
+         (denat-temp (if is-taq 95 98))
+         (ext-temp   (if is-taq 68 72))
+         
+         ;; Calculate extension time
+         (length-kb  (/ length-bp 1000.0))
+         (seconds-per-kb (if is-taq 60 30)) ;; taq uses 60s/kb, others use 10-30s/kb
+         (raw-ext-seconds (max 10 (* length-kb seconds-per-kb))) ;; use at least 10 secs
+         (ext-time-str (de/pcr-format-time raw-ext-seconds))
+
+         ;; annealing logic
+         (anneal-temp (cond (is-hifi (+ tm 3))
+                            (is-taq  (- tm 5))
+                            (t tm)))
+         (anneal-note (cond (is-hifi "Tm + 3 °C")
+                            (is-taq "Tm - 5 °C")
+                            (t "Tm")))
+
+         ;; Final extension defaults
+         (final-ext-time (if is-q5 "2:00" "5:00")))
+
+    (insert
+     (format "| Step | Temp. | Time | Notes |\n")
+     (format "|------|-------|------|-------|\n")
+     (format "| init. denaturation | %d °C | 0:30 | |\n" denat-temp)
+     (format "| %d cycles | | | |\n" ncycles)
+     (format "| - denaturation | %d °C | %s | |\n"
+             denat-temp (if is-taq "0:30" "0:10"))
+     (format "| - annealing    | %d °C | %s | Calc: %s |\n"
+             anneal-temp (if is-taq "1:00" "0:30") anneal-note)
+     (format "| - extension    | %d °C | %s | %.2f kb * %ds/kb |\n"
+             ext-temp ext-time-str length-kb seconds-per-kb)
+     (format "|------|-------|------|-------|\n")
+     (format "| Final extension| %d °C | %s | |\n" ext-temp final-ext-time)
+     (format "| hold | 12 °C | \u221e | |"))
+    (org-table-align)))
+
+
+(defun de/insert-pcr-template ()
+  "Interactively insert a PCR dynamic block."
+  (interactive)
+  (let ((poly (completing-read "Polymerase: " '("q5" "phusion" "taq") nil t "q5"))
+        (len (read-number "Amplicon Length (bp): "))
+        (tm (read-number "Primer Tm (°C): "))
+        (ncycles (read-number "# cycles: ")))
+    (insert
+     (format "#+BEGIN: pcr-protocol :polymerase \"%s\" :length-bp %d :tm %d :ncycles %d\n#+END\n"
+             poly len tm ncycles))
+    (forward-line -1)
+    (org-ctrl-c-ctrl-c)))
 #+end_src
 
 

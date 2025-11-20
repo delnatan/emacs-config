@@ -1,6 +1,5 @@
 ;; -*- lexical-binding: t -*-
 ;; DE_fun01.el --- Custom-defined functions for various text-related tasks
-
 (defun de/wrap-region (n start end)
   "Wrap text in current region.
 (wrap-region N START END)
@@ -20,15 +19,15 @@ C-u 50 M-x wrap-region
   (if (use-region-p)
       ;; if using region
       (save-excursion
-	(let* ((regionp (clean-string (buffer-substring start end)))
-	       (result
-		(string-join (split-string-every regionp n) "\n")))
-	  ;; `let` body
-	  (kill-region start end) ;; delete current region
-	  (insert result) ;; insert split text
-	  )
-	;; otherwise
-	(message "no region was selected"))
+	    (let* ((regionp (clean-string (buffer-substring start end)))
+	           (result
+		        (string-join (split-string-every regionp n) "\n")))
+	      ;; `let` body
+	      (kill-region start end) ;; delete current region
+	      (insert result) ;; insert split text
+	      )
+	    ;; otherwise
+	    (message "no region was selected"))
     )
   )
 
@@ -51,15 +50,15 @@ C-u 50 M-x wrap-region
   (if (use-region-p)
       ;; if using region
       (save-excursion
-	(let* ((regionp (clean-string-keep-punctuations (buffer-substring start end)))
-	       (result
-		(string-join (split-string-every regionp n) "\n")))
-	  ;; `let` body
-	  (kill-region start end) ;; delete current region
-	  (insert result) ;; insert split text
-	  )
-	;; otherwise
-	(message "no region was selected"))
+	    (let* ((regionp (clean-string-keep-punctuations (buffer-substring start end)))
+	           (result
+		        (string-join (split-string-every regionp n) "\n")))
+	      ;; `let` body
+	      (kill-region start end) ;; delete current region
+	      (insert result) ;; insert split text
+	      )
+	    ;; otherwise
+	    (message "no region was selected"))
     )
   )
 
@@ -79,10 +78,10 @@ string's start (sstart) and end (send)"
   (interactive "r")
   (if (use-region-p)
       (let* ((regionp (clean-string (buffer-substring start end)))
-	     (sstart (string-to-number (read-from-minibuffer "String start: ")))
-	     (send (string-to-number (read-from-minibuffer (format "String end (%d): " (length regionp))))))
-	(message "Put %d to %d (%d total chars) to kill-ring" sstart send (length regionp))
-	(kill-new (substring regionp (- sstart 1) send)))
+	         (sstart (string-to-number (read-from-minibuffer "String start: ")))
+	         (send (string-to-number (read-from-minibuffer (format "String end (%d): " (length regionp))))))
+	    (message "Put %d to %d (%d total chars) to kill-ring" sstart send (length regionp))
+	    (kill-new (substring regionp (- sstart 1) send)))
     (message "no region was selected")))
 
 
@@ -100,11 +99,11 @@ Meant to be used with biosequences."
 
 This returns a list of strings."
   (cond ((string-empty-p string) nil)
-	((< (length string) chars)
-	 (list string))
-	(t (cons (substring string 0 chars)
-		 (split-string-every (substring string chars)
-				     chars)))))
+	    ((< (length string) chars)
+	     (list string))
+	    (t (cons (substring string 0 chars)
+		         (split-string-every (substring string chars)
+				                     chars)))))
 
 (defun clean-string (string)
   "cleans input STRING
@@ -200,18 +199,18 @@ Used to make neat table-of-content style dotted spaces
 "
   (interactive "r")
   (let* ((lines (extract-rectangle start end))
-	 (rect-width (apply 'max (mapcar 'length lines))))
+	     (rect-width (apply 'max (mapcar 'length lines))))
     (delete-rectangle start end)
     (goto-char start)
     (insert-rectangle
      (mapcar (lambda (line)
-	       (let* ((trimmed-line (string-trim line))
-		      (ndots (- rect-width (length trimmed-line)))
-		      (ndots (+ ndots 1)) ;account for '~' character
-		      (dots (make-string ndots ?.)))
-		 (message "replacing '~' in %s with %s" line dots)
-		 (replace-regexp-in-string "~" dots line)))
-	     lines))))
+	           (let* ((trimmed-line (string-trim line))
+		              (ndots (- rect-width (length trimmed-line)))
+		              (ndots (+ ndots 1)) ;account for '~' character
+		              (dots (make-string ndots ?.)))
+		         (message "replacing '~' in %s with %s" line dots)
+		         (replace-regexp-in-string "~" dots line)))
+	         lines))))
 
 
 (defun de/find-sequence-in-region (query)
@@ -226,19 +225,19 @@ returns (start end) and prints the message with the same information
   (if (not (use-region-p))
       (message "No region selected")
     (let* ((beg (region-beginning))
-	   (end (region-end))
-	   (region-text (buffer-substring-no-properties beg end))
-	   (cleaned-region (replace-regexp-in-string "[^a-zA-Z]" "" region-text))
-	   (cleaned-query  (replace-regexp-in-string "[^a-zA-Z]" "" query)))
+	       (end (region-end))
+	       (region-text (buffer-substring-no-properties beg end))
+	       (cleaned-region (replace-regexp-in-string "[^a-zA-Z]" "" region-text))
+	       (cleaned-query  (replace-regexp-in-string "[^a-zA-Z]" "" query)))
       (if (zerop (length cleaned-query))
-	  (message "Query is empty after removing non-alphabetic characters.")
-	(let ((match-start (string-match (upcase cleaned-query) (upcase cleaned-region))))
-	  (if (not match-start)
-	      (message "Query sequence not found in selected region.")
-	    (let ((start-index (1+ match-start))
-		  (end-index (+ match-start (length cleaned-query))))
-	      (message "Found '%s' at (%d %d)" cleaned-query start-index end-index)
-	      (list start-index end-index))))))))
+	      (message "Query is empty after removing non-alphabetic characters.")
+	    (let ((match-start (string-match (upcase cleaned-query) (upcase cleaned-region))))
+	      (if (not match-start)
+	          (message "Query sequence not found in selected region.")
+	        (let ((start-index (1+ match-start))
+		          (end-index (+ match-start (length cleaned-query))))
+	          (message "Found '%s' at (%d %d)" cleaned-query start-index end-index)
+	          (list start-index end-index))))))))
 
 
 
@@ -248,8 +247,8 @@ returns (start end) and prints the message with the same information
   "Calculate the arithmetic expression in the region and append the result. The result is appended on the same line, separate by ' = '."
   (interactive "r")
   (let* ((expression (buffer-substring-no-properties start end))
-	 (cleaned-expr (string-trim expression))
-	 (result (calc-eval cleaned-expr)))
+	     (cleaned-expr (string-trim expression))
+	     (result (calc-eval cleaned-expr)))
     (goto-char end)
     (insert (format " = %s" result))))
 
