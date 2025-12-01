@@ -178,6 +178,7 @@ version in swiper.
 
 (use-package consult
   :bind (("C-x b" . consult-buffer)
+         ("C-x 4 b" . consult-buffer-other-window)
          ("C-s" . consult-line)
          ("C-r" . consult-line)))
   #+end_src
@@ -217,6 +218,40 @@ Switching to using ~dirvish~ for an enhanced dired experience
                          (display-line-numbers-mode -1)
                          (visual-line-mode -1)
                          (hl-line-mode 1))))
+#+end_src
+
+Let's make `ibuffer` look nicer:
+#+begin_src emacs-lisp
+(use-package nerd-icons-ibuffer
+  :straight t
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
+  :config
+  ;; Use human-readable sizes (1k, 1M) and align icons nicely
+  (setq nerd-icons-ibuffer-human-readable-size t
+        nerd-icons-ibuffer-icon t
+        nerd-icons-ibuffer-color-icon t))
+
+;; Configure ibuffer itself to be cleaner
+(use-package ibuffer
+  :straight (:type built-in)
+  :bind ("C-x C-b" . ibuffer)
+  :config
+  ;; Don't show empty filter groups
+  (setq ibuffer-show-empty-filter-groups nil)
+  ;; Use your custom filter groups (simplified from your original config)
+  (setq ibuffer-saved-filter-groups
+        '(("Default"
+           ("Magit" (name . "^magit"))
+           ("Dired" (mode . dired-mode))
+           ("Org" (mode . org-mode))
+           ("Code" (derived-mode . prog-mode))
+           ("PDF" (mode . pdf-view-mode))
+           ("Shell" (or (mode . eshell-mode) (mode . shell-mode) (mode . vterm-mode)))
+           ("Emacs" (or (name . "^\\*scratch\\*$") (name . "^\\*Messages\\*$"))))))
+  ;; Load these groups automatically
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "Default"))))
 #+end_src
 
 I'd like to be able to toggle horizontal/vertical split when I have 2 windows
@@ -535,6 +570,7 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
    ("C-c C-c" . code-cells-eval)))
 #+end_src
 
+
 ** Jupyter setup
 
 I'm using my own fork of the jupyter package because I don't like the default
@@ -744,20 +780,19 @@ using ~homebrew~.
     "Apply custom font and face overrides for nano-theme."
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
-                        :family "Roboto Mono"
-                        :height 130
-                        :weight 'light)
+                        :family "Iosevka"
+                        :height 130)
     (set-face-attribute 'italic nil
                         :family "Victor Mono"
                         :slant 'italic
                         :height 130)
     (set-face-attribute 'fixed-pitch nil
-                        :family "Roboto Mono"
-                        :height 130
-                        :weight 'light)
+                        :family "Iosevka"
+                        :height 130)
     (set-face-attribute 'variable-pitch nil
                         :family "Roboto Slab"
-                        :height 135)
+                        :height 135
+                        :weight 'light)
     
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
