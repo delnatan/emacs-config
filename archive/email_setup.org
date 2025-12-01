@@ -1,0 +1,269 @@
+#+TITLE: Archived config
+#+AUTHOR: Daniel Elnatan
+
+Here is where I keep all of old configurations that I no longer use. Mostly for record because some of these were pretty involved.
+
+* E-mail setup
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+
+To save some clutter, I've stopped using mu4e for now... maybe until my next computer setup.
+
+** Notes on setting up ~isync~ and ~mu4~
+
+~mu~ was installed via Homebrew in MacOS, and it actually comes with ~mu4e~, so I need to point use-package to use the files that were installed by homebrew in ~/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e~.
+
+Setting up gmail was relatively trivial by using "App password", following the guide in [[https://macowners.club/posts/email-emacs-mu4e-macos/]], I was able to get pretty far.
+
+But when setting up the UC Davis e-mail, this was when things got pretty hairy. I had to basically re-build ~isync~ from source instead of using whatever the homebrew recipe for ~isync~ does. This was because isync, when installed via the standard recipe via homebrew, uses Apple's internal SASL library. You can check this by running:
+
+~otool -L $(which mbsync)~
+
+You can see that it uses the library from ~/usr/lib~.
+
+Now, the "modern" microsoft exchange 365 authentication method needs /XOAUTH2/, which you can install from [[https://github.com/moriyoshi/cyrus-sasl-xoauth2]], but you first need to install ~cyrus-sasl~ from homebrew. Make sure than when you run ~pluginviewer~ (from cyrus-sasl), that the 'xoauth2' is present. You can do this by specifying that ~./configure --with-cyrus-sasl=/path/to/cyrus-sasl~, when building the xoauth2 plugin.
+
+In addition, you need to register your 'web app' in microsoft's [[https://portal.azure.com][Azure portal]]. 
+
+Do this in conjunction with installing the python command line ~oauth2ms~ ([[https://github.com/harishkrupo/oauth2ms]]), follow the guide there. It would take you pretty far. I installed the python package until my 'utils' conda environment, which was added as a "shebang" line at the top of the oauth2ms script. Here are my settings for mbsync and smtp:
+
+=~/.mbsyncrc=:
+#+begin_example
+######################################################################
+# GMAIL IMAP SETUP for mbsync (isync)                                #
+######################################################################
+IMAPAccount gmail
+Host imap.gmail.com
+User delnatan@gmail.com
+PassCmd "security find-generic-password -s isync-gmail -a delnatan@gmail.com -w"
+Port 993
+TLSType IMAPS
+TLSVersions +1.2
+AuthMechs PLAIN
+SystemCertificates no
+CertificateFile ~/.maildir/certificates/root-certificates.pem
+
+IMAPStore gmail-remote
+Account gmail
+
+MaildirStore gmail-local
+SubFolders Verbatim
+Path ~/.maildir/gmail/
+Inbox ~/.maildir/gmail/INBOX/
+
+Channel gmail
+Far :gmail-remote:
+Near :gmail-local:
+Patterns *
+Create Near
+Sync All
+Expunge Both
+SyncState *
+
+
+######################################################################
+# EXCHANGE UCD EMAIL                                                 #
+######################################################################
+IMAPAccount ucd
+User delnatan@ucdavis.edu
+Host outlook.office365.com
+Port 993
+TLSType IMAPS
+TLSVersions +1.2
+PassCmd oauth2ms
+AuthMechs XOAUTH2
+CertificateFile ~/.maildir/certificates/root-certificates.pem
+
+IMAPStore ucd-remote
+Account ucd
+
+MaildirStore ucd-local
+SubFolders Verbatim
+Path ~/.maildir/ucd/
+Inbox ~/.maildir/ucd/INBOX
+
+Channel ucd
+Far :ucd-remote:
+Near :ucd-local:
+Patterns *
+Create Near
+Sync All
+Expunge Both
+SyncState *
+
+#+end_example
+
+Note that I use "TLSVersions", which is presumable new in isync 1.5.0 because the previous keyword "SSLversions" has been deprecated. It requires the version value to have +/- signs.
+
+As for the oauth2ms configuration, make sure you (requests are subject to approval of the azure account, mine was approved within a business day) get the details from the azure portal and put them in the config like below:
+=~/.config/oauth2ms/config.json=:
+#+begin_src json
+{
+    "tenant_id": "<your_tenant_id>"
+    "client_id": "<your_client_id>",
+    "client_secret": "<your_client_secret>",
+    "redirect_host": "localhost",
+    "redirect_port": "5123",
+    "redirect_path": "/getToken/",
+    "scopes": [
+	"https://outlook.office.com/IMAP.AccessAsUser.All",
+	"https://outlook.office.com/SMTP.Send"
+    ]
+}
+#+end_src
+
+The port number is arbitrary, I just chose something that I don't typically use.
+For some reason, this stopped working for my outlook e-mail! My app authorization expired and needed to renew it! Note that after renewing permissions, you may need to remove a token that's been saved in ~~/.local/share/oauth2ms~ (it may be named credentials.bin). If so, delete that file and authentication should work fine.
+
+Once done, run ~mbsync -aV~. Then, initialize ~mu~ by running:
+
+#+begin_src bash
+mu init -m ~/.maildir \
+   --my-address delnatan@gmail.com \
+   --my-address delnatan@ucdavis.edu
+
+mu index
+#+end_src
+
+To send e-mails, SMTP needs to be setup properly also.
+
+=~/.msmtprc=:
+#+begin_example
+# SMTP, for sending e-mails
+
+# Default values for all accounts
+defaults
+logfile ~/.maildir/msmtp.log
+tls_trust_file ~/.maildir/certificates/root-certificates.pem
+
+######################################################################
+# GMAIL SMTP                                                         #
+######################################################################
+account gmail
+auth on
+host smtp.gmail.com
+port 465
+protocol smtp
+from delnatan@gmail.com
+user delnatan
+passwordeval security find-generic-password -s isync-gmail -a delnatan@gmail.com -w
+tls on
+tls_starttls off
+
+######################################################################
+# UCD Exchange (office 365)                                          #
+######################################################################
+account ucd
+host smtp.office365.com
+port 587
+user delnatan@ucdavis.edu
+from delnatan@ucdavis.edu
+auth xoauth2
+passwordeval "oauth2ms"
+tls on
+tls_starttls on
+tls_certcheck on
+
+######################################################################
+account default : gmail
+#+end_example
+
+** use-package & mu4e configuration
+#+begin_src emacs-lisp
+(use-package mu4e
+  :straight nil
+  :load-path "/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e"
+  :config
+  (require 'mu4e-contrib)
+  (require 'smtpmail)
+  
+  (setq mu4e-mu-binary (executable-find "mu"))
+  ;; this is the directory we created before:
+  (setq mu4e-maildir "~/.maildir")
+  ;; this command is called to sync imap servers:
+  (setq mu4e-get-mail-command (concat (executable-find "mbsync") " -a"))
+  ;; how often to call it in seconds:
+  (setq mu4e-update-interval 300)
+  ;; save attachment to desktop by default
+  ;; or another choice of yours:
+  (setq mu4e-attachment-dir "~/Downloads/MailAttachments/")
+  ;; rename files when moving - needed for mbsync:
+  (setq mu4e-change-filenames-when-moving t)
+  ;; list of your email adresses:
+  (setq mu4e-user-mail-address-list '("delnatan@gmail.com"
+				      "delnatan@ucdavis.edu"))
+  (setq mu4e-maildir-shortcuts
+	'(("/gmail/INBOX" . ?g)
+          ("/gmail/Sent" . ?G)
+	  ("/ucd/INBOX" . ?u)
+	  ("/ucd/Sent" . ?U)))
+
+  ;; add bookmark
+  ;; (add-to-list 'mu4e-bookmarks
+  ;; 	       (mu4e-bookmark-define
+  ;; 		"maildir:/gmail/INBOX"
+  ;; 		"Inbox - Gmail"
+  ;; 		?g))
+
+  (setq mu4e-contexts
+	`(,(make-mu4e-context
+            :name "gmail"
+            :enter-func
+            (lambda () (mu4e-message "Enter delnatan@gmail.com context"))
+            :leave-func
+            (lambda () (mu4e-message "Leave delnatan@gmail.com context"))
+            :match-func
+            (lambda (msg)
+              (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@gmail.com")))
+            :vars '((user-mail-address . "delnatan@gmail.com")
+                    (user-full-name . "Daniel Elnatan")
+                    (mu4e-drafts-folder . "/gmail/Drafts")
+                    (mu4e-refile-folder . "/gmail/Archive")
+                    (mu4e-sent-folder . "/gmail/Sent")
+                    (mu4e-trash-folder . "/gmail/Trash")))
+	  ,(make-mu4e-context
+	    :name "UCD"
+	    :enter-func
+	    (lambda () (mu4e-message "Enter delnatan@ucdavis.edu context"))
+	    :leave-func
+	    (lambda () (mu4e-message "Leave delnatan@ucdavis.edu context"))
+	    :match-func
+	    (lambda (msg)
+	      (when msg
+		(mu4e-message-contact-field-matches
+		 msg :to "delnatan@ucdavis.edu")))
+	    :vars `((user-mail-address . "delnatan@ucdavis.edu")
+		    (user-full-name . "Daniel Elnatan")
+		    (mu4e-drafts-folder . "/ucd/Drafts")
+		    (mu4e-refile-folder . "/ucd/Archive")
+		    (mu4e-sent-folder . "/ucd/Sent")
+		    (mu4e-trash-folder . "/ucd/Deleted Items")))))
+  
+  ;; start with the first (default) context
+  (setq mu4e-context-policy 'pick-first)
+  ;; ask for context if no context matches
+  (setq mu4e-compose-context-policy 'ask)
+
+  ;; use smtp
+  (setq message-send-mail-function 'message-send-mail-with-sendmail)
+  (setq sendmail-program "msmtp"))
+
+
+#+end_src
+
+Using Nicolas Rougier's ~mu4e-dashboard~
+
+#+begin_src emacs-lisp
+(use-package async
+  :straight t)
+
+(add-to-list 'load-path "~/Apps/emacs/mu4e-dashboard/")
+
+;; ensure that mu4e-dashboard is loaded after executing mu4e
+(with-eval-after-load 'mu4e (require 'mu4e-dashboard))
+#+end_src
+
+

@@ -7,16 +7,20 @@
 today. So this block is commented out.
 
 #+begin_src emacs-lisp
-  ;; (use-package exec-path-from-shell
-  ;;   :straight (exec-path-from-shell
-  ;;              :type git :host github
-  ;;              :repo "purcell/exec-path-from-shell")
-  ;;   :init
-  ;;   (when (memq window-system '(mac ns x))
-  ;;     (exec-path-from-shell-initialize)))
+;; (use-package exec-path-from-shell
+;;   :straight (exec-path-from-shell
+;;              :type git :host github
+;;              :repo "purcell/exec-path-from-shell")
+;;   :init
+;;   (when (memq window-system '(mac ns x))
+;;     (exec-path-from-shell-initialize)))
 
-  ;; toggle this to debug issues
-  ;; (setq debug-on-error t)
+;; toggle this to debug issues
+;; (setq debug-on-error t)
+
+;; use the latest transient (needed by magit, dirvish, and probably many others)
+(use-package transient
+  :straight t)
 #+end_src
 
 
@@ -27,6 +31,7 @@ today. So this block is commented out.
 (use-package no-littering
   :straight t)
 
+(set-language-environment "UTF-8")
 (set-default-coding-systems 'utf-8)
 (setq inhibit-startup-message t)
 (setq custom-safe-themes t)
@@ -48,10 +53,15 @@ today. So this block is commented out.
 ;; reverse mouse direction for a more natural swipe feel
 (setq mouse-wheel-flip-direction t)
 
+;; start as a small frame
+(setq initial-frame-alist
+       '((top . 1) (left . 1) (width . 80) (height . 40)))
+
 ;; hooks to customize behavior of specific modes
 (add-hook 'text-mode-hook 'visual-line-mode)
 (add-hook 'prog-mode-hook 'visual-line-mode)
 (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode)
+
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'visual-line-mode)
@@ -98,68 +108,13 @@ today. So this block is commented out.
 (global-set-key (kbd "M-`") 'other-frame)
 #+end_src
 
-Customize ~ibuffer~ to show things by groups. To disable filtering (remove all
-filter groups) do =/ \= while in ibuffer mode. Then if you want to re-apply the
-saved filter group, do =/ R=.
-#+begin_src emacs-lisp
-;; Enable ibuffer
-(require 'ibuffer)
-
-;; map C-x C-b to `ibuffer`
-(define-key ctl-x-map "\C-b" 'ibuffer)
-
-;; Define custom groups for ibuffer
-;; add commonly used modes below
-(setq ibuffer-saved-filter-groups
-      '(("default"
-         ("Dired" (mode . dired-mode))
-  	     ("Web" (or (mode . tsx-ts-mode)
-  		            (mode . js-ts-mode)
-  		            (mode . js-json-mode)))
-         ("Python" (or (mode . python-mode)
-                       (mode . python-ts-mode)))
-         ("Elisp" (or (mode . emacs-lisp-mode)))
-  	     ("Rust" (mode . rust-ts-mode))
-         ("Org" (mode . org-mode))
-         ("Jupyter" (mode . jupyter-repl-mode))
-         ("Emacs" (or (name . "^\\*scratch\\*$")
-                      (name . "^\\*Messages\\*$")
-                      (name . "^\\*Warnings\\*$")))
-  	     ("Document" (or (mode . pdf-view-mode)
-  			             (mode . doc-view-mode)))
-         ("Help" (or (name . "^\\*Help\\*$")
-                     (name . "^\\*Apropos\\*$")
-                     (name . "^\\*info\\*$"))))))
-
-;; Set the default filter group
-(add-hook 'ibuffer-mode-hook
-          (lambda ()
-            (ibuffer-switch-to-saved-filter-groups "default")))
-
-(setq ibuffer-formats
-      '((mark modified read-only " "
-              (name 30 30 :left :elide)
-              " "
-              (size 9 -1 :right)
-              " "
-              (mode 16 16 :left :elide)
-              " " filename-and-process)
-        (mark " "
-              (name 16 -1)
-              " " filename)))
-
-;; Enable ibuffer auto-mode
-(setq ibuffer-expert t)
-(setq ibuffer-show-empty-filter-groups nil)
-#+end_src
-
 In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
 #+begin_src emacs-lisp
 (use-package ultra-scroll
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
   (setq scroll-conservatively 101
-  	    scroll-margin 0)
+    	scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 #+end_src
@@ -170,24 +125,9 @@ Use multiple cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-  	     ("C-c C-<" . mc/mark-all-like-this)
+    	 ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
-#+end_src
-
-Emacs will automatically create backup files in the same folder as the current directory, but this creates a lot of clutter, so let's just move all the files into a hidden folder
-#+begin_src emacs-lisp
-;; Ensure the backup/auto-save directory exists
-(make-directory (expand-file-name "~/.emacs.d/bak") t)
-(setq backup-directory-alist '(("" . "~/.emacs.d/bak")))
-
-(setq auto-save-file-name-transforms
-      '((".*" "~/.emacs.d/bak/autosaves" t)))
-(setq backup-by-copying t ; use copying to create backup files
-      delete-old-versions t ; delete excess backup files
-      kept-new-versions 4
-      kept-old-versions 2
-      version-control t)
 #+end_src
 
 Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]]
@@ -226,6 +166,7 @@ version in swiper.
    ("C-h v" . helpful-variable)
    ("C-h k" . helpful-key)
    ("C-h x" . helpful-command)
+   ("C-h o" . helpful-symbol)
    ;; Lookup the current symbol at point
    ("C-c C-d" . helpful-at-point)))
 
@@ -239,7 +180,7 @@ version in swiper.
   :bind (("C-x b" . consult-buffer)
          ("C-s" . consult-line)
          ("C-r" . consult-line)))
-#+end_src
+  #+end_src
 
 
 ** Enhancements
@@ -253,81 +194,29 @@ The default keybinding to switch to another window is =C-x o=, let's just make t
   (("M-o" . ace-window)))
 #+end_src
 
-Using ~dired-sidebar~ to conveniently go through files and folders in vertical
-minibuffer
+Switching to using ~dirvish~ for an enhanced dired experience
 #+begin_src emacs-lisp
-;; this was taken from https://www.emacswiki.org/emacs/DiredOmitMode
-(defun dired-dotfiles-toggle ()
-  "Show/hide dot-files"
-  (interactive)
-  (when (equal major-mode 'dired-sidebar-mode)
-    (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
-        (progn 
-          (set (make-local-variable 'dired-dotfiles-show-p) nil)
-          (message "h")
-          (dired-mark-files-regexp "^\\\.")
-          (dired-do-kill-lines))
-      (progn (revert-buffer) ; otherwise just revert to re-show
-             (set (make-local-variable 'dired-dotfiles-show-p) t)))))
-
-;; add dired-sidebar selector
-(defun ibuffer-mark-dired-sidebar-buffers ()
-  "Mark all `dired-sidebar' buffers."
-  (interactive)
-  (ibuffer-mark-on-buffer
-   (lambda (buf) (eq (buffer-local-value 'major-mode buf) 'dired-sidebar-mode))))
-
-;; for better quality icons, Emacs should be installed with imagemagick support
-(use-package vscode-icon
+(use-package dirvish
   :straight t
-  :commands (vscode-icon-for-file))
-
-(use-package dired-sidebar
-  :straight (:type git :host github :repo "jojojames/dired-sidebar")
-  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar)
-         :map dired-mode-map
-         ("<backtab>" . dired-dotfiles-toggle))
-  :commands (dired-sidebar-toggle-sidebar)
-  :config
-  (setq dired-sidebar-width 30)
   :init
-  (add-hook 'dired-sidebar-mode-hook
-            (lambda ()
-              (unless (file-remote-p default-directory)
-                (auto-revert-mode))))
+  ;; Enable dirvish globally (replaces standard dired)
+  (dirvish-override-dired-mode)
+  :custom
+  ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
+  (dirvish-attributes '(nerd-icons file-time file-size collapse subtree-state vc-state git-msg))
+  (dirvish-side-width 30)
   :config
-  (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
-  (push 'rotate-windows dired-sidebar-toggle-hidden-commands)
-  (setq dired-sidebar-subtree-line-prefix "__")
-  (setq dired-sidebar-theme 'vscode)
-  (setq dired-sidebar-use-term-integration t))
-
-(use-package ibuffer
-  :straight (:type built-in)
-  :config
-  ;; define keymap to select all dired-sidebar modes while in ibuffer
-  (define-key ibuffer-mode-map (kbd "* |") 'ibuffer-mark-dired-sidebar-buffers))
-
-#+end_src
-
-Customize keybindings for outline-minor-mode when editing structured texts.
-#+begin_src emacs-lisp
-;; ;; define custom function to trigger show/hide in 'outline-minor-mode'
-(defun de/hide_all ()
-  (interactive)
-  (if outline-minor-mode
-      (progn (outline-hide-body)
-             (outline-hide-sublevels 1))
-    (message "Outline minor mode is not enabled.")))
-
-;; remap some of the terrible default keybindings
-(let ((kmap outline-minor-mode-map))
-  (define-key kmap (kbd "M-<up>") 'outline-move-subtree-up)
-  (define-key kmap (kbd "M-<down>") 'outline-move-subtree-down)
-  (define-key kmap (kbd "<backtab>") 'outline-cycle)
-  (define-key kmap (kbd "C-s-h") 'de/hide_all)
-  (define-key kmap (kbd "C-s-s") 'outline-show-all))
-
+  ;; Enable "follow mode" so the sidebar updates as you switch files
+  (dirvish-side-follow-mode)
+  :bind
+  ;; Bind a key to toggle the sidebar
+  ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
+  :hook
+  ;; Clean up the sidebar look
+  (dirvish-side-mode . (lambda ()
+                         (display-line-numbers-mode -1)
+                         (visual-line-mode -1)
+                         (hl-line-mode 1))))
 #+end_src
 
 I'd like to be able to toggle horizontal/vertical split when I have 2 windows
@@ -400,15 +289,12 @@ the center for easier viewing:
 ** General setup
 
 Using magit for git project management.
-#+begin_src emacs-lisp
-(use-package magit
-  :straight (magit :type git :host github :repo "magit/magit")
-  :bind (("C-x g" . magit-status)))
-#+end_src
 
-In general, I prefer a tab width of 4:
-#+begin_src emacs-lisp
-(setq tab-width 4)
+#+begin_src emacs-lisp :tangle yes
+(use-package magit
+  :defer t
+  :straight t
+  :bind (("C-x g" . magit-status)))
 #+end_src
 
 Setup ~treesitter~ for several languages. To tell whether the current buffer is
@@ -416,8 +302,9 @@ using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
 (add-to-list 'treesit-language-source-alist
-	         '(python . ("https://github.com/tree-sitter/tree-sitter-python")))
-
+  	         '(python . ("https://github.com/tree-sitter/tree-sitter-python"))
+             '(cpp    . ("https://github.com/tree-sitter/tree-sitter-cpp"))
+             '(c      . ("https://github.com/tree-sitter/tree-sitter-c")))
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
@@ -427,36 +314,22 @@ Silence eglot progress (in the *Messages* buffer)
 (setq eglot-report-progress nil)
 #+end_src
 
-I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed
-up LSP via ~eglot-booster~.
+I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed up LSP via ~eglot-booster~.
 
-Since eglot is the LSP client, you can also configure each LSP settings
-'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
+Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
 
 #+begin_src emacs-lisp
 (use-package eglot
   :defer t
-   :straight (:type built-in)
-  :bind (:map eglot-mode-map
-              ("C-c C-d" . eldoc)
-              ("C-c C-f" . eglot-format-buffer))
+  :straight (:type built-in)
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-d" . eldoc)
+        ("C-c C-f" . eglot-format-buffer))
   :hook ((python-base-mode . eglot-ensure)
-  	     (rust-mode . eglot-ensure))
+         (rust-mode . eglot-ensure))
   :custom
-  (eglot-autoshutdown t)
-  :config
-  (setq-default
-   eglot-workspace-configuration
-   '(;; Configuration for basedpyright (Python)
-     :basedpyright
-     (:typeCheckingMode "standard"
-			            :reportMissingTypeArgument "none"
-			            :analysis
-			            (:inlayHints (:callArgumentNames :json-false
-							                             :variableTypes :json-false
-							                             :functionReturnTypes :json-false)))
-     )))
-
+  (eglot-autoshutdown t))
 
 (use-package eglot-booster
   :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
@@ -474,7 +347,6 @@ uses a timer to type some characters, and 'l' for going to a specific line.
 (global-set-key (kbd "M-g c") 'avy-goto-char)
 (global-set-key (kbd "M-g t") 'avy-goto-char-timer)
 (global-set-key (kbd "M-g l") 'avy-goto-line)
-
 #+end_src
 
 Use `treesit-fold` for code folding
@@ -482,20 +354,19 @@ Use `treesit-fold` for code folding
 (use-package treesit-fold
   :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :hook (prog-mode . treesit-fold-mode)
-  :bind (:map prog-mode-map
-              ("C-c f f" . treesit-fold-toggle)    
-              ("C-c f c" . treesit-fold-close)     
-              ("C-c f o" . treesit-fold-open)      
-              ("C-c f r" . treesit-fold-open-recursively)
-              ("C-c f C" . treesit-fold-close-all)  
-              ("C-c f O" . treesit-fold-open-all))) 
+  :bind
+  (:map prog-mode-map
+        ("C-c f f" . treesit-fold-toggle)    
+        ("C-c f c" . treesit-fold-close)     
+        ("C-c f o" . treesit-fold-open)      
+        ("C-c f r" . treesit-fold-open-recursively)
+        ("C-c f C" . treesit-fold-close-all)  
+        ("C-c f O" . treesit-fold-open-all))) 
 
 (use-package treesit-fold-indicators
   :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :config
   (global-treesit-fold-indicators-mode))
-
-
 #+end_src
 
 For general code formatting I use ~apheleia~. Python code formatting uses =ruff=
@@ -510,20 +381,20 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
   :config
   ;; supress auto-revert warnings
   (setq apheleia-inhibit-functions
-  	    (cons #'buffer-modified-p apheleia-inhibit-functions))
+    	(cons #'buffer-modified-p apheleia-inhibit-functions))
   ;; define formatters
   (setf (alist-get 'ruff apheleia-formatters)
         '("ruff" "format" "--verbose" "--line-length" "79"
-  	      "--stdin-filename" filepath))
+    	  "--stdin-filename" filepath))
   (setf (alist-get 'prettier-typescript apheleia-formatters)
-  	    '("prettier" "--use-tabs=false" "--print-width" "80"
-  	      "--stdin-filename" filepath "--parser=typescript"))
+    	'("prettier" "--use-tabs=false" "--print-width" "80"
+    	  "--stdin-filename" filepath "--parser=typescript"))
   (setf (alist-get 'prettier-json apheleia-formatters)
-  	    '("prettier" "--use-tabs=false" "--print-width" "80"
-  	      "--stdin-filename" filepath "--parser=json"))
+    	'("prettier" "--use-tabs=false" "--print-width" "80"
+    	  "--stdin-filename" filepath "--parser=json"))
   (setf (alist-get 'prettier-javascript apheleia-formatters)
-  	    '("prettier" "--use-tabs=false" "--print-width" "80"
-  	      "--stdin-filename" filepath "--parser=babel-flow"))
+    	'("prettier" "--use-tabs=false" "--print-width" "80"
+    	  "--stdin-filename" filepath "--parser=babel-flow"))
   ;; define commands for each mode
   (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
   (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
@@ -541,49 +412,59 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 
 #+begin_src emacs-lisp
 (use-package corfu
-  :straight (corfu :type git :host github :repo "minad/corfu")
+  :after orderless
+  :straight t
   :custom
-  (completion-cycle-threshold nil)
-  (corfu-cycle t) ;; allow cycling through candidates
-  (corfu-separator ?\s) ;; orderless field separator
-  (corfu-quit-no-match 'separator) ;; or t
-  (corfu-auto-delay 0.1)
-  (corfu-scroll-margin 7)
-  (corfu-popupinfo-delay '(0.3 . 0.15))
-  ;; enable corfu only for select modes
-  ;; :hook ((prog-mode . corfu-mode))
+  (corfu-auto t)              ; enable auto-completion
+  (corfu-cycle t)             ; allow cycling through candidates
+  (corfu-separator ?\s)       ; orderless field separator
+  (corfu-auto-prefix 2)       ; trigger after 2 chars
+  (corfu-auto-delay 0.1)      ; short delay for IDE-like feel
+  (corfu-popupinfo-delay 0.4) ; delay before doc popup appears
+  (corfu-quit-at-boundary nil)
   :init
-  ;; enable corfu globally. Recommended since Dabbrev can be used
-  ;; globally (M-/).
   (global-corfu-mode)
-  (corfu-popupinfo-mode))
+  (corfu-popupinfo-mode)
+  :bind
+  (:map corfu-map
+        ("M-SPC" . corfu-insert-separator)
+        ("M-n" . corfu-popupinfo-scroll-up)
+        ("M-p" . corfu-popupinfo-scroll-down)))
+
+(use-package nerd-icons-corfu
+  :straight t
+  :after corfu
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
 ;; add corfu extension
 (use-package cape
   :straight t
-  :bind (("C-c p p" . completion-at-point)
-  	     ("C-c p \\" . cape-tex)
-  	     ("C-c p _" . cape-tex)
-  	     ("C-c p ^" . cape-tex)
-  	     ("C-c p f" . cape-file)
-  	     ("C-c p d" . cape-dabbrev)
-  	     ("C-c p s" . cape-elisp-symbol)
-  	     ("C-c p e" . cape-elisp-block))
+  :bind (("C-c p p" . completion-at-point) ; explicitly trigger completion
+         ("C-c p t" . cape-tex)
+         ("C-c p f" . cape-file)
+         ("C-c p d" . cape-dabbrev)
+         ("C-c p s" . cape-elisp-symbol)
+         ("C-c p e" . cape-elisp-block))
   :init
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; use cape-file everywhere
   (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-block))
-
+  ;; only check for elisp blocks inside org files
+  (add-hook
+   'org-mode-hook (lambda ()
+                    (add-to-list 'completion-at-point-functions #'cape-elisp-block)))
+  (add-hook
+   'latex-mode-hook (lambda ()
+                      (add-to-list 'completion-at-point-functions #'cape-tex))))
 #+end_src
+
+A note for using ~corfu~:
+=M-h= is bound to ~corfu-popupinfo-documentation~ which show/hide the docstring popup.
 
 
 ** Python
 
-Simple Python setup using venv for managing environments.
-
-I've been using `uv` to manage my Python environments and `venv` for creating
-separate environments. You can simply run:
+Simple Python setup using venv for managing environments. I've been using `uv` to manage my Python environments and `venv` for creating separate environments. You can simply run:
 
 ~uv venv my-new-env --python 3.11~ to create a new environment.
 
@@ -598,28 +479,20 @@ separate environments. You can simply run:
   :init
   (require 'venv-manager)
   :custom
-  (venv-manager-directories '("~/envs"))
-  :config
-  (defun change-inferior-python ()
-    (let ((jupyter-path (expand-file-name "bin/jupyter" venv-manager-current-venv)))
-      (when (file-exists-p jupyter-path)
-  	    (setq python-shell-interpreter "ipython3"
-              python-shell-interpreter-args "--simple-prompt"))))
-  :hook
-  (venv-manager-postactivate . change-inferior-python))
+  (venv-manager-directories '("/Users/delnatan/envs")))
 
 ;; set the default python to 'utils' (remember to create this!)
 (activate-venv "utils")
   #+end_src
 
 #+begin_src emacs-lisp
-;; use treesitter
 (use-package python
   :config
-  (define-key python-ts-mode-map (kbd "s-[") 'python-indent-shift-left)
-  (define-key python-ts-mode-map (kbd "s-]") 'python-indent-shift-right)
+  ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
+  (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1")
   (setq python-indent-guess-indent-offset t)
   (setq python-indent-guess-indent-offset-verbose nil)
+  ;; use tree-sitter
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
   	      (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
@@ -661,11 +534,6 @@ separate environments. You can simply run:
    ("C-c x ;" . code-cells-comment-or-uncomment)
    ("C-c C-c" . code-cells-eval)))
 #+end_src
-
-At the moment, editing org source block is broken because I'm using
-treesitter. If you look at ~org-src-lang-modes~, you see that "jupyter-python" is
-mapped to Python. See the config in [[*Jupyter setup][Jupyter setup]]
-
 
 ** Jupyter setup
 
@@ -727,8 +595,7 @@ from the jupyter kernel.
             (assq-delete-all "jupyter-python" org-src-lang-modes)))
 #+end_src
 
-A typical workflow in org-mode is to use source blocks with the following tag
-(after running =activate-venv=!):
+A typical workflow in org-mode is to use source blocks with the following tag (after running =activate-venv=!):
 #+begin_example
   #+PROPERTY: header-args:python :session py
   #+PROPERTY: header-args:python+ :async yes
@@ -869,7 +736,8 @@ using ~homebrew~.
 (use-package nano-theme
   :straight (nano-theme :type git :local-repo "/Users/delnatan/Apps/emacs/nano-theme/")
   :init
-  (setq nano-fonts-use nil)  ; Use your own fonts, NOT NANO fonts
+  ; Use your own fonts, NOT NANO fonts
+  (setq nano-fonts-use nil)  
   :config
   ;; define a function to set custom faces
   (defun de/nano-theme-overrides (&rest _)
@@ -877,30 +745,29 @@ using ~homebrew~.
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
                         :family "Roboto Mono"
-                        :height 120
+                        :height 130
                         :weight 'light)
     (set-face-attribute 'italic nil
                         :family "Victor Mono"
                         :slant 'italic
-                        :height 125)  
+                        :height 130)
     (set-face-attribute 'fixed-pitch nil
                         :family "Roboto Mono"
-                        :height 120
+                        :height 130
                         :weight 'light)
     (set-face-attribute 'variable-pitch nil
                         :family "Roboto Slab"
-                        :height 125
-                        :weight 'light)                        
-
+                        :height 135)
+    
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
       (set-face-attribute 'nano-modeline-active nil
-                          :background nil
-                          :foreground nil
+                          :background 'unspecified
+                          :foreground 'unspecified
                           :inherit 'nano-subtle)
       (set-face-attribute 'nano-modeline-inactive nil
-                          :background nil
-                          :foreground nil
+                          :background 'unspecified
+                          :foreground 'unspecified
                           :inherit 'nano-faded)
       (force-mode-line-update t))
     
@@ -936,6 +803,8 @@ using ~homebrew~.
 
   ;; initial setup
   (nano-mode)
+  ;; modify popout color
+  (set-face-attribute 'nano-popout nil :foreground "#D0634A")
   ;; reset this again just to be safe
   (setq nano-fonts-use nil)
   ;; load initial theme as light
@@ -958,6 +827,7 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 (add-to-list 'load-path "~/Apps/emacs/nano-tools")
+
 (require 'nano-writer)
 ;; use Rougier's writer mode for a nicer org-mode
 
@@ -1014,7 +884,6 @@ Minor reconfiguration of ~org-mode~.
 #+begin_src emacs-lisp
 (use-package org
   :config
-  ;; Your existing configuration
   (add-hook 'org-mode-hook 'org-indent-mode)
   (setq org-startup-indented t)
   (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
@@ -1091,15 +960,32 @@ writing LaTeX in org documents.
 		org-appear-autosubmarkers t)) ; Show sub- and superscripts
 #+end_src
 
-A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to
-show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
+Let's change the bullets appearance too.
+#+begin_src emacs-lisp
+(use-package org-superstar
+  :straight t
+  :after org
+  :hook (org-mode . org-superstar-mode)
+  :config
+  ;; Hide the leading asterisks (e.g., "** Headline" becomes "   Headline")
+  ;; This creates a much cleaner outline structure.
+  (setq org-superstar-remove-leading-stars t)
 
-For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX
-fragments within an org document whenever the org file is in any of my Dropbox
-folder. So here I'm trying to see if changing the temporary directory to be in
-an absolute local folder instead of a relative one helps. This didn't solve the
-problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox=
-doesn't!
+  ;; Set specific bullets for the first few levels.
+  ;; This list cycles if you go deeper than the defined length.
+  ;; Options: ◉ ○ ✸ ✿ ⁖ ⊚ ⊛ ∙ ▷
+  (setq org-superstar-headline-bullets-list '("◉" "○" "⚬" "◈" "◇" "✳" "◎"))
+
+  ;; Optional: If you want to prettify plain lists ( - or + ) as well
+  (setq org-superstar-item-bullet-alist
+        '((?* . ?•)
+          (?+ . ?➤)
+          (?- . ?–))))
+#+end_src
+
+A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
+
+For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX fragments within an org document whenever the org file is in any of my Dropbox folder. So here I'm trying to see if changing the temporary directory to be in an absolute local folder instead of a relative one helps. This didn't solve the problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox= doesn't!
 
 #+begin_src emacs-lisp
 (setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
@@ -1107,9 +993,7 @@ doesn't!
 (setq temporary-file-directory (file-truename "~/.emacs.d/tmp"))
 #+end_src
 
-To preview images =C-c C-x C-v= or invoke =org-toggle-inline-images=. Images are
-inserted like regular links, just enclose a path to an image file with
-=[[<path_to_image>]]=.
+To preview images =C-c C-x C-v= or invoke =org-toggle-inline-images=. Images are inserted like regular links, just enclose a path to an image file with =[[<path_to_image>]]=.
 
 To export org files to HTML use ~htmlize~
 #+begin_src emacs-lisp
@@ -1270,91 +1154,20 @@ Load my custom functions
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 #+end_src
 
-Simple protein diagram program using svg.
 #+begin_src emacs-lisp
+;; add my custom programs/functions to load-path
 (add-to-list 'load-path "~/Apps/emacs/de-tools")
+;; for drawing protein diagrams
 (require 'protein-diagrams)
+;; load molecular biology stuff
+(require 'molbio-utils)
 #+end_src
 
 ** Molecular Biology work
-Added [2025-11-19 Wed]
+[2025-11-30 Sun] moved to ~~/Apps/emacs/de-tools/molbio-utils.el~.
+[2025-11-19 Wed] added
 
 Some tasks in wet lab is repetitive (like setting up a PCR). I decided to use ~dynamic blocks~ to try out how this can make my life a bit easier.
-
-#+begin_src emacs-lisp
-(defun de/pcr-format-time (seconds)
-  "Converts seconds into a MM:SS string."
-  (let* ((sec (ceiling seconds))
-         (m (/ sec 60))
-         (s (% sec 60)))
-    (format "%d:%02d" m s)))
-
-(defun org-dblock-write:pcr-protocol (params)
-  "Generates a PCR protocol based on PARAMS.
-PARAMS should include :polymerase, :length-bp, and :tm."
-  (let* ((polymerase (plist-get params :polymerase))
-         (length-bp  (plist-get params :length-bp))
-         (ncycles    (plist-get params :ncycles))
-         (tm         (plist-get params :tm))
-
-         ;; polymerase type
-         (is-taq     (string-match-p "taq" polymerase))
-         (is-hifi    (or (string-match-p "q5" polymerase)
-                         (string-match-p "phusion" polymerase)))
-         (is-q5      (string-match-p "q5" polymerase))
-
-         ;; figure out temperatures
-         ;; taq uses 95 for denaturation and 68 for extension
-         (denat-temp (if is-taq 95 98))
-         (ext-temp   (if is-taq 68 72))
-         
-         ;; Calculate extension time
-         (length-kb  (/ length-bp 1000.0))
-         (seconds-per-kb (if is-taq 60 30)) ;; taq uses 60s/kb, others use 10-30s/kb
-         (raw-ext-seconds (max 10 (* length-kb seconds-per-kb))) ;; use at least 10 secs
-         (ext-time-str (de/pcr-format-time raw-ext-seconds))
-
-         ;; annealing logic
-         (anneal-temp (cond (is-hifi (+ tm 3))
-                            (is-taq  (- tm 5))
-                            (t tm)))
-         (anneal-note (cond (is-hifi "Tm + 3 °C")
-                            (is-taq "Tm - 5 °C")
-                            (t "Tm")))
-
-         ;; Final extension defaults
-         (final-ext-time (if is-q5 "2:00" "5:00")))
-
-    (insert
-     (format "| Step | Temp. | Time | Notes |\n")
-     (format "|------|-------|------|-------|\n")
-     (format "| init. denaturation | %d °C | 0:30 | |\n" denat-temp)
-     (format "| %d cycles | | | |\n" ncycles)
-     (format "| - denaturation | %d °C | %s | |\n"
-             denat-temp (if is-taq "0:30" "0:10"))
-     (format "| - annealing    | %d °C | %s | Calc: %s |\n"
-             anneal-temp (if is-taq "1:00" "0:30") anneal-note)
-     (format "| - extension    | %d °C | %s | %.2f kb * %ds/kb |\n"
-             ext-temp ext-time-str length-kb seconds-per-kb)
-     (format "|------|-------|------|-------|\n")
-     (format "| Final extension| %d °C | %s | |\n" ext-temp final-ext-time)
-     (format "| hold | 12 °C | \u221e | |"))
-    (org-table-align)))
-
-
-(defun de/insert-pcr-template ()
-  "Interactively insert a PCR dynamic block."
-  (interactive)
-  (let ((poly (completing-read "Polymerase: " '("q5" "phusion" "taq") nil t "q5"))
-        (len (read-number "Amplicon Length (bp): "))
-        (tm (read-number "Primer Tm (°C): "))
-        (ncycles (read-number "# cycles: ")))
-    (insert
-     (format "#+BEGIN: pcr-protocol :polymerase \"%s\" :length-bp %d :tm %d :ncycles %d\n#+END\n"
-             poly len tm ncycles))
-    (forward-line -1)
-    (org-ctrl-c-ctrl-c)))
-#+end_src
 
 
 * Org-agenda
@@ -1373,13 +1186,10 @@ agenda items in my main todo-list.
   	    "/Users/delnatan/Documents/org/tasks.org"
   	    "/Users/delnatan/Documents/org/meetings.org"
   	    "/Users/delnatan/Documents/org/events.org"
-  	    "/Users/delnatan/Work/org/schedules.org"
-        ))
+  	    "/Users/delnatan/Work/org/schedules.org"))
 #+end_src
 
-A convenient aspect of the org calendar system is that you can do arithmetic
-very easily. When you invoke a calendar minibuffer (e.g. via =C-c != or =C-c .=)
-you can simply just do ~+4w~ to set a date 4-weeks from today.
+A convenient aspect of the org calendar system is that you can do arithmetic very easily. When you invoke a calendar minibuffer (e.g. via =C-c != or =C-c .=) you can simply just do ~+4w~ to set a date 4-weeks from today.
 
 The syntax for relative dates is:
 +N unit or -N unit
@@ -1411,7 +1221,9 @@ In the templates here's what each placeholder means:
 To prompt for the entry in the minibuffer. use ~%^{prompt}~.
 Enter time in a 24-hour format.
 
-You can add priorities to each TODO or notes by adding a =[#1]= (a numeric value to each tag). For example:  =* TODO [#1] my TODO item.= 
+You can add priorities to each TODO or notes by adding a =[#1]= (a numeric value to each tag). For example:
+=* TODO [#1] my TODO item.= 
+
 Generally, the notes are meant to be refiled so that it would show up when you run =M-x notes-list=. However, the TODO items get added to the calendar.
 
 #+begin_src emacs-lisp
@@ -1485,279 +1297,4 @@ I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to
 (add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
 (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
 #+end_src
-
-** Snippets
-#+begin_src emacs-lisp
-;; (use-package yasnippet
-;;   :straight t
-;;   :hook ((org-mode prog-mode) . yas-minor-mode-on)
-;;   :init
-;;   (setq yas-snippet-dirs '("~/.emacs.d/snippets")))
-#+end_src
-
-
-* E-mail setup
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-
-To save some clutter, I've stopped using mu4e for now... maybe until my next computer setup.
-
-** Notes on setting up ~isync~ and ~mu4~
-
-~mu~ was installed via Homebrew in MacOS, and it actually comes with ~mu4e~, so I need to point use-package to use the files that were installed by homebrew in ~/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e~.
-
-Setting up gmail was relatively trivial by using "App password", following the guide in [[https://macowners.club/posts/email-emacs-mu4e-macos/]], I was able to get pretty far.
-
-But when setting up the UC Davis e-mail, this was when things got pretty hairy. I had to basically re-build ~isync~ from source instead of using whatever the homebrew recipe for ~isync~ does. This was because isync, when installed via the standard recipe via homebrew, uses Apple's internal SASL library. You can check this by running:
-
-~otool -L $(which mbsync)~
-
-You can see that it uses the library from ~/usr/lib~.
-
-Now, the "modern" microsoft exchange 365 authentication method needs /XOAUTH2/, which you can install from [[https://github.com/moriyoshi/cyrus-sasl-xoauth2]], but you first need to install ~cyrus-sasl~ from homebrew. Make sure than when you run ~pluginviewer~ (from cyrus-sasl), that the 'xoauth2' is present. You can do this by specifying that ~./configure --with-cyrus-sasl=/path/to/cyrus-sasl~, when building the xoauth2 plugin.
-
-In addition, you need to register your 'web app' in microsoft's [[https://portal.azure.com][Azure portal]]. 
-
-Do this in conjunction with installing the python command line ~oauth2ms~ ([[https://github.com/harishkrupo/oauth2ms]]), follow the guide there. It would take you pretty far. I installed the python package until my 'utils' conda environment, which was added as a "shebang" line at the top of the oauth2ms script. Here are my settings for mbsync and smtp:
-
-=~/.mbsyncrc=:
-#+begin_example
-######################################################################
-# GMAIL IMAP SETUP for mbsync (isync)                                #
-######################################################################
-IMAPAccount gmail
-Host imap.gmail.com
-User delnatan@gmail.com
-PassCmd "security find-generic-password -s isync-gmail -a delnatan@gmail.com -w"
-Port 993
-TLSType IMAPS
-TLSVersions +1.2
-AuthMechs PLAIN
-SystemCertificates no
-CertificateFile ~/.maildir/certificates/root-certificates.pem
-
-IMAPStore gmail-remote
-Account gmail
-
-MaildirStore gmail-local
-SubFolders Verbatim
-Path ~/.maildir/gmail/
-Inbox ~/.maildir/gmail/INBOX/
-
-Channel gmail
-Far :gmail-remote:
-Near :gmail-local:
-Patterns *
-Create Near
-Sync All
-Expunge Both
-SyncState *
-
-
-######################################################################
-# EXCHANGE UCD EMAIL                                                 #
-######################################################################
-IMAPAccount ucd
-User delnatan@ucdavis.edu
-Host outlook.office365.com
-Port 993
-TLSType IMAPS
-TLSVersions +1.2
-PassCmd oauth2ms
-AuthMechs XOAUTH2
-CertificateFile ~/.maildir/certificates/root-certificates.pem
-
-IMAPStore ucd-remote
-Account ucd
-
-MaildirStore ucd-local
-SubFolders Verbatim
-Path ~/.maildir/ucd/
-Inbox ~/.maildir/ucd/INBOX
-
-Channel ucd
-Far :ucd-remote:
-Near :ucd-local:
-Patterns *
-Create Near
-Sync All
-Expunge Both
-SyncState *
-
-#+end_example
-
-Note that I use "TLSVersions", which is presumable new in isync 1.5.0 because the previous keyword "SSLversions" has been deprecated. It requires the version value to have +/- signs.
-
-As for the oauth2ms configuration, make sure you (requests are subject to approval of the azure account, mine was approved within a business day) get the details from the azure portal and put them in the config like below:
-=~/.config/oauth2ms/config.json=:
-#+begin_src json
-{
-    "tenant_id": "<your_tenant_id>"
-    "client_id": "<your_client_id>",
-    "client_secret": "<your_client_secret>",
-    "redirect_host": "localhost",
-    "redirect_port": "5123",
-    "redirect_path": "/getToken/",
-    "scopes": [
-	"https://outlook.office.com/IMAP.AccessAsUser.All",
-	"https://outlook.office.com/SMTP.Send"
-    ]
-}
-#+end_src
-
-The port number is arbitrary, I just chose something that I don't typically use.
-For some reason, this stopped working for my outlook e-mail! My app authorization expired and needed to renew it! Note that after renewing permissions, you may need to remove a token that's been saved in ~~/.local/share/oauth2ms~ (it may be named credentials.bin). If so, delete that file and authentication should work fine.
-
-Once done, run ~mbsync -aV~. Then, initialize ~mu~ by running:
-
-#+begin_src bash
-mu init -m ~/.maildir \
-   --my-address delnatan@gmail.com \
-   --my-address delnatan@ucdavis.edu
-
-mu index
-#+end_src
-
-To send e-mails, SMTP needs to be setup properly also.
-
-=~/.msmtprc=:
-#+begin_example
-# SMTP, for sending e-mails
-
-# Default values for all accounts
-defaults
-logfile ~/.maildir/msmtp.log
-tls_trust_file ~/.maildir/certificates/root-certificates.pem
-
-######################################################################
-# GMAIL SMTP                                                         #
-######################################################################
-account gmail
-auth on
-host smtp.gmail.com
-port 465
-protocol smtp
-from delnatan@gmail.com
-user delnatan
-passwordeval security find-generic-password -s isync-gmail -a delnatan@gmail.com -w
-tls on
-tls_starttls off
-
-######################################################################
-# UCD Exchange (office 365)                                          #
-######################################################################
-account ucd
-host smtp.office365.com
-port 587
-user delnatan@ucdavis.edu
-from delnatan@ucdavis.edu
-auth xoauth2
-passwordeval "oauth2ms"
-tls on
-tls_starttls on
-tls_certcheck on
-
-######################################################################
-account default : gmail
-#+end_example
-
-** use-package & mu4e configuration
-#+begin_src emacs-lisp
-;; (use-package mu4e
-;;   :straight nil
-;;   :load-path "/opt/homebrew/Cellar/mu/1.12.5/share/emacs/site-lisp/mu/mu4e"
-;;   :config
-;;   (require 'mu4e-contrib)
-;;   (require 'smtpmail)
-  
-;;   (setq mu4e-mu-binary (executable-find "mu"))
-;;   ;; this is the directory we created before:
-;;   (setq mu4e-maildir "~/.maildir")
-;;   ;; this command is called to sync imap servers:
-;;   (setq mu4e-get-mail-command (concat (executable-find "mbsync") " -a"))
-;;   ;; how often to call it in seconds:
-;;   (setq mu4e-update-interval 300)
-;;   ;; save attachment to desktop by default
-;;   ;; or another choice of yours:
-;;   (setq mu4e-attachment-dir "~/Downloads/MailAttachments/")
-;;   ;; rename files when moving - needed for mbsync:
-;;   (setq mu4e-change-filenames-when-moving t)
-;;   ;; list of your email adresses:
-;;   (setq mu4e-user-mail-address-list '("delnatan@gmail.com"
-;; 				      "delnatan@ucdavis.edu"))
-;;   (setq mu4e-maildir-shortcuts
-;; 	'(("/gmail/INBOX" . ?g)
-;;           ("/gmail/Sent" . ?G)
-;; 	  ("/ucd/INBOX" . ?u)
-;; 	  ("/ucd/Sent" . ?U)))
-
-;;   ;; add bookmark
-;;   ;; (add-to-list 'mu4e-bookmarks
-;;   ;; 	       (mu4e-bookmark-define
-;;   ;; 		"maildir:/gmail/INBOX"
-;;   ;; 		"Inbox - Gmail"
-;;   ;; 		?g))
-
-;;   (setq mu4e-contexts
-;; 	`(,(make-mu4e-context
-;;             :name "gmail"
-;;             :enter-func
-;;             (lambda () (mu4e-message "Enter delnatan@gmail.com context"))
-;;             :leave-func
-;;             (lambda () (mu4e-message "Leave delnatan@gmail.com context"))
-;;             :match-func
-;;             (lambda (msg)
-;;               (when msg
-;; 		(mu4e-message-contact-field-matches
-;; 		 msg :to "delnatan@gmail.com")))
-;;             :vars '((user-mail-address . "delnatan@gmail.com")
-;;                     (user-full-name . "Daniel Elnatan")
-;;                     (mu4e-drafts-folder . "/gmail/Drafts")
-;;                     (mu4e-refile-folder . "/gmail/Archive")
-;;                     (mu4e-sent-folder . "/gmail/Sent")
-;;                     (mu4e-trash-folder . "/gmail/Trash")))
-;; 	  ,(make-mu4e-context
-;; 	    :name "UCD"
-;; 	    :enter-func
-;; 	    (lambda () (mu4e-message "Enter delnatan@ucdavis.edu context"))
-;; 	    :leave-func
-;; 	    (lambda () (mu4e-message "Leave delnatan@ucdavis.edu context"))
-;; 	    :match-func
-;; 	    (lambda (msg)
-;; 	      (when msg
-;; 		(mu4e-message-contact-field-matches
-;; 		 msg :to "delnatan@ucdavis.edu")))
-;; 	    :vars `((user-mail-address . "delnatan@ucdavis.edu")
-;; 		    (user-full-name . "Daniel Elnatan")
-;; 		    (mu4e-drafts-folder . "/ucd/Drafts")
-;; 		    (mu4e-refile-folder . "/ucd/Archive")
-;; 		    (mu4e-sent-folder . "/ucd/Sent")
-;; 		    (mu4e-trash-folder . "/ucd/Deleted Items")))))
-  
-;;   ;; start with the first (default) context
-;;   (setq mu4e-context-policy 'pick-first)
-;;   ;; ask for context if no context matches
-;;   (setq mu4e-compose-context-policy 'ask)
-
-;;   ;; use smtp
-;;   (setq message-send-mail-function 'message-send-mail-with-sendmail)
-;;   (setq sendmail-program "msmtp")
-;;   )
-
-
-#+end_src
-
-Using Nicolas Rougier's ~mu4e-dashboard~
-
-#+begin_src emacs-lisp
-;; (use-package async
-;;   :straight t)
-
-;; (add-to-list 'load-path "~/Apps/emacs/mu4e-dashboard/")
-
-;; ;; ensure that mu4e-dashboard is loaded after executing mu4e
-;; (with-eval-after-load 'mu4e (require 'mu4e-dashboard))
-#+end_src
-
 
