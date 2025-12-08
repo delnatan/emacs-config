@@ -91,7 +91,7 @@ Useful for counting the number of characters in a region with linebreaks.
 Meant to be used with biosequences."
   (interactive "r")
   (if (use-region-p)
-      (message "Region has %d characters" (length (clean-string (buffer-substring start end))))
+      (message "Region has %d characters" (length (clean-string (buffer-substring-no-properties start end))))
     (message "no region was selected")))
 
 (defun split-string-every (string chars)
@@ -119,6 +119,23 @@ These characters are removed:
 numbers, punctuation marks (non-word), whitespace, newline"
   (replace-regexp-in-string "[[:digit:]\s\n]" "" string))
 
+
+(defun de/get-char-index-in-cleaned-region (char start end)
+  "Prompts for a character in region and prints 1-based index within selected region.
+Numbers, whitespace, newlines and punctuation marks are removed from region."
+  (interactive "cCharacter to find: \nr") ;; 'c' gets character, 'r' gets region
+  (if (use-region-p)
+      (let ((text (clean-string (buffer-substring-no-properties start end)))
+            (indices '()))
+        (dotimes (i (length text))
+          (when (char-equal (aref text i) char)
+            (push (+ i 1) indices)))
+        (if indices
+            (message "Found %c at %s" char (mapconcat 'number-to-string (nreverse indices) ", "))
+          (message "Did not find %c in selected region." char)))
+    (message "No region selected.")
+    )
+  )
 
 (defun de/sum-list (lst)
   "adds up every element of a list using recursion

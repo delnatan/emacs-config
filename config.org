@@ -29,7 +29,9 @@ today. So this block is commented out.
 #+begin_src emacs-lisp
 ;; keep things tidy
 (use-package no-littering
-  :straight t)
+  :straight t
+  :init
+  (require 'no-littering))
 
 (set-language-environment "UTF-8")
 (set-default-coding-systems 'utf-8)
@@ -130,10 +132,7 @@ Use multiple cursors
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
 
-Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]]
-(reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so
-the standard =C-s= and =C-r= keybinding is replaced here with its corresponding
-version in swiper.
+Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]] (reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so the standard =C-s= and =C-r= keybinding is replaced here with its corresponding version in swiper.
 
 #+begin_src emacs-lisp
 (use-package vertico
@@ -184,6 +183,7 @@ version in swiper.
   #+end_src
 
 
+
 ** Enhancements
 
 The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
@@ -205,13 +205,14 @@ Switching to using ~dirvish~ for an enhanced dired experience
   :custom
   ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
   (dirvish-attributes '(nerd-icons file-time file-size collapse subtree-state vc-state git-msg))
-  (dirvish-side-width 30)
+  (dirvish-side-width 40)
   :config
   ;; Enable "follow mode" so the sidebar updates as you switch files
   (dirvish-side-follow-mode)
   :bind
   ;; Bind a key to toggle the sidebar
   ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
+  
   :hook
   ;; Clean up the sidebar look
   (dirvish-side-mode . (lambda ()
@@ -336,11 +337,15 @@ Setup ~treesitter~ for several languages. To tell whether the current buffer is
 using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
-(add-to-list 'treesit-language-source-alist
-  	         '(python . ("https://github.com/tree-sitter/tree-sitter-python"))
-             '(cpp    . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-             '(c      . ("https://github.com/tree-sitter/tree-sitter-c")))
+(dolist (lang '((python "https://github.com/tree-sitter/tree-sitter-python")
+                (cpp    "https://github.com/tree-sitter/tree-sitter-cpp")
+                (c      "https://github.com/tree-sitter/tree-sitter-c")
+                (rust   "https://github.com/tree-sitter/tree-sitter-rust")
+                (elisp  "https://github.com/Wilfred/tree-sitter-elisp")))
+  (add-to-list 'treesit-language-source-alist lang))
+
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+(add-to-list 'major-mode-remap-alist '(elisp-mode . elisp-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
 
@@ -451,6 +456,7 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   :straight t
   :custom
   (corfu-auto t)              ; enable auto-completion
+  (corfu-quit-no-match t)     ; do nothing when no match is found
   (corfu-cycle t)             ; allow cycling through candidates
   (corfu-separator ?\s)       ; orderless field separator
   (corfu-auto-prefix 2)       ; trigger after 2 chars
@@ -744,15 +750,19 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
 #+end_src
 
 
+** Rust
+#+begin_src emacs-lisp
+(use-package rust-mode
+  :init
+  (setq rust-mode-treesitter-derive t))
+#+end_src
+
+
 * Theme and appearance
 
-I really like Nicolas Rougier's nano-modeline, so we'll set that up independent
-of whatever theme I end up using.
+I really like Nicolas Rougier's nano-modeline, so we'll set that up independent of whatever theme I end up using.
 
-The ~(&rest _)~ trick is used here to ignore any arguments that is passed to the
-function (it can be called with any number of arguments, but they will be
-ignored). ~enable-theme-functions~ calls its functions with one argument. My
-function works without using any, so I will just ignore the argument.
+The ~(&rest _)~ trick is used here to ignore any arguments that is passed to the function (it can be called with any number of arguments, but they will be ignored). ~enable-theme-functions~ calls its functions with one argument. My function works without using any, so I will just ignore the argument.
 
 #+begin_src emacs-lisp
 (use-package nano-modeline
@@ -760,19 +770,16 @@ function works without using any, so I will just ignore the argument.
   :config
   ;; enable modeline globally
   (nano-modeline-text-mode t))
-
-(setq-default mode-line-format nil)
 #+end_src
 
 ** Nicolas Rougier's NANO emacs
-Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them
-using ~homebrew~.  
+Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~homebrew~.  
 
 #+begin_src emacs-lisp
 (use-package nano-theme
   :straight (nano-theme :type git :local-repo "/Users/delnatan/Apps/emacs/nano-theme/")
   :init
-  ; Use your own fonts, NOT NANO fonts
+  ;; Use your own fonts, NOT NANO fonts
   (setq nano-fonts-use nil)  
   :config
   ;; define a function to set custom faces
@@ -780,22 +787,24 @@ using ~homebrew~.
     "Apply custom font and face overrides for nano-theme."
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
-                        :family "Iosevka"
-                        :height 130)
+                        :family "Roboto Mono"
+                        :height 125
+                        :weight 'light)
     (set-face-attribute 'italic nil
                         :family "Victor Mono"
                         :slant 'italic
                         :height 130)
     (set-face-attribute 'fixed-pitch nil
-                        :family "Iosevka"
-                        :height 130)
+                        :family "Roboto Mono"
+                        :height 125
+                        :weight 'light)
     (set-face-attribute 'variable-pitch nil
                         :family "Roboto Slab"
-                        :height 135
-                        :weight 'light)
+                        :height 135)                        
     
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
+      (setq mode-line-format "")
       (set-face-attribute 'nano-modeline-active nil
                           :background 'unspecified
                           :foreground 'unspecified
@@ -804,10 +813,20 @@ using ~homebrew~.
                           :background 'unspecified
                           :foreground 'unspecified
                           :inherit 'nano-faded)
+      (set-face-attribute 'mode-line nil
+                          :background (face-background 'default)
+                          :underline (face-foreground 'nano-faded)
+                          :height 40 
+                          :overline nil :box nil)
+      (set-face-attribute 'mode-line-inactive nil
+                          :background (face-background 'default)
+                          :underline (face-foreground 'nano-subtle)
+                          :height 40 
+                          :overline nil :box nil)
       (force-mode-line-update t))
     
     ;; org mode customization
-    (when (featurep 'org) 
+    (when (featurep 'org)
       ;; Keep highlight background but use fixed-pitch font
       (set-face-attribute 'org-block nil :inherit '(highlight fixed-pitch))
       (set-face-attribute 'org-code nil :inherit '(nano-salient fixed-pitch))
@@ -833,11 +852,12 @@ using ~homebrew~.
   (advice-add 'nano-light :after #'de/nano-theme-overrides)
   (advice-add 'nano-dark :after #'de/nano-theme-overrides)
   
-  (with-eval-after-load 'org (de/nano-theme-overrides))
   (with-eval-after-load 'nano-modeline (de/nano-theme-overrides))
+  (with-eval-after-load 'org (de/nano-theme-overrides))
 
   ;; initial setup
   (nano-mode)
+
   ;; modify popout color
   (set-face-attribute 'nano-popout nil :foreground "#D0634A")
   ;; reset this again just to be safe
@@ -861,10 +881,6 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 ;; add emacs ~app~ folder to load-path
 (add-to-list 'load-path "~/Apps/emacs/notes-list")  
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
-(add-to-list 'load-path "~/Apps/emacs/nano-tools")
-
-(require 'nano-writer)
-;; use Rougier's writer mode for a nicer org-mode
 
 (use-package svg-lib
   :defer t
@@ -917,53 +933,56 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 Minor reconfiguration of ~org-mode~.
 
 #+begin_src emacs-lisp
-(use-package org
-  :config
-  (add-hook 'org-mode-hook 'org-indent-mode)
-  (setq org-startup-indented t)
-  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
-  (setq org-confirm-babel-evaluate nil)
-  (setq org-display-inline-images t)
-  (setq org-adapt-indentation t)
-  (setq org-hide-leading-stars t)
-  (setq org-src-fontify-natively t)
-  (setq org-src-tab-acts-natively t)
-  (setq org-edit-src-content-indentation 0)
-  (setq org-startup-with-inline-images t)
-  (setq org-src-window-setup 'split-window-below)
-  (setq org-format-latex-options
-	    (plist-put org-format-latex-options :scale 1.1))
-  (setq org-image-actual-width nil)
-  (setq org-export-default-inline-image-rule
-	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
-  (setq org-src-preserve-indentation t)
-  (setq org-latex-compiler "xelatex")
-  (setq org-latex-pdf-process
-	    (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
-  :bind (:map org-mode-map
-	          ("C-c l" . org-store-link)
-	          ("C-c C-l" . org-insert-link)
-	          ("C-x v l" . org-toggle-link-display)))
+  (use-package org
+    :config
+    (add-hook 'org-mode-hook 'org-indent-mode)
+    (setq org-startup-indented t)
+    ;; make sure org-indent is there
+    (require 'org-indent nil t)
+    ;; fix org indent issue for multi-level bullets
+    (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+    (setq org-confirm-babel-evaluate nil)
+    (setq org-display-inline-images t)
+    (setq org-adapt-indentation t)
+    (setq org-hide-leading-stars t)
+    (setq org-src-fontify-natively t)
+    (setq org-src-tab-acts-natively t)
+    (setq org-edit-src-content-indentation 0)
+    (setq org-startup-with-inline-images t)
+    (setq org-src-window-setup 'split-window-below)
+    (setq org-format-latex-options
+  	(plist-put org-format-latex-options :scale 1.1))
+    (setq org-image-actual-width nil)
+    (setq org-export-default-inline-image-rule
+  	'(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
+    (setq org-src-preserve-indentation t)
+    (setq org-latex-compiler "xelatex")
+    (setq org-latex-pdf-process
+  	(list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+    :bind (:map org-mode-map
+  	      ("C-c l" . org-store-link)
+  	      ("C-c C-l" . org-insert-link)
+  	      ("C-x v l" . org-toggle-link-display)))
 
-;; Enable variable-pitch-mode in org buffers
-(add-hook 'org-mode-hook 'variable-pitch-mode)
+  ;; Enable variable-pitch-mode in org buffers
+  (add-hook 'org-mode-hook 'variable-pitch-mode)
 
-;; remove under/over line in org source block header/footer
-(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+  ;; remove under/over line in org source block header/footer
+  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
-;; shortcut to insert source block
-(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-(add-to-list 'org-structure-template-alist '("sp" . "src python"))
-(add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
+  ;; shortcut to insert source block
+  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+  (add-to-list 'org-structure-template-alist '("sp" . "src python"))
+  (add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
 
-;; use engrave-faces to support fontifying source blocks in LaTeX exports
-(use-package engrave-faces
-  :straight t
-  :defer t
-  :init
-  (setq org-latex-src-block-backend 'engraved))
+  ;; use engrave-faces to support fontifying source blocks in LaTeX exports
+  (use-package engrave-faces
+    :straight t
+    :defer t
+    :init
+    (setq org-latex-src-block-backend 'engraved))
 
-(setq org-latex-engraved-theme 'nano)
+  (setq org-latex-engraved-theme 'nano)
 #+end_src
 
 For a nicer org source block experience, trying ~corg.el~. You can trigger
@@ -1058,9 +1077,7 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 (add-hook 'org-export-before-processing-hook 'de/my-org-inline-css-hook)
 #+end_src
 
-Please note that at the moment, there doesn't seem to be a good way to include
-an SVG file in the HTML export??
-
+Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export??
 For convenience, let's just base64-encode images when exporting an org file to HTML
 #+begin_src emacs-lisp
 (defun org-org-html--format-image (source attributes info)
@@ -1074,8 +1091,7 @@ For convenience, let's just base64-encode images when exporting an org file to H
 (advice-add #'org-html--format-image :override #'org-org-html--format-image)
 #+end_src
 
-To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c
-.. because that would close a window!)
+To invoke LaTeX preview, =C-c C-x C-l= (danger! don't reverse to C-x C-c .. because that would close a window!)
 
 For citations, I want to use csl styles, so I'll need the ~citeproc~ package
 #+begin_src emacs-lisp
@@ -1085,12 +1101,7 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :straight t)
 #+end_src
 
-to use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org
-document pointing to the relevant files (CSL file and bibliography exported
-from zotero or manually constructed).
-
-invoke ~org-cite-insert~, select the citation from the mini-buffer. Note that a
-single citation can cite more than one references. When done do =M-<return>=.
+To use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org document pointing to the relevant files (CSL file and bibliography exported from zotero or manually constructed), invoke ~org-cite-insert~ and select the citation from the mini-buffer. Note that a single citation can cite more than one references. When done do =M-<return>=.
 
 ** org document export to PDF
 
@@ -1191,11 +1202,10 @@ Load my custom functions
 
 #+begin_src emacs-lisp
 ;; add my custom programs/functions to load-path
+;; this includes molecular biology and svg drawing tools
 (add-to-list 'load-path "~/Apps/emacs/de-tools")
-;; for drawing protein diagrams
-(require 'protein-diagrams)
-;; load molecular biology stuff
 (require 'molbio-utils)
+(require 'protein-diagrams)
 #+end_src
 
 ** Molecular Biology work
