@@ -770,6 +770,8 @@ The ~(&rest _)~ trick is used here to ignore any arguments that is passed to the
   :config
   ;; enable modeline globally
   (nano-modeline-text-mode t))
+
+(setq-default mode-line-format nil)
 #+end_src
 
 ** Nicolas Rougier's NANO emacs
@@ -788,15 +790,11 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
                         :family "Roboto Mono"
-                        :height 125
+                        :height 120
                         :weight 'light)
-    (set-face-attribute 'italic nil
-                        :family "Victor Mono"
-                        :slant 'italic
-                        :height 130)
     (set-face-attribute 'fixed-pitch nil
                         :family "Roboto Mono"
-                        :height 125
+                        :height 120
                         :weight 'light)
     (set-face-attribute 'variable-pitch nil
                         :family "Roboto Slab"
@@ -804,7 +802,7 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
     
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
-      (setq mode-line-format "")
+      (setq mode-line-format nil)
       (set-face-attribute 'nano-modeline-active nil
                           :background 'unspecified
                           :foreground 'unspecified
@@ -813,16 +811,13 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
                           :background 'unspecified
                           :foreground 'unspecified
                           :inherit 'nano-faded)
-      (set-face-attribute 'mode-line nil
-                          :background (face-background 'default)
-                          :underline (face-foreground 'nano-faded)
-                          :height 40 
-                          :overline nil :box nil)
-      (set-face-attribute 'mode-line-inactive nil
-                          :background (face-background 'default)
-                          :underline (face-foreground 'nano-subtle)
-                          :height 40 
-                          :overline nil :box nil)
+      ;; Footer line via window dividers
+      (setq window-divider-default-bottom-width 1)
+      (setq window-divider-default-right-width 1)
+      (setq window-divider-default-places 'bottom-only)
+      (window-divider-mode 1)
+      (set-face-attribute 'window-divider nil 
+                          :foreground (face-foreground 'nano-faded))      
       (force-mode-line-update t))
     
     ;; org mode customization
