@@ -1,6 +1,11 @@
-#+TITLE: Current Emacs (v30) config
+#+TITLE: Current Emacs config
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
+
+* TODO package cleanup & improvements [0/2]
+  - [ ] setup ~citar~ for better citation experience. /Do I need to change citeproc?/
+  - [ ] test
+    
 
 * Preamble
 [2025-11-07 Fri] this is fixed in the emacs-plus@30 build when I tried as of
@@ -57,7 +62,7 @@ today. So this block is commented out.
 
 ;; start as a small frame
 (setq initial-frame-alist
-       '((top . 1) (left . 1) (width . 80) (height . 40)))
+      '((top . 1) (left . 1) (width . 80) (height . 40)))
 
 ;; hooks to customize behavior of specific modes
 (add-hook 'text-mode-hook 'visual-line-mode)
@@ -588,12 +593,12 @@ from the jupyter kernel.
 
 #+begin_src emacs-lisp
 (use-package jupyter
-  :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter/")
+  :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter"
+                     :branch "fix-python-error-location-ansi")
   :defer t
   :custom
   (jupyter-eval-use-overlays t)
-  ;; (jupyter-repl-echo-eval-p t)
-  (jupyter-repl-prompt-margin-width 5)
+  ;; (jupyter-repl-echo-eval-p nil)
   :config
   (add-to-list 'display-buffer-alist
 	           '("\\*jupyter-output\\*"
@@ -666,9 +671,9 @@ To make life a bit simpler, I've made a function to insert this snippet with the
              (properties
               (format
                "#+PROPERTY: header-args:jupyter-python :session py
-  ,#+PROPERTY: header-args:jupyter-python+ :async yes
-  ,#+PROPERTY: header-args:jupyter-python+ :eval never-export
-  ,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
+,#+PROPERTY: header-args:jupyter-python+ :async yes
+,#+PROPERTY: header-args:jupyter-python+ :eval never-export
+,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -687,12 +692,12 @@ next/previous blocks.
 As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering
 correctly. This is a workaround found in the ~emacs-jupyter~ issues list:
 #+begin_src emacs-lisp
-(defun patch/display-ansi-colors ()
-  "Fixes kernel output in emacs-jupyter"
-  (ansi-color-apply-on-region (point-min) (point-max)))
-(add-hook 'org-mode-hook
-          (lambda ()
-            (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
+;; (defun patch/display-ansi-colors ()
+;;   "Fixes kernel output in emacs-jupyter"
+;;   (ansi-color-apply-on-region (point-min) (point-max)))
+;; (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
 #+end_src
 
 For prototyping a lot of code, I typically open a Python file and associate a
@@ -781,7 +786,7 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
 (use-package nano-theme
   :straight (nano-theme :type git :local-repo "/Users/delnatan/Apps/emacs/nano-theme/")
   :init
-  ;; Use your own fonts, NOT NANO fonts
+  ;; To use your own fonts, set to nil
   (setq nano-fonts-use nil)  
   :config
   ;; define a function to set custom faces
@@ -789,16 +794,15 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
     "Apply custom font and face overrides for nano-theme."
     ;; -- Global Font Settings --
     (set-face-attribute 'default nil 
-                        :family "Roboto Mono"
-                        :height 120
-                        :weight 'light)
-    (set-face-attribute 'fixed-pitch nil
-                        :family "Roboto Mono"
-                        :height 120
-                        :weight 'light)
-    (set-face-attribute 'variable-pitch nil
-                        :family "Roboto Slab"
-                        :height 135)                        
+                        :family "CMU Typewriter Text"
+                        :height 135)
+    ;; (set-face-attribute 'fixed-pitch nil
+    ;;                     :family "Roboto Mono"
+    ;;                     :height 120
+    ;;                     :weight 'light)
+    ;; (set-face-attribute 'variable-pitch nil
+    ;;                     :family "Roboto Slab"
+    ;;                     :height 135)                        
     
     ;; nano-modeline theme-switching fix
     (when (featurep 'nano-modeline)
@@ -814,10 +818,12 @@ Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~
       ;; Footer line via window dividers
       (setq window-divider-default-bottom-width 1)
       (setq window-divider-default-right-width 1)
-      (setq window-divider-default-places 'bottom-only)
+      (setq window-divider-default-places t)
       (window-divider-mode 1)
-      (set-face-attribute 'window-divider nil 
-                          :foreground (face-foreground 'nano-faded))      
+      (set-face-attribute 'window-divider nil
+                          :foreground (face-foreground 'nano-faded)
+                          :background (face-background 'nano-faded))
+      (set-face-foreground 'vertical-border "#A7A6BA")
       (force-mode-line-update t))
     
     ;; org mode customization
@@ -907,19 +913,6 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 
 #+end_src
 
-** buffer-box for borders around frames
-
-#+begin_src emacs-lisp
-(use-package buffer-box
-  :straight nil
-  :load-path "/Users/delnatan/Apps/emacs/buffer-box/"
-  :bind
-  ("C-c b" . buffer-box)
-  ;; :hook
-  ;; (after-change-major-mode . buffer-box)
-  )
-#+end_src
-
 
 * org-mode configuration
 :PROPERTIES:
@@ -960,7 +953,7 @@ Minor reconfiguration of ~org-mode~.
   	      ("C-x v l" . org-toggle-link-display)))
 
   ;; Enable variable-pitch-mode in org buffers
-  (add-hook 'org-mode-hook 'variable-pitch-mode)
+  ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 
   ;; remove under/over line in org source block header/footer
   (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
@@ -1098,6 +1091,7 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
 
 To use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org document pointing to the relevant files (CSL file and bibliography exported from zotero or manually constructed), invoke ~org-cite-insert~ and select the citation from the mini-buffer. Note that a single citation can cite more than one references. When done do =M-<return>=.
 
+
 ** org document export to PDF
 
 The custom LaTeX template is stored in the ~texmf~ directory locally, to figure out where it is do:
@@ -1205,7 +1199,6 @@ Load my custom functions
 
 ** Molecular Biology work
 [2025-11-30 Sun] moved to ~~/Apps/emacs/de-tools/molbio-utils.el~.
-[2025-11-19 Wed] added
 
 Some tasks in wet lab is repetitive (like setting up a PCR). I decided to use ~dynamic blocks~ to try out how this can make my life a bit easier.
 
