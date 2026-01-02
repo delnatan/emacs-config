@@ -2,31 +2,29 @@
 #+AUTHOR: Daniel Elnatan
 #+STARTUP: overview
 
-* TODO package cleanup & improvements [0/2]
-  - [ ] setup ~citar~ for better citation experience. /Do I need to change citeproc?/
-  - [ ] test
-    
-
 * Preamble
 [2025-11-07 Fri] this is fixed in the emacs-plus@30 build when I tried as of
 today. So this block is commented out.
 
 #+begin_src emacs-lisp
-;; (use-package exec-path-from-shell
-;;   :straight (exec-path-from-shell
-;;              :type git :host github
-;;              :repo "purcell/exec-path-from-shell")
-;;   :init
-;;   (when (memq window-system '(mac ns x))
-;;     (exec-path-from-shell-initialize)))
-
-;; toggle this to debug issues
+;; toggle this debug issues
 ;; (setq debug-on-error t)
 
 ;; use the latest transient (needed by magit, dirvish, and probably many others)
 (use-package transient
   :straight t)
 #+end_src
+
+
+A convenient way to debug is you can add the following tags under a heading:
+#+begin_src org
+,* Some heading
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+#+end_src
+
+By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangled.
 
 
 * Basic settings
@@ -38,7 +36,6 @@ today. So this block is commented out.
   :init
   (require 'no-littering))
 
-(set-language-environment "UTF-8")
 (set-default-coding-systems 'utf-8)
 (setq inhibit-startup-message t)
 (setq custom-safe-themes t)
@@ -52,7 +49,6 @@ today. So this block is commented out.
 (setq-default fill-column 79)
 ;; enable recent-file mode
 (setq recentf-max-saved-items 50)
-(recentf-mode 1)
 ;; refresh dired if file is changed on disk
 (setq dired-auto-revert-buffer t)
 ;; enable side scrolling with mouse wheel
@@ -77,14 +73,15 @@ today. So this block is commented out.
 (which-key-mode)
 (column-number-mode)
 
-;; Open recent files
-(global-set-key (kbd "C-c r") 'recentf-open-files)
-
 ;; enable automatic parenthesis pairing
 (electric-pair-mode 1)
 
 ;; default input mode to 'TeX', so can easily C-\ for inserting symbols
-(setq default-input-method "TeX")
+;; resorting to using after-init-hook because nothing else works!
+(add-hook 'after-init-hook
+          (lambda ()
+            (setq default-input-method "TeX")))
+
 
 ;; Kill current buffer (instead of asking first buffer name)
 (global-set-key (kbd "C-x k") 'kill-current-buffer)
@@ -94,6 +91,11 @@ today. So this block is commented out.
 (global-unset-key (kbd "C-<wheel-down>"))
 (global-unset-key (kbd "C-<mouse-5>"))
 (global-unset-key (kbd "C-<mouse-4>"))
+
+;; set case insensitivity for completion
+(setq read-file-name-completion-ignore-case t
+      read-buffer-completion-ignore-case t
+      completion-ignore-case t)
 
 ;; Close frame if not the last, kill emacs else
 (defun de/delete-frame-or-kill-emacs ()
@@ -140,6 +142,15 @@ Use multiple cursors
 Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how_to_use_ivy_and_its_utilities_in_your/][TIP: How to use Ivy and its utilities in your workflow]] (reddit r/emacs). I like using 'swiper' in place of the built-in isearch, so the standard =C-s= and =C-r= keybinding is replaced here with its corresponding version in swiper.
 
 #+begin_src emacs-lisp
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))
+                                   (symbol (styles orderless basic))
+                                   (command (styles orderless basic))
+                                   (variable (styles orderless basic))))
+  (completion-category-defaults nil))
+
 (use-package vertico
   :straight t
   :init (vertico-mode))
@@ -153,6 +164,21 @@ Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how
   (marginalia-align 'right)
   :init
   (marginalia-mode))
+
+(use-package consult
+  :straight t
+  :bind (;; Replace C-s with consult-line (like Swiper)
+         ("C-s" . consult-line)
+         ;; Replace C-x b with a better buffer switcher
+         ("C-x b" . consult-buffer)
+         ("C-x C-r" . consult-recent-file)
+         ;; Optional: Search for files in the whole project
+         ;; (requires 'ripgrep' (rg) installed on OS)
+         ("M-s r" . consult-ripgrep)
+         ("M-s f" . consult-find))
+  :config
+  ;; Optional: Improve the preview experience
+  (setq consult-preview-key 'any))
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -173,21 +199,7 @@ Using the workflow from [[https://www.reddit.com/r/emacs/comments/910pga/tip_how
    ("C-h o" . helpful-symbol)
    ;; Lookup the current symbol at point
    ("C-c C-d" . helpful-at-point)))
-
-(use-package orderless
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles partial-completion))))
-  (completion-category-defaults nil))
-
-(use-package consult
-  :bind (("C-x b" . consult-buffer)
-         ("C-x 4 b" . consult-buffer-other-window)
-         ("C-s" . consult-line)
-         ("C-r" . consult-line)))
-  #+end_src
-
-
+#+end_src
 
 ** Enhancements
 
@@ -209,15 +221,15 @@ Switching to using ~dirvish~ for an enhanced dired experience
   (dirvish-override-dired-mode)
   :custom
   ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
-  (dirvish-attributes '(nerd-icons file-time file-size collapse subtree-state vc-state git-msg))
-  (dirvish-side-width 40)
+  (dirvish-attributes '(nerd-icons collapse subtree-state vc-state))
+  (dirvish-side-width 35)
   :config
   ;; Enable "follow mode" so the sidebar updates as you switch files
   (dirvish-side-follow-mode)
   :bind
   ;; Bind a key to toggle the sidebar
   ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
-  
+  ("TAB" . dirvish-subtree-toggle)
   :hook
   ;; Clean up the sidebar look
   (dirvish-side-mode . (lambda ()
@@ -359,8 +371,6 @@ Silence eglot progress (in the *Messages* buffer)
 (setq eglot-report-progress nil)
 #+end_src
 
-I have ~emacs-lsp-booster~ installed and setup in my ~PATH~, so I'd like to speed up LSP via ~eglot-booster~.
-
 Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
 
 #+begin_src emacs-lisp
@@ -371,15 +381,10 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
   (:map eglot-mode-map
         ("C-c C-d" . eldoc)
         ("C-c C-f" . eglot-format-buffer))
-  :hook ((python-base-mode . eglot-ensure)
+  :hook ((python-ts-mode . eglot-ensure)
          (rust-mode . eglot-ensure))
   :custom
   (eglot-autoshutdown t))
-
-(use-package eglot-booster
-  :straight (eglot-booster :type git :host github :repo "jdtsmith/eglot-booster")
-  :after eglot
-  :config (eglot-booster-mode))
 #+end_src
 
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
@@ -388,7 +393,7 @@ uses a timer to type some characters, and 'l' for going to a specific line.
 (use-package avy
   :straight t)
 
-;; configure avy globally, use prefix M-g 
+;; configure avy globally, use prefix M-g
 (global-set-key (kbd "M-g c") 'avy-goto-char)
 (global-set-key (kbd "M-g t") 'avy-goto-char-timer)
 (global-set-key (kbd "M-g l") 'avy-goto-line)
@@ -401,12 +406,12 @@ Use `treesit-fold` for code folding
   :hook (prog-mode . treesit-fold-mode)
   :bind
   (:map prog-mode-map
-        ("C-c f f" . treesit-fold-toggle)    
-        ("C-c f c" . treesit-fold-close)     
-        ("C-c f o" . treesit-fold-open)      
+        ("C-c f f" . treesit-fold-toggle)
+        ("C-c f c" . treesit-fold-close)
+        ("C-c f o" . treesit-fold-open)
         ("C-c f r" . treesit-fold-open-recursively)
-        ("C-c f C" . treesit-fold-close-all)  
-        ("C-c f O" . treesit-fold-open-all))) 
+        ("C-c f C" . treesit-fold-close-all)
+        ("C-c f O" . treesit-fold-open-all)))
 
 (use-package treesit-fold-indicators
   :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
@@ -471,6 +476,9 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   :init
   (global-corfu-mode)
   (corfu-popupinfo-mode)
+  :config
+  (setq eldoc-echo-area-use-multiline-p nil)
+  (set-face-attribute 'corfu-default nil :inherit 'default)
   :bind
   (:map corfu-map
         ("M-SPC" . corfu-insert-separator)
@@ -508,6 +516,13 @@ A note for using ~corfu~:
 =M-h= is bound to ~corfu-popupinfo-documentation~ which show/hide the docstring popup.
 
 
+For a better parenthesis experience, use rainbow-delimiters:
+#+begin_src emacs-lisp
+(use-package rainbow-delimiters
+  :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
+
 ** Python
 
 Simple Python setup using venv for managing environments. I've been using `uv` to manage my Python environments and `venv` for creating separate environments. You can simply run:
@@ -529,10 +544,14 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
 
 ;; set the default python to 'utils' (remember to create this!)
 (activate-venv "utils")
-  #+end_src
+#+end_src
 
 #+begin_src emacs-lisp
 (use-package python
+  :custom
+  ;; 1. Fix the "dummy_completion" garbage
+  (python-shell-completion-native-enable nil)
+  
   :config
   ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
   (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1")
@@ -541,8 +560,19 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   ;; use tree-sitter
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
-  	      (append '((python-mode . python-ts-mode)) major-mode-remap-alist))))
-
+  	      (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
+  ;; get completions in the REPL
+  :hook
+  ((python-mode python-ts-mode) . (lambda ()
+                                    (remove-hook 'completion-at-point-functions
+                                                 #'python-completion-at-point 'local)))
+  ;; For REPL: remove the shell completion that causes the race condition
+  (inferior-python-mode . (lambda ()
+                            (corfu-mode 1)
+                            (setq comint-process-echoes t)
+                            (setq-local corfu-auto nil)
+                            (setq-local completion-at-point-functions
+                                        '(comint-completion-at-point t)))))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -621,7 +651,9 @@ from the jupyter kernel.
  'org-babel-load-languages
  '((emacs-lisp . t)
    (awk . t)
+   (latex . t)
    (sed . t)
+   (org . t)
    (sqlite . t)
    (shell . t)
    (gnuplot . t)
@@ -644,13 +676,12 @@ from the jupyter kernel.
 
 A typical workflow in org-mode is to use source blocks with the following tag (after running =activate-venv=!):
 #+begin_example
-  #+PROPERTY: header-args:python :session py
-  #+PROPERTY: header-args:python+ :async yes
-  #+PROPERTY: header-args:python+ :kernel GEManalysis
-  #+begin_src python :session py :kernel GEManalysis :async yes
-  <python code goes here>
-  #+end_src
-
+#+PROPERTY: header-args:python :session py
+#+PROPERTY: header-args:python+ :async yes
+#+PROPERTY: header-args:python+ :kernel GEManalysis
+#+begin_src python :session py :kernel GEManalysis :async yes
+<python code goes here>
+#+end_src
 #+end_example
 
 To make life a bit simpler, I've made a function to insert this snippet with the help of ChatGPT. To insert the snippet above in an org file, do =C-c j=. The ~never-export~ option tells org not to re-evaluate the entire document whenever the document is exported.
@@ -689,20 +720,7 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for
 next/previous blocks.
 
-As of [2024-03-29 Fri], ansi colors in the org-mode results is not rendering
-correctly. This is a workaround found in the ~emacs-jupyter~ issues list:
-#+begin_src emacs-lisp
-;; (defun patch/display-ansi-colors ()
-;;   "Fixes kernel output in emacs-jupyter"
-;;   (ansi-color-apply-on-region (point-min) (point-max)))
-;; (add-hook 'org-mode-hook
-;;           (lambda ()
-;;             (add-hook 'org-babel-after-execute-hook #'patch/display-ansi-colors)))
-#+end_src
-
-For prototyping a lot of code, I typically open a Python file and associate a
-jupyter console to it. Since I do this a lot, I decided to simplify this into a
-function:
+For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
 
 #+begin_src emacs-lisp
 (defun de/python-with-jupyter-repl
@@ -765,122 +783,83 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
 
 * Theme and appearance
 
-I really like Nicolas Rougier's nano-modeline, so we'll set that up independent of whatever theme I end up using.
-
-The ~(&rest _)~ trick is used here to ignore any arguments that is passed to the function (it can be called with any number of arguments, but they will be ignored). ~enable-theme-functions~ calls its functions with one argument. My function works without using any, so I will just ignore the argument.
-
-#+begin_src emacs-lisp
-(use-package nano-modeline
-  :straight (nano-modeline :type git :host github :repo "rougier/nano-modeline")
-  :config
-  ;; enable modeline globally
-  (nano-modeline-text-mode t))
-
-(setq-default mode-line-format nil)
-#+end_src
-
-** Nicolas Rougier's NANO emacs
-Use Nicolas Rougier's ~nano-emacs~. For fonts (on MacOS), I install them using ~homebrew~.  
-
-#+begin_src emacs-lisp
-(use-package nano-theme
-  :straight (nano-theme :type git :local-repo "/Users/delnatan/Apps/emacs/nano-theme/")
-  :init
-  ;; To use your own fonts, set to nil
-  (setq nano-fonts-use nil)  
-  :config
-  ;; define a function to set custom faces
-  (defun de/nano-theme-overrides (&rest _)
-    "Apply custom font and face overrides for nano-theme."
-    ;; -- Global Font Settings --
-    (set-face-attribute 'default nil 
-                        :family "CMU Typewriter Text"
-                        :height 135)
-    ;; (set-face-attribute 'fixed-pitch nil
-    ;;                     :family "Roboto Mono"
-    ;;                     :height 120
-    ;;                     :weight 'light)
-    ;; (set-face-attribute 'variable-pitch nil
-    ;;                     :family "Roboto Slab"
-    ;;                     :height 135)                        
-    
-    ;; nano-modeline theme-switching fix
-    (when (featurep 'nano-modeline)
-      (setq mode-line-format nil)
-      (set-face-attribute 'nano-modeline-active nil
-                          :background 'unspecified
-                          :foreground 'unspecified
-                          :inherit 'nano-subtle)
-      (set-face-attribute 'nano-modeline-inactive nil
-                          :background 'unspecified
-                          :foreground 'unspecified
-                          :inherit 'nano-faded)
-      ;; Footer line via window dividers
-      (setq window-divider-default-bottom-width 1)
-      (setq window-divider-default-right-width 1)
-      (setq window-divider-default-places t)
-      (window-divider-mode 1)
-      (set-face-attribute 'window-divider nil
-                          :foreground (face-foreground 'nano-faded)
-                          :background (face-background 'nano-faded))
-      (set-face-foreground 'vertical-border "#A7A6BA")
-      (force-mode-line-update t))
-    
-    ;; org mode customization
-    (when (featurep 'org)
-      ;; Keep highlight background but use fixed-pitch font
-      (set-face-attribute 'org-block nil :inherit '(highlight fixed-pitch))
-      (set-face-attribute 'org-code nil :inherit '(nano-salient fixed-pitch))
-      (set-face-attribute 'org-block-begin-line nil :inherit '(nano-faded fixed-pitch))
-      (set-face-attribute 'org-block-end-line nil :inherit '(nano-faded fixed-pitch))
-      (set-face-attribute 'org-verbatim nil :inherit '(nano-popout fixed-pitch))
-      (set-face-attribute 'org-table nil :inherit '(nano-faded fixed-pitch))
-      ;; keep org-hide hidden when switching theme
-      (set-face-attribute 'org-hide nil :foreground (face-attribute 'default :background))
-      (set-face-attribute 'org-checkbox nil :inherit '(nano-faded fixed-pitch))
-      (set-face-attribute 'org-special-keyword nil :inherit '(nano-faded fixed-pitch))
-      (set-face-attribute 'org-meta-line nil :inherit '(nano-faded fixed-pitch))
-      (set-face-attribute 'corfu-default nil :inherit '(nano-subtle fixed-pitch))
-      
-      ;; Headings with variable-pitch, keeping nano-strong styling
-      (set-face-attribute 'org-document-title nil :inherit '(nano-strong variable-pitch) :height 1.4)
-      (set-face-attribute 'org-level-1 nil :inherit '(nano-strong variable-pitch) :height 1.2)
-      (set-face-attribute 'org-level-2 nil :inherit '(nano-strong variable-pitch) :height 1.1)
-      (set-face-attribute 'org-level-3 nil :inherit '(nano-strong variable-pitch) :height 1.05)
-      (set-face-attribute 'org-level-4 nil :inherit '(nano-strong variable-pitch) :height 1.0)
-      (set-face-attribute 'org-level-5 nil :inherit '(nano-strong variable-pitch) :height 1.0)))
-
-  (advice-add 'nano-light :after #'de/nano-theme-overrides)
-  (advice-add 'nano-dark :after #'de/nano-theme-overrides)
-  
-  (with-eval-after-load 'nano-modeline (de/nano-theme-overrides))
-  (with-eval-after-load 'org (de/nano-theme-overrides))
-
-  ;; initial setup
-  (nano-mode)
-
-  ;; modify popout color
-  (set-face-attribute 'nano-popout nil :foreground "#D0634A")
-  ;; reset this again just to be safe
-  (setq nano-fonts-use nil)
-  ;; load initial theme as light
-  (nano-light))
-
-                      #+end_src
-
 I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~.
 #+begin_src emacs-lisp
 (use-package rainbow-mode
   :straight t
   :hook (org-mode prog-mode))
+
+;; use Rougier's nano emacs
+(use-package nano
+  :straight (:type git :host github :repo "rougier/nano-emacs")
+  :init
+  ;; Optional: for variable-pitch
+  ;; (setq nano-font-family-proportional "Fira Sans")
+  ;; default 'old' settings
+  ;; (setq nano-font-family-monospaced "Roboto Mono")
+  (setq nano-font-size 14)
+  
+  :config
+  ;; Choose light or dark theme
+  (require 'nano-theme-light)  ; or nano-theme-dark
+  (require 'nano-faces)
+  (require 'nano-theme)
+  (require 'nano-modeline)
+  (require 'nano-layout)
+  (nano-faces)
+  
+  (defun de/nano-font-stack ()
+    (set-face-attribute 'default nil
+                        :family "Berkeley Mono" :weight 'light :height 140)
+    (set-face-attribute 'bold nil
+                        :family "Berkeley Mono" :weight 'regular)
+    (set-face-attribute 'italic nil
+                        :family "Victor Mono" :weight 'semilight :slant
+                        'italic :height 130))
+
+  (advice-add 'nano-theme :after #'de/nano-font-stack)
+  
+  (defun de/nano-org-block-faces ()
+    "Apply custom org-block faces for nano theme."
+    (let ((block-bg (if (eq frame-background-mode 'light)
+                        "#F5F5F5"    ; slightly darker than white
+                      "#3B4252")))   ; slightly lighter than nord dark
+      (set-face-attribute 'org-block nil
+                          :background block-bg
+                          :extend t)
+      (set-face-attribute 'org-block-begin-line nil
+                          :extend t)
+      (set-face-attribute 'org-block-end-line nil
+                          :extend t)))
+
+  ;; Apply on initial load
+  (with-eval-after-load 'bookmark
+    (nano-theme)
+    (de/nano-org-block-faces))
+
+  ;; Reapply when org loads
+  (with-eval-after-load 'org
+    (de/nano-org-block-faces))
+
+  ;; Reapply after theme toggle
+  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
+
+  ;; for initial font setup
+  (de/nano-font-stack)
+  
+  ;; undo 'meta' key reassignment. I'm already used to 'alt' as 'meta'
+  (setq ns-alternate-modifier 'meta)
+  (setq ns-command-modifier 'super))
+
+(recentf-mode 1)
 #+end_src
 
 
-* Rougier's wonderful tools
+* Nicolas Rougier's tools
 
 #+begin_src emacs-lisp
 ;; add emacs ~app~ folder to load-path
-(add-to-list 'load-path "~/Apps/emacs/notes-list")  
+(add-to-list 'load-path "~/Apps/emacs/notes-list")
 (add-to-list 'load-path "~/Apps/emacs/svg-tag-mode")
 
 (use-package svg-lib
@@ -909,8 +888,15 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
     (insert (format "#+ICON: %s\n" icon))))
 
 (with-eval-after-load 'org
-  (define-key org-mode-map (kbd "C-c i p") 'de/insert-org-note-properties))
+  (define-key org-mode-map (kbd "C-c i p")
+              'de/insert-org-note-properties))
 
+;; [2025-12-29 Mon] trying out buffer-box
+(use-package buffer-box
+  :straight (buffer-box :type git :host github
+                        :repo "rougier/buffer-box")
+  :bind
+  ("C-c v b" . buffer-box))
 #+end_src
 
 
@@ -921,62 +907,61 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 Minor reconfiguration of ~org-mode~.
 
 #+begin_src emacs-lisp
-  (use-package org
-    :config
-    (add-hook 'org-mode-hook 'org-indent-mode)
-    (setq org-startup-indented t)
-    ;; make sure org-indent is there
-    (require 'org-indent nil t)
-    ;; fix org indent issue for multi-level bullets
-    (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
-    (setq org-confirm-babel-evaluate nil)
-    (setq org-display-inline-images t)
-    (setq org-adapt-indentation t)
-    (setq org-hide-leading-stars t)
-    (setq org-src-fontify-natively t)
-    (setq org-src-tab-acts-natively t)
-    (setq org-edit-src-content-indentation 0)
-    (setq org-startup-with-inline-images t)
-    (setq org-src-window-setup 'split-window-below)
-    (setq org-format-latex-options
-  	(plist-put org-format-latex-options :scale 1.1))
-    (setq org-image-actual-width nil)
-    (setq org-export-default-inline-image-rule
-  	'(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
-    (setq org-src-preserve-indentation t)
-    (setq org-latex-compiler "xelatex")
-    (setq org-latex-pdf-process
-  	(list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
-    :bind (:map org-mode-map
-  	      ("C-c l" . org-store-link)
-  	      ("C-c C-l" . org-insert-link)
-  	      ("C-x v l" . org-toggle-link-display)))
+(use-package org
+  :config
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (setq org-startup-indented t)
+  ;; make sure org-indent is there
+  (require 'org-indent nil t)
+  ;; fix org indent issue for multi-level bullets
+  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-display-inline-images t)
+  (setq org-adapt-indentation t)
+  (setq org-hide-leading-stars t)
+  (setq org-src-fontify-natively t)
+  (setq org-src-tab-acts-natively t)
+  (setq org-edit-src-content-indentation 0)
+  (setq org-startup-with-inline-images t)
+  (setq org-src-window-setup 'split-window-below)
+  ;; use SVG for better LaTeX preview
+  (setq org-preview-latex-default-process 'dvisvgm)
+  (setq org-format-latex-options
+  	    (plist-put org-format-latex-options :scale 1.05))
+  (setq org-image-actual-width nil)
+  (setq org-export-default-inline-image-rule
+  	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
+  (setq org-src-preserve-indentation t)
+  (setq org-latex-compiler "xelatex")
+  (setq org-latex-pdf-process
+  	    (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+  :bind (:map org-mode-map
+  	          ("C-c l" . org-store-link)
+  	          ("C-c C-l" . org-insert-link)
+  	          ("C-x v l" . org-toggle-link-display)))
 
-  ;; Enable variable-pitch-mode in org buffers
-  ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+;; Enable variable-pitch-mode in org buffers
+;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 
-  ;; remove under/over line in org source block header/footer
-  (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+;; remove under/over line in org source block header/footer
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
-  ;; shortcut to insert source block
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("sp" . "src python"))
-  (add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
+;; shortcut to insert source block
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("sp" . "src python"))
+(add-to-list 'org-structure-template-alist '("sjp" . "src jupyter-python"))
 
-  ;; use engrave-faces to support fontifying source blocks in LaTeX exports
-  (use-package engrave-faces
-    :straight t
-    :defer t
-    :init
-    (setq org-latex-src-block-backend 'engraved))
+;; use engrave-faces to support fontifying source blocks in LaTeX exports
+(use-package engrave-faces
+  :straight t
+  :defer t
+  :init
+  (setq org-latex-src-block-backend 'engraved))
 
-  (setq org-latex-engraved-theme 'nano)
+(setq org-latex-engraved-theme nil)
 #+end_src
 
-For a nicer org source block experience, trying ~corg.el~. You can trigger
-completion at point to see what's available. Typically I prefer just invoking
-~complete-symbol~ via `M-<tab>`.
-
+For a nicer org source block experience, trying ~corg.el~. You can trigger completion at point to see what's available. Typically I prefer just invoking ~complete-symbol~ via `M-<tab>`.
 #+begin_src emacs-lisp
 (use-package corg
   :straight (corg :host github :repo "isamert/corg.el")
@@ -1016,8 +1001,7 @@ Let's change the bullets appearance too.
   ;; Set specific bullets for the first few levels.
   ;; This list cycles if you go deeper than the defined length.
   ;; Options: ◉ ○ ✸ ✿ ⁖ ⊚ ⊛ ∙ ▷
-  (setq org-superstar-headline-bullets-list '("◉" "○" "⚬" "◈" "◇" "✳" "◎"))
-
+  (setq org-superstar-headline-bullets-list '("◉" "○" "◦" "•" "•" "•"))
   ;; Optional: If you want to prettify plain lists ( - or + ) as well
   (setq org-superstar-item-bullet-alist
         '((?* . ?•)
@@ -1065,8 +1049,7 @@ I want to use Nicolas Rougier's style sheet for exporting org files to HTML, so 
 (add-hook 'org-export-before-processing-hook 'de/my-org-inline-css-hook)
 #+end_src
 
-Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export??
-For convenience, let's just base64-encode images when exporting an org file to HTML
+Please note that at the moment, there doesn't seem to be a good way to include an SVG file in the HTML export? For convenience, let's just base64-encode images when exporting an org file to HTML
 #+begin_src emacs-lisp
 (defun org-org-html--format-image (source attributes info)
   (format "<img src=\"data:image/%s+xml;base64,%s\"%s />"
@@ -1089,8 +1072,20 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :straight t)
 #+end_src
 
-To use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org document pointing to the relevant files (CSL file and bibliography exported from zotero or manually constructed), invoke ~org-cite-insert~ and select the citation from the mini-buffer. Note that a single citation can cite more than one references. When done do =M-<return>=.
+To use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org document pointing to the relevant files (CSL file and bibliography exported from zotero or manually constructed), invoke ~org-cite-insert~ and select the citation from the mini-buffer. Note that a single citation can cite more than one references. When done do =M-<return>=. Here's an example of how to use it:
 
+#+begin_src org
+
+#+TITLE: My Paper
+#+BIBLIOGRAPHY: ~/Documents/references.bib
+#+CITE_EXPORT: csl ~/Documents/styles/ieee.csl
+,* Introduction
+Here is a claim supported by evidence.
+
+,* References
+#+PRINT_BIBLIOGRAPHY:
+
+#+end_src
 
 ** org document export to PDF
 
@@ -1115,7 +1110,6 @@ If you put new templates in there, update the LaTeX database by running ~texhash
                ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
                ("\\paragraph{%s}" . "\\paragraph*{%s}")
                ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
-
 #+end_src
 
 To use the template you just put this at the top of your org document:
@@ -1126,6 +1120,14 @@ To use the template you just put this at the top of your org document:
 #+end_example
 Use the svg package when exporting svg images or graphs into PDF.
 
+#+begin_src emacs-lisp
+(defun de/insert-latex-notes-header ()
+  (interactive)
+  (goto-char (point-min))
+  (insert "#+LATEX_CLASS: org-notes-template
+#+LATEX_CLASS_OPTIONS: [10pt]
+#+LATEX_HEADER: \\usepackage[inkscapelatex=false]{svg}\n\n"))
+#+end_src
 
 
 * Personal customizations
@@ -1228,15 +1230,15 @@ The syntax for relative dates is:
 +N unit or -N unit
 
 Where:
-    + or - : Specifies addition or subtraction from the current date/time.
+  + or - : Specifies addition or subtraction from the current date/time.
     N      : Is the number of units.
     unit   : Is a letter for the time unit:
-    
-        h for hours (relative to current time)
-        d for days (relative to today at midnight)
-        w for weeks (relative to today at midnight)
-        m for months (relative to today at midnight)
-        y for years (relative to today at midnight)
+
+    h for hours (relative to current time)
+    d for days (relative to today at midnight)
+    w for weeks (relative to today at midnight)
+    m for months (relative to today at midnight)
+    y for years (relative to today at midnight)
 
 
 * Org-capture setup
@@ -1255,7 +1257,7 @@ To prompt for the entry in the minibuffer. use ~%^{prompt}~.
 Enter time in a 24-hour format.
 
 You can add priorities to each TODO or notes by adding a =[#1]= (a numeric value to each tag). For example:
-=* TODO [#1] my TODO item.= 
+=* TODO [#1] my TODO item.=
 
 Generally, the notes are meant to be refiled so that it would show up when you run =M-x notes-list=. However, the TODO items get added to the calendar.
 
@@ -1267,24 +1269,24 @@ Generally, the notes are meant to be refiled so that it would show up when you r
 (setq org-capture-templates
       '(("t" "TODO" entry (file+headline "/Users/delnatan/Documents/org/tasks.org" "Tasks")
     	 "TODO %U %? \n  %i\n" :prepend t :empty-lines 1)
-  	("n" "Note" entry (file+headline "/Users/delnatan/Documents/org/notes.org" "Notes")
-  	 "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t :empty-lines 1)
-  	("m" "Meeting" entry (file+headline "/Users/delnatan/Documents/org/meetings.org" "Meetings")
-  	 "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t :empty-lines 1)
-  	("e" "Event" entry (file+headline "/Users/delnatan/Documents/org/events.org" "Events")
-  	 "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t :empty-lines 1)))
+  	    ("n" "Note" entry (file+headline "/Users/delnatan/Documents/org/notes.org" "Notes")
+  	     "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t :empty-lines 1)
+  	    ("m" "Meeting" entry (file+headline "/Users/delnatan/Documents/org/meetings.org" "Meetings")
+  	     "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t :empty-lines 1)
+  	    ("e" "Event" entry (file+headline "/Users/delnatan/Documents/org/events.org" "Events")
+  	     "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t :empty-lines 1)))
 
 (defun de/org-sort-entries-by-date ()
   "Sort entries in descending order by date"
   (when (or (string= (buffer-name) "events.org")
-	    (string= (buffer-name) "meetings.org"))
+	        (string= (buffer-name) "meetings.org"))
     (org-sort-entries nil ?T)))
 
 (add-hook 'org-capture-after-finalize-hook 'de/org-sort-entries-by-date)
 
 ;; configure refile targets
 (setq org-refile-targets '((nil :maxlevel . 3)
-  			   (org-agenda-files :maxlevel . 3)))
+  			               (org-agenda-files :maxlevel . 3)))
 #+end_src
 
 The workflow is such: do =C-c n= to capture a note in a new buffer, then save the file and do =C-c C-c= to complete the capture. Do =C-c C-k= to abort capture.
@@ -1311,16 +1313,6 @@ Sometimes I work with a lot of CSV files when doing data processing using Python
   :straight (csv-mode :type git :host github :repo "emacsmirror/csv-mode"))
 #+end_src
 
-For reading pdfs, let's try out pdf-tools, which has a nice 'midnight' mode.
-#+begin_src emacs-lisp 
-(use-package pdf-tools
-  :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
-  :config
-  (pdf-tools-install :no-query)
-  (setq-default pdf-view-display-size 'fit-width)
-  (setq pdf-view-midnight-colors '("#e5e9f0" . "#2e3440")))
-#+end_src
-
 I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to match a literal dot in the file name. You need to declare and escape and then ~\.~ to match a dot (because a dot matches any character in regex). The ~\\'~ just means the 'end of string'.
 
 #+begin_src emacs-lisp
@@ -1331,3 +1323,35 @@ I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to
 (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
 #+end_src
 
+Use citar to manage/access up-to-date bibliography in Zotero
+#+begin_src emacs-lisp
+(use-package citar
+  :no-require
+  :custom
+  (org-cite-global-bibliography '("~/Work/org/my_bibliography.bib"))
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar)
+  (citar-bibliography org-cite-global-bibliography)
+  ;; optional: org-cite-insert is also bound to C-c C-x C-@
+  :bind
+  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
+
+;; Recommended: Citar Embark integration
+;; This allows you to use Embark actions on citations (e.g., open url, open pdf, insert key)
+(use-package citar-embark
+  :straight t
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
+#+end_src
+
+I love org mode but sometimes it's convenient to write documents in markdown
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+         ("C-c C-e" . markdown-do)))
+#+end_src
