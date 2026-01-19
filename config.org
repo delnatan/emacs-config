@@ -222,7 +222,7 @@ Switching to using ~dirvish~ for an enhanced dired experience
   :custom
   ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
   (dirvish-attributes '(nerd-icons collapse subtree-state vc-state))
-  (dirvish-side-width 35)
+  (dirvish-side-width 30)
   :config
   ;; Enable "follow mode" so the sidebar updates as you switch files
   (dirvish-side-follow-mode)
@@ -523,6 +523,7 @@ For a better parenthesis experience, use rainbow-delimiters:
   :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 
+
 ** Python
 
 Simple Python setup using venv for managing environments. I've been using `uv` to manage my Python environments and `venv` for creating separate environments. You can simply run:
@@ -783,8 +784,10 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
 
 * Theme and appearance
 
-I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~.
+To justify both sides evenly like Rougier's examples. Use enriched-mode and press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the current paragraph. *But be careful!* This actually changes the document as rich-text and adds markup (tags) to the text file.
+
 #+begin_src emacs-lisp
+;; use rainbow-mode to display the color of a color string
 (use-package rainbow-mode
   :straight t
   :hook (org-mode prog-mode))
@@ -792,6 +795,8 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
 ;; use Rougier's nano emacs
 (use-package nano
   :straight (:type git :host github :repo "rougier/nano-emacs")
+  ;; don't load nano.el, load each modules explicitly
+  :no-require t 
   :init
   ;; Optional: for variable-pitch
   ;; (setq nano-font-family-proportional "Fira Sans")
@@ -800,25 +805,33 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
   (setq nano-font-size 14)
   
   :config
-  ;; Choose light or dark theme
-  (require 'nano-theme-light)  ; or nano-theme-dark
+  ;; workaround, somehow NANO needs this face
+  (defface bookmark-menu-heading
+    `((((class color) (min-colors 89)) (:foreground "#000000")))
+    "workaround")
+  
+  ;; load modules explicitly
+  (require 'nano-defaults)
   (require 'nano-faces)
   (require 'nano-theme)
+  (require 'nano-theme-dark)
+  (require 'nano-theme-light)
   (require 'nano-modeline)
   (require 'nano-layout)
-  (nano-faces)
-  
+  ;; this also sets `frame-background-mode` needed for functions below
+  (nano-theme-set-light) ;; set default to 'light'
+
+  ;; define custom fonts
   (defun de/nano-font-stack ()
     (set-face-attribute 'default nil
-                        :family "Berkeley Mono" :weight 'light :height 140)
+                        :family "Roboto Mono" :weight 'light :height 140)
     (set-face-attribute 'bold nil
-                        :family "Berkeley Mono" :weight 'regular)
+                        :family "Roboto Mono" :weight 'regular)
     (set-face-attribute 'italic nil
                         :family "Victor Mono" :weight 'semilight :slant
                         'italic :height 130))
 
-  (advice-add 'nano-theme :after #'de/nano-font-stack)
-  
+  ;; define custom org source block colors
   (defun de/nano-org-block-faces ()
     "Apply custom org-block faces for nano theme."
     (let ((block-bg (if (eq frame-background-mode 'light)
@@ -832,26 +845,34 @@ I want to show the colors of hex codes in the buffer so I'm using ~rainbow-mode~
       (set-face-attribute 'org-block-end-line nil
                           :extend t)))
 
-  ;; Apply on initial load
-  (with-eval-after-load 'bookmark
-    (nano-theme)
-    (de/nano-org-block-faces))
+  ;; setup hooks and advice
+  (advice-add 'nano-theme :after #'de/nano-font-stack)
+  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
+  ;; Ensure org blocks update whenever the theme is set or toggled
+  (advice-add 'nano-theme :after #'de/nano-org-block-faces) 
+  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
 
   ;; Reapply when org loads
   (with-eval-after-load 'org
     (de/nano-org-block-faces))
 
-  ;; Reapply after theme toggle
-  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
+  ;; Apply on initial load
+  (with-eval-after-load 'bookmark
+    (nano-theme)
+    (de/nano-org-block-faces))
 
-  ;; for initial font setup
-  (de/nano-font-stack)
+  ;; initialize theme
+  (nano-faces)
+  (nano-theme) ;; all advice should be triggered correctly  
   
   ;; undo 'meta' key reassignment. I'm already used to 'alt' as 'meta'
   (setq ns-alternate-modifier 'meta)
   (setq ns-command-modifier 'super))
 
 (recentf-mode 1)
+;; patch, somehome nano-defaults did not do these
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
 #+end_src
 
 
@@ -927,7 +948,7 @@ Minor reconfiguration of ~org-mode~.
   ;; use SVG for better LaTeX preview
   (setq org-preview-latex-default-process 'dvisvgm)
   (setq org-format-latex-options
-  	    (plist-put org-format-latex-options :scale 1.05))
+  	    (plist-put org-format-latex-options :scale 1.02))
   (setq org-image-actual-width nil)
   (setq org-export-default-inline-image-rule
   	    '(("file" . "\\.\\(gif\\|jp\\(?:e?g\\)\\|svg?\\|p\\(?:bm\\|gm\\|ng\\|pm\\)\\|tiff?\\|x\\(?:[bp]m\\)\\'")))
@@ -943,7 +964,6 @@ Minor reconfiguration of ~org-mode~.
 ;; Enable variable-pitch-mode in org buffers
 ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 
-;; remove under/over line in org source block header/footer
 (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
 
 ;; shortcut to insert source block
