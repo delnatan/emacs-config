@@ -1,0 +1,60 @@
+US keyboard coverage:
+
+abcdefghijklmnopqrstuvwxyz`1234567890-=[]\;',./
+ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+{}|:"<>?
+
+latin1 coverage: ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿
+EURO SIGN, TRADE MARK SIGN: €™
+
+αβγδΓϕπφνηξϵμ∇Δ·⊤
+ℝ
+
+ambiguity test:
+
+e¢coC0ODQ iI71lL!|¦
+b6G&0B83  [](){}/\.…·•
+zs$S52Z%  ´`'"‘’“”«»
+
+all characters in a sentence, uppercase:
+
+the quick brown fox jumps over the lazy dog
+THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG
+
+same, in french:
+
+Portez ce vieux whisky au juge blond qui fume.
+
+dès noël, où un zéphyr haï me vêt de glaçons würmiens, je dîne
+d’exquis rôtis de bœuf au kir, à l’aÿ d’âge mûr, &cætera.
+
+DÈS NOËL, OÙ UN ZÉPHYR HAÏ ME VÊT DE GLAÇONS WÜRMIENS, JE DÎNE
+D’EXQUIS RÔTIS DE BŒUF AU KIR, À L’AŸ D’ÂGE MÛR, &CÆTERA.
+
+Ligatures test:
+
+-<< -< -<- <-- <--- <<- <- -> ->> --> ---> ->- >- >>-
+=<< =< =<= <== <=== <<= <= => =>> ==> ===> =>= >= >>=
+<-> <--> <---> <----> <=> <==> <===> <====> :: ::: __
+<~~ </ </> /> ~~> == != /= ~= <> === !== !=== =/= =!=
+<: := *= *+ <* <*> *> <| <|> |> <. <.> .> +* =* =: :>
+(* *) /* */ [| |] {| |} ++ +++ \/ /\ |- -| <!-- <!---
+
+Box drawing alignment tests:
+                                                                   █
+╔══╦══╗  ┌──┬──┐  ╭──┬──╮  ╭──┬──╮  ┏━━┳━━┓ ┎┒┏┑   ╷  ╻ ┏┯┓ ┌┰┐    ▉ ╱╲╱╲╳╳╳
+║┌─╨─┐║  │╔═╧═╗│  │╒═╪═╕│  │╓─╁─╖│  ┃┌─╂─┐┃ ┗╃╄┙  ╶┼╴╺╋╸┠┼┨ ┝╋┥    ▊ ╲╱╲╱╳╳╳
+║│╲ ╱│║  │║   ║│  ││ │ ││  │║ ┃ ║│  ┃│ ╿ │┃ ┍╅╆┓   ╵  ╹ ┗┷┛ └┸┘    ▋ ╱╲╱╲╳╳╳
+╠╡ ╳ ╞╣  ├╢   ╟┤  ├┼─┼─┼┤  ├╫─╂─╫┤  ┣┿╾┼╼┿┫ ┕┛┖┚     ┌┄┄┐ ╎ ┏┅┅┓ ┋ ▌ ╲╱╲╱╳╳╳
+║│╱ ╲│║  │║   ║│  ││ │ ││  │║ ┃ ║│  ┃│ ╽ │┃ ░░▒▒▓▓██ ┊  ┆ ╎ ╏  ┇ ┋ ▍
+║└─╥─┘║  │╚═╤═╝│  │╘═╪═╛│  │╙─╀─╜│  ┃└─╂─┘┃ ░░▒▒▓▓██ ┊  ┆ ╎ ╏  ┇ ┋ ▎
+╚══╩══╝  └──┴──┘  ╰──┴──╯  ╰──┴──╯  ┗━━┻━━┛          └╌╌┘ ╎ ┗╍╍┛ ┋ ▏▁▂▃▄▅▆▇█
+
+Lines alignment test:
+---------------------------------------- HYPHEN-MINUS
+−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−− MINUS SIGN
+–––––––––––––––––––––––––––––––––––––––– EN
+———————————————————————————————————————— EM DASH
+―――――――――――――――――――――――――――――――――――――――― HORIZONTAL BAR
+________________________________________ LOW LINE
+
+All in one line, surrounded by PLUS SIGN: +-−–—―_+

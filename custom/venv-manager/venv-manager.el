@@ -72,15 +72,24 @@
 
 (defun venv-manager--list-venvs ()
   "Get list of available virtual environments.
-Returns an alist where key is the venv name and value is the full path."
+Returns an alist where key is the venv name and value is the full path.
+Supports both traditional venvs (subdirectories with bin/python)
+and uv workspace venvs (subdirectories containing .venv/bin/python)."
   (let ((venvs '()))
     (dolist (dir venv-manager-directories)
-      (when (file-directory-p (expand-file-name dir))
-        (dolist (venv (directory-files (expand-file-name dir)))
-          (let ((venv-path (expand-file-name venv dir)))
-            (when (and (file-directory-p venv-path)
-                       (file-exists-p (expand-file-name "bin/python" venv-path)))
-              (push (cons venv venv-path) venvs))))))
+      (let ((expanded-dir (expand-file-name dir)))
+        (when (file-directory-p expanded-dir)
+          (dolist (venv (directory-files expanded-dir nil "^[^.]"))
+            (let* ((venv-path (expand-file-name venv expanded-dir))
+                   (uv-venv-path (expand-file-name ".venv" venv-path)))
+              (when (file-directory-p venv-path)
+                (cond
+                 ;; Traditional venv: subdir itself contains bin/python
+                 ((file-exists-p (expand-file-name "bin/python" venv-path))
+                  (push (cons venv venv-path) venvs))
+                 ;; UV workspace: subdir contains .venv/bin/python
+                 ((file-exists-p (expand-file-name "bin/python" uv-venv-path))
+                  (push (cons venv uv-venv-path) venvs)))))))))
     venvs))
 
 ;;;###autoload

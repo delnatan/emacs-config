@@ -3,12 +3,20 @@
 #+STARTUP: overview
 
 * Preamble
-[2025-11-07 Fri] this is fixed in the emacs-plus@30 build when I tried as of
-today. So this block is commented out.
 
 #+begin_src emacs-lisp
 ;; toggle this debug issues
 ;; (setq debug-on-error t)
+
+;; using cask at the moment, need this path injection
+(use-package exec-path-from-shell
+  :straight (exec-path-from-shell
+             :type git
+             :host github
+             :repo "purcell/exec-path-from-shell")
+  :init
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
 
 ;; use the latest transient (needed by magit, dirvish, and probably many others)
 (use-package transient
@@ -503,6 +511,7 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   :init
   ;; use cape-file everywhere
   (add-to-list 'completion-at-point-functions #'cape-file)
+  
   ;; only check for elisp blocks inside org files
   (add-hook
    'org-mode-hook (lambda ()
@@ -541,7 +550,9 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   :init
   (require 'venv-manager)
   :custom
-  (venv-manager-directories '("/Users/delnatan/envs")))
+  (venv-manager-directories
+   '("/Users/delnatan/envs"
+     "/Users/delnatan/uv-workspaces")))
 
 ;; set the default python to 'utils' (remember to create this!)
 (activate-venv "utils")
@@ -624,7 +635,9 @@ from the jupyter kernel.
 
 #+begin_src emacs-lisp
 (use-package jupyter
-  :straight (jupyter :type git :local-repo "/Users/delnatan/Apps/emacs/jupyter"
+  :straight (jupyter :type git
+                     :repo "delnatan/jupyter"
+                     :local-repo "/Users/delnatan/Apps/emacs/jupyter"
                      :branch "fix-python-error-location-ansi")
   :defer t
   :custom
@@ -717,6 +730,15 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 
 (add-hook 'org-mode-hook 'de/org-jupyter-setup())
 #+end_src
+
+Note: for routine work with matplotlib, you can add the following snippet to make exporting to PDF nicer (will export images!)
+#+begin_example
+;; this tells org to produce an image file (don't forget to specify file name with `:file`)
+#+PROPERTY: header-args:jupyter-python+ :results graphics file :exports both
+
+;; above the inserted image, you can add this to adjust size
+#+ATTR_LATEX: :width 0.4\textwidth :float nil
+#+end_example
 
 You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for
 next/previous blocks.
@@ -845,9 +867,33 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
       (set-face-attribute 'org-block-end-line nil
                           :extend t)))
 
+  ;; derive corfu faces from nano
+  (defun de/nano-corfu-faces ()
+    "Derive corfu popup faces from nano faces."
+    (with-eval-after-load 'corfu
+      (set-face 'corfu-default 'nano-face-subtle)
+      (set-face 'corfu-current '(nano-face-strong nano-face-subtle))
+      (set-face-attribute 'corfu-current nil :background nano-color-highlight)
+      (set-face 'corfu-bar 'nano-face-faded)
+      (set-face-attribute 'corfu-bar nil :background nano-color-foreground)
+      (set-face 'corfu-border 'nano-face-subtle)
+      (set-face-attribute 'corfu-border nil :background nano-color-faded)
+      (set-face 'corfu-annotations 'nano-face-faded)
+      (set-face 'corfu-deprecated 'nano-face-faded)))
+
+  ;; force corfu to recreate popup after theme change
+  (defun de/corfu-reset-frames (&rest _)
+    "Kill corfu child frames so they're recreated with new colors."
+    (dolist (frame (frame-list))
+      (when (frame-parameter frame 'corfu--frame)
+        (delete-frame frame))))
+  
   ;; setup hooks and advice
   (advice-add 'nano-theme :after #'de/nano-font-stack)
   (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
+  (advice-add 'nano-theme :after #'de/nano-corfu-faces)
+  (advice-add 'nano-refresh-theme :after #'de/corfu-reset-frames)  
+
   ;; Ensure org blocks update whenever the theme is set or toggled
   (advice-add 'nano-theme :after #'de/nano-org-block-faces) 
   (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
