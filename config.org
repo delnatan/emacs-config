@@ -5,21 +5,21 @@
 * Preamble
 
 #+begin_src emacs-lisp
-  ;; toggle this debug issues
-  ;; (setq debug-on-error t)
+;; toggle this debug issues
+;; (setq debug-on-error t)
 
-  ;; use the latest transient (needed by magit, dirvish, and probably many others)
-  (use-package transient
-    :straight t)
+;; use the latest transient (needed by magit, dirvish, and probably many others)
+(use-package transient
+  :straight t)
 #+end_src
 
 
 A convenient way to debug is you can add the following tags under a heading:
 #+begin_src org
-  ,* Some heading
-  :PROPERTIES:
-  :header-args: :tangle no
-  :END:
+,* Some heading
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 #+end_src
 
 By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangled.
@@ -28,188 +28,188 @@ By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangl
 * Basic settings
 
 #+begin_src emacs-lisp
-  ;; keep things tidy
-  (use-package no-littering
-    :straight t
-    :init
-    (require 'no-littering))
+;; keep things tidy
+(use-package no-littering
+  :straight t
+  :init
+  (require 'no-littering))
 
-  (set-default-coding-systems 'utf-8)
-  (setq inhibit-startup-message t)
-  (setq custom-safe-themes t)
+(set-default-coding-systems 'utf-8)
+(setq inhibit-startup-message t)
+(setq custom-safe-themes t)
 
-  ;; enable global auto revert (refresh buffer if there's file changes)
-  (global-auto-revert-mode 1)
-  (setq make-backup-files nil)
-  (setq auto-revert-verbose nil)
-  ;; use y/n for yes-or-no
-  (setq use-short-answers t)
-  ;; for programming set fill to 80 columns and display column indicator
-  (setq-default fill-column 79)
-  ;; enable recent-file mode
-  (setq recentf-max-saved-items 50)
-  ;; refresh dired if file is changed on disk
-  (setq dired-auto-revert-buffer t)
-  ;; enable side scrolling with mouse wheel
-  (setq mouse-wheel-tilt-scroll t)
-  ;; reverse mouse direction for a more natural swipe feel
-  (setq mouse-wheel-flip-direction t)
+;; enable global auto revert (refresh buffer if there's file changes)
+(global-auto-revert-mode 1)
+(setq make-backup-files nil)
+(setq auto-revert-verbose nil)
+;; use y/n for yes-or-no
+(setq use-short-answers t)
+;; for programming set fill to 80 columns and display column indicator
+(setq-default fill-column 79)
+;; enable recent-file mode
+(setq recentf-max-saved-items 50)
+;; refresh dired if file is changed on disk
+(setq dired-auto-revert-buffer t)
+;; enable side scrolling with mouse wheel
+(setq mouse-wheel-tilt-scroll t)
+;; reverse mouse direction for a more natural swipe feel
+(setq mouse-wheel-flip-direction t)
 
-  ;; start as a small frame
-  (setq initial-frame-alist
-        '((top . 1) (left . 1) (width . 80) (height . 40)))
+;; start as a small frame
+(setq initial-frame-alist
+      '((top . 1) (left . 1) (width . 80) (height . 40)))
 
-  ;; hooks to customize behavior of specific modes
-  (add-hook 'text-mode-hook #'visual-line-mode)
-  (add-hook 'prog-mode-hook #'visual-line-mode)
-  ;; draw fill-column indicator in text and prog modes
-  (dolist (hook '(text-mode-hook prog-mode-hook))
-    (add-hook hook #'display-fill-column-indicator-mode))
+;; hooks to customize behavior of specific modes
+(add-hook 'text-mode-hook #'visual-line-mode)
+(add-hook 'prog-mode-hook #'visual-line-mode)
+;; draw fill-column indicator in text and prog modes
+(dolist (hook '(text-mode-hook prog-mode-hook))
+  (add-hook hook #'display-fill-column-indicator-mode))
 
-  ;; I only want to show line numbers in programming mode.
-  (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+;; I only want to show line numbers in programming mode.
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
-  ;; new in emacs 30, enable which-key-mode
-  (which-key-mode)
-  (which-key-add-key-based-replacements
-    "C-c u" "artist"
-    "C-c p" "cape"
-    "C-c f" "fold"
-    "C-c r" "run/restart")
-  (column-number-mode)
+;; new in emacs 30, enable which-key-mode
+(which-key-mode)
+(which-key-add-key-based-replacements
+  "C-c u" "artist"
+  "C-c p" "cape"
+  "C-c f" "fold"
+  "C-c r" "run/restart")
+(column-number-mode)
 
-  ;; enable automatic parenthesis pairing
-  (electric-pair-mode 1)
+;; enable automatic parenthesis pairing
+(electric-pair-mode 1)
 
-  ;; default input mode to 'TeX', so can easily C-\ for inserting symbols
-  ;; resorting to using after-init-hook because nothing else works!
-  (add-hook 'after-init-hook
-            (lambda ()
-              (setq default-input-method "TeX")))
+;; default input mode to 'TeX', so can easily C-\ for inserting symbols
+;; resorting to using after-init-hook because nothing else works!
+(add-hook 'after-init-hook
+          (lambda ()
+            (setq default-input-method "TeX")))
 
 
-  ;; Kill current buffer (instead of asking first buffer name)
-  (global-set-key (kbd "C-x k") #'kill-current-buffer)
+;; Kill current buffer (instead of asking first buffer name)
+(global-set-key (kbd "C-x k") #'kill-current-buffer)
 
-  ;; unbind annoying text-scaling with Ctrl-mouse wheel
-  (global-unset-key (kbd "C-<wheel-up>"))
-  (global-unset-key (kbd "C-<wheel-down>"))
-  (global-unset-key (kbd "C-<mouse-5>"))
-  (global-unset-key (kbd "C-<mouse-4>"))
+;; unbind annoying text-scaling with Ctrl-mouse wheel
+(global-unset-key (kbd "C-<wheel-up>"))
+(global-unset-key (kbd "C-<wheel-down>"))
+(global-unset-key (kbd "C-<mouse-5>"))
+(global-unset-key (kbd "C-<mouse-4>"))
 
-  ;; set case insensitivity for completion
-  (setq read-file-name-completion-ignore-case t
-        read-buffer-completion-ignore-case t
-        completion-ignore-case t)
+;; set case insensitivity for completion
+(setq read-file-name-completion-ignore-case t
+      read-buffer-completion-ignore-case t
+      completion-ignore-case t)
 
-  ;; Close frame if not the last, kill emacs else
-  (defun de/delete-frame-or-kill-emacs ()
-    "Delete frame or kill Emacs if there is only one frame."
-    (interactive)
-    (if (> (length (frame-list)) 1)
-        (delete-frame)
-      (save-buffers-kill-terminal)))
-  (global-set-key (kbd "C-x C-c") #'de/delete-frame-or-kill-emacs)
+;; Close frame if not the last, kill emacs else
+(defun de/delete-frame-or-kill-emacs ()
+  "Delete frame or kill Emacs if there is only one frame."
+  (interactive)
+  (if (> (length (frame-list)) 1)
+      (delete-frame)
+    (save-buffers-kill-terminal)))
+(global-set-key (kbd "C-x C-c") #'de/delete-frame-or-kill-emacs)
 
-  ;; create a new frame with *scratch* buffer
-  (defun de/new-frame ()
-    "make a new frame with scratch buffer and switch to that buffer."
-    (interactive)
-    (select-frame (make-frame))
-    (switch-to-buffer "*scratch*"))
+;; create a new frame with *scratch* buffer
+(defun de/new-frame ()
+  "make a new frame with scratch buffer and switch to that buffer."
+  (interactive)
+  (select-frame (make-frame))
+  (switch-to-buffer "*scratch*"))
 
-  (global-set-key (kbd "M-N") #'de/new-frame)
-  (global-set-key (kbd "M-`") #'other-frame)
+(global-set-key (kbd "M-N") #'de/new-frame)
+(global-set-key (kbd "M-`") #'other-frame)
 #+end_src
 
 In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
 #+begin_src emacs-lisp
-  (use-package ultra-scroll
-    :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
-    :init
-    (setq scroll-conservatively 101
+(use-package ultra-scroll
+  :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
+  :init
+  (setq scroll-conservatively 101
       	scroll-margin 0)
-    :config
-    (ultra-scroll-mode 1))
+  :config
+  (ultra-scroll-mode 1))
 #+end_src
 
 Use multiple cursors
 #+begin_src emacs-lisp
-  (use-package multiple-cursors
-    :straight t
-    :bind (("C->" . mc/mark-next-like-this)
-           ("C-<" . mc/mark-previous-like-this)
+(use-package multiple-cursors
+  :straight t
+  :bind (("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
       	 ("C-c C-<" . mc/mark-all-like-this)
-           ("C-S-c C-S-c" . mc/edit-lines)
-           ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
+         ("C-S-c C-S-c" . mc/edit-lines)
+         ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
 
 I now use consult to replace the default =C-s= search in buffer.
 
 #+begin_src emacs-lisp
-  (use-package orderless
-    :custom
-    (completion-styles '(orderless basic))
-    (completion-category-overrides '((file (styles partial-completion))
-                                     (symbol (styles orderless basic))
-                                     (command (styles orderless basic))
-                                     (variable (styles orderless basic))
-                                     (consult-location (styles orderless basic))))
-    (completion-category-defaults nil))
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))
+                                   (symbol (styles orderless basic))
+                                   (command (styles orderless basic))
+                                   (variable (styles orderless basic))
+                                   (consult-location (styles orderless basic))))
+  (completion-category-defaults nil))
 
-  (use-package vertico
-    :straight t
-    :init (vertico-mode))
+(use-package vertico
+  :straight t
+  :init (vertico-mode))
 
-  (use-package marginalia
-    :straight t
-    :bind
-    (:map minibuffer-local-map
-          ("M-A" . marginalia-cycle))
-    :custom
-    (marginalia-max-relative-age 0)
-    (marginalia-align 'right)
-    :init
-    (marginalia-mode))
+(use-package marginalia
+  :straight t
+  :bind
+  (:map minibuffer-local-map
+        ("M-A" . marginalia-cycle))
+  :custom
+  (marginalia-max-relative-age 0)
+  (marginalia-align 'right)
+  :init
+  (marginalia-mode))
 
-  (use-package consult
-    :straight t
-    :bind (;; Replace C-s with consult-line (like Swiper)
-           ("C-s" . consult-line)
-           ;; Replace C-x b with a better buffer switcher
-           ("C-x b" . consult-buffer)
-           ("C-x C-r" . consult-recent-file)
-           ;; Optional: Search for files in the whole project
-           ;; (requires 'ripgrep' (rg) installed on OS)
-           ("M-s r" . consult-ripgrep)
-           ("M-s f" . consult-find))
-    :config
-    ;; Optional: Improve the preview experience
-    (setq consult-preview-key 'any)
-    ;; NOTE: consult--regexp-compiler is an internal API (double-dash);
-    ;; this is the canonical recommendation from consult docs but may
-    ;; need updating if consult internals change.
-    (setq consult--regexp-compiler #'consult--orderless-regexp-compiler))
+(use-package consult
+  :straight t
+  :bind (;; Replace C-s with consult-line (like Swiper)
+         ("C-s" . consult-line)
+         ;; Replace C-x b with a better buffer switcher
+         ("C-x b" . consult-buffer)
+         ("C-x C-r" . consult-recent-file)
+         ;; Optional: Search for files in the whole project
+         ;; (requires 'ripgrep' (rg) installed on OS)
+         ("M-s r" . consult-ripgrep)
+         ("M-s f" . consult-find))
+  :config
+  ;; Optional: Improve the preview experience
+  (setq consult-preview-key 'any)
+  ;; NOTE: consult--regexp-compiler is an internal API (double-dash);
+  ;; this is the canonical recommendation from consult docs but may
+  ;; need updating if consult internals change.
+  (setq consult--regexp-compiler #'consult--orderless-regexp-compiler))
 
-  ;; A few more useful configurations...
-  (use-package emacs
-    :custom
-    (indent-tabs-mode nil)
-    (tab-width 4)
-    (tab-always-indent 'complete)
-    (text-mode-ispell-word-completion nil)
-    (read-extended-command-predicate #'command-completion-default-include-p))
+;; A few more useful configurations...
+(use-package emacs
+  :custom
+  (indent-tabs-mode nil)
+  (tab-width 4)
+  (tab-always-indent 'complete)
+  (text-mode-ispell-word-completion nil)
+  (read-extended-command-predicate #'command-completion-default-include-p))
 
-  (use-package helpful
-    :straight t
-    :bind
-    (("C-h f" . helpful-callable)
-     ("C-h v" . helpful-variable)
-     ("C-h k" . helpful-key)
-     ("C-h x" . helpful-command)
-     ("C-h o" . helpful-symbol)
-     ;; Lookup the current symbol at point
-     ("C-c C-d" . helpful-at-point)))
+(use-package helpful
+  :straight t
+  :bind
+  (("C-h f" . helpful-callable)
+   ("C-h v" . helpful-variable)
+   ("C-h k" . helpful-key)
+   ("C-h x" . helpful-command)
+   ("C-h o" . helpful-symbol)
+   ;; Lookup the current symbol at point
+   ("C-c C-d" . helpful-at-point)))
 #+end_src
 
 I find myself using more of ~artist-mode~ to write plain ASCII notes because I
@@ -219,14 +219,14 @@ mode so that it would not interfere with commonly used keybindings like =C-c
 C-c=. Use =C-c u a= to enter artist-mode and =C-c u a= again to exit.
 
 #+begin_src emacs-lisp
-  (define-prefix-command 'de/artist-map)
-  (global-set-key (kbd "C-c u") #'de/artist-map)
-  ;; unbind C-c C-c (previously bound to 'artist-mode-off)
-  (with-eval-after-load 'artist
-    (define-key artist-mode-map (kbd "C-c C-c") nil))
+(define-prefix-command 'de/artist-map)
+(global-set-key (kbd "C-c u") #'de/artist-map)
+;; unbind C-c C-c (previously bound to 'artist-mode-off)
+(with-eval-after-load 'artist
+  (define-key artist-mode-map (kbd "C-c C-c") nil))
 
-  (define-key de/artist-map (kbd "a") #'artist-mode)
-  (define-key de/artist-map (kbd "q") #'artist-mode-off)
+(define-key de/artist-map (kbd "a") #'artist-mode)
+(define-key de/artist-map (kbd "q") #'artist-mode-off)
 #+end_src
 
 Common operations while in artist mode is to draw boxes/lines/ellipses, which is triggered by the `artist-select-op-*` functions. The default mode is `artist-select-op-pen-line`.
@@ -236,103 +236,103 @@ Common operations while in artist mode is to draw boxes/lines/ellipses, which is
 
 The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
 #+begin_src emacs-lisp
-  ;; (global-set-key (kbd "M-o") 'other-window)
-  (use-package ace-window
-    :straight t
-    :bind
-    (("M-o" . ace-window)))
+;; (global-set-key (kbd "M-o") 'other-window)
+(use-package ace-window
+  :straight t
+  :bind
+  (("M-o" . ace-window)))
 #+end_src
 
 Switching to using ~dirvish~ for an enhanced dired experience
 #+begin_src emacs-lisp
-  (use-package dirvish
-    :straight t
-    :init
-    ;; Enable dirvish globally (replaces standard dired)
-    (dirvish-override-dired-mode)
-    :custom
-    ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
-    (dirvish-attributes '(nerd-icons collapse subtree-state vc-state))
-    (dirvish-side-width 30)
-    :config
-    ;; Enable "follow mode" so the sidebar updates as you switch files
-    ;; (dirvish-side-follow-mode)
-    :bind
-    ;; Bind a key to toggle the sidebar
-    ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
-    ("TAB" . dirvish-subtree-toggle)
-    :hook
-    ;; Clean up the sidebar look
-    (dirvish-side-mode . (lambda ()
-                           (display-line-numbers-mode -1)
-                           (visual-line-mode -1)
-                           (hl-line-mode 1))))
+(use-package dirvish
+  :straight t
+  :init
+  ;; Enable dirvish globally (replaces standard dired)
+  (dirvish-override-dired-mode)
+  :custom
+  ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
+  (dirvish-attributes '(nerd-icons collapse subtree-state vc-state))
+  (dirvish-side-width 30)
+  :config
+  ;; Enable "follow mode" so the sidebar updates as you switch files
+  ;; (dirvish-side-follow-mode)
+  :bind
+  ;; Bind a key to toggle the sidebar
+  ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
+  ("TAB" . dirvish-subtree-toggle)
+  :hook
+  ;; Clean up the sidebar look
+  (dirvish-side-mode . (lambda ()
+                         (display-line-numbers-mode -1)
+                         (visual-line-mode -1)
+                         (hl-line-mode 1))))
 #+end_src
 
 Let's make `ibuffer` look nicer:
 #+begin_src emacs-lisp
-  (use-package nerd-icons-ibuffer
-    :straight t
-    :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
-    :config
-    ;; Use human-readable sizes (1k, 1M) and align icons nicely
-    (setq nerd-icons-ibuffer-human-readable-size t
-          nerd-icons-ibuffer-icon t
-          nerd-icons-ibuffer-color-icon t))
+(use-package nerd-icons-ibuffer
+  :straight t
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
+  :config
+  ;; Use human-readable sizes (1k, 1M) and align icons nicely
+  (setq nerd-icons-ibuffer-human-readable-size t
+        nerd-icons-ibuffer-icon t
+        nerd-icons-ibuffer-color-icon t))
 
-  ;; Configure ibuffer itself to be cleaner
-  (use-package ibuffer
-    :straight (:type built-in)
-    :bind ("C-x C-b" . ibuffer)
-    :config
-    ;; Don't show empty filter groups
-    (setq ibuffer-show-empty-filter-groups nil)
-    ;; Use your custom filter groups (simplified from your original config)
-    (setq ibuffer-saved-filter-groups
-          '(("Default"
-             ("Magit" (name . "^magit"))
-             ("Dired" (mode . dired-mode))
-             ("Org" (mode . org-mode))
-             ("Code" (derived-mode . prog-mode))
-             ("PDF" (mode . pdf-view-mode))
-             ("Shell" (or (mode . eshell-mode) (mode . shell-mode) (mode . vterm-mode)))
-             ("Emacs" (or (name . "^\\*scratch\\*$") (name . "^\\*Messages\\*$"))))))
-    ;; Load these groups automatically
-    (add-hook 'ibuffer-mode-hook
-              (lambda ()
-                (ibuffer-switch-to-saved-filter-groups "Default"))))
+;; Configure ibuffer itself to be cleaner
+(use-package ibuffer
+  :straight (:type built-in)
+  :bind ("C-x C-b" . ibuffer)
+  :config
+  ;; Don't show empty filter groups
+  (setq ibuffer-show-empty-filter-groups nil)
+  ;; Use your custom filter groups (simplified from your original config)
+  (setq ibuffer-saved-filter-groups
+        '(("Default"
+           ("Magit" (name . "^magit"))
+           ("Dired" (mode . dired-mode))
+           ("Org" (mode . org-mode))
+           ("Code" (derived-mode . prog-mode))
+           ("PDF" (mode . pdf-view-mode))
+           ("Shell" (or (mode . eshell-mode) (mode . shell-mode) (mode . vterm-mode)))
+           ("Emacs" (or (name . "^\\*scratch\\*$") (name . "^\\*Messages\\*$"))))))
+  ;; Load these groups automatically
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "Default"))))
 #+end_src
 
 I'd like to be able to toggle horizontal/vertical split when I have 2 windows
 open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
 
 #+begin_src emacs-lisp
-  (defun de/toggle-split-direction ()
-    (interactive)
-    (if (= (count-windows) 2)
-        (let* ((this-win-buffer (window-buffer))
-               (next-win-buffer (window-buffer (next-window)))
-               (this-win-edges (window-edges (selected-window)))
-               (next-win-edges (window-edges (next-window)))
-               (this-win-2nd (not (and (<= (car this-win-edges)
-                                           (car next-win-edges))
-                                       (<= (cadr this-win-edges)
-                                           (cadr next-win-edges)))))
-               (splitter
-                (if (= (car this-win-edges)
-                       (car (window-edges (next-window))))
-                    'split-window-horizontally
-                  'split-window-vertically)))
-          (delete-other-windows)
-          (let ((first-win (selected-window)))
-            (funcall splitter)
-            (if this-win-2nd (other-window 1))
-            (set-window-buffer (selected-window) this-win-buffer)
-            (set-window-buffer (next-window) next-win-buffer)
-            (select-window first-win)
-            (if this-win-2nd (other-window 1))))))
+(defun de/toggle-split-direction ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
 
-  (global-set-key (kbd "C-x |")  #'de/toggle-split-direction)
+(global-set-key (kbd "C-x |")  #'de/toggle-split-direction)
 
 #+end_src
 
@@ -341,8 +341,8 @@ but there's no native function that would do the inverse of these
 operations. The unfill package does just that.
 
 #+begin_src emacs-lisp
-  (use-package unfill
-    :straight t)
+(use-package unfill
+  :straight t)
 #+end_src
 
 
@@ -352,20 +352,20 @@ I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these
 keybindings to custom functions that scrolls half-page up/down & keep things in
 the center for easier viewing:
 #+begin_src emacs-lisp
-  (defun de/scroll-half-page-down ()
-    (interactive)
-    (move-to-window-line-top-bottom)
-    (move-to-window-line-top-bottom)
-    (recenter-top-bottom))
+(defun de/scroll-half-page-down ()
+  (interactive)
+  (move-to-window-line-top-bottom)
+  (move-to-window-line-top-bottom)
+  (recenter-top-bottom))
 
-  (defun de/scroll-half-page-up ()
-    (interactive)
-    (move-to-window-line-top-bottom)
-    (recenter-top-bottom)
-    (recenter-top-bottom))
+(defun de/scroll-half-page-up ()
+  (interactive)
+  (move-to-window-line-top-bottom)
+  (recenter-top-bottom)
+  (recenter-top-bottom))
 
-  (global-set-key (kbd "C-v") #'de/scroll-half-page-down)
-  (global-set-key (kbd "M-v") #'de/scroll-half-page-up)
+(global-set-key (kbd "C-v") #'de/scroll-half-page-down)
+(global-set-key (kbd "M-v") #'de/scroll-half-page-up)
 #+end_src
 
 
@@ -375,79 +375,79 @@ the center for easier viewing:
 Using magit for git project management.
 
 #+begin_src emacs-lisp :tangle yes
-  (use-package magit
-    :defer t
-    :straight t
-    :bind (("C-x g" . magit-status)))
+(use-package magit
+  :defer t
+  :straight t
+  :bind (("C-x g" . magit-status)))
 #+end_src
 
 Setup ~treesitter~ for several languages. To tell whether the current buffer is
 using the ~ts~ mode is by running =M-x major-mode=.
 
 #+begin_src emacs-lisp
-  (dolist (lang '((python "https://github.com/tree-sitter/tree-sitter-python")
-                  (cpp    "https://github.com/tree-sitter/tree-sitter-cpp")
-                  (c      "https://github.com/tree-sitter/tree-sitter-c")
-                  (rust   "https://github.com/tree-sitter/tree-sitter-rust")
-                  (elisp  "https://github.com/Wilfred/tree-sitter-elisp")))
-    (add-to-list 'treesit-language-source-alist lang))
+(dolist (lang '((python "https://github.com/tree-sitter/tree-sitter-python")
+                (cpp    "https://github.com/tree-sitter/tree-sitter-cpp")
+                (c      "https://github.com/tree-sitter/tree-sitter-c")
+                (rust   "https://github.com/tree-sitter/tree-sitter-rust")
+                (elisp  "https://github.com/Wilfred/tree-sitter-elisp")))
+  (add-to-list 'treesit-language-source-alist lang))
 
-  (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
-  (add-to-list 'major-mode-remap-alist '(elisp-mode . elisp-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
+(add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+(add-to-list 'major-mode-remap-alist '(elisp-mode . elisp-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
 
 Silence eglot progress (in the *Messages* buffer)
 #+begin_src emacs-lisp
-  (setq eglot-report-progress nil)
+(setq eglot-report-progress nil)
 #+end_src
 
 Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
 
 #+begin_src emacs-lisp
-  (use-package eglot
-    :defer t
-    :straight (:type built-in)
-    :bind
-    (:map eglot-mode-map
-          ("C-c C-d" . eldoc)
-          ("C-c C-f" . eglot-format-buffer))
-    :hook ((python-ts-mode . eglot-ensure)
-           (rust-mode . eglot-ensure))
-    :custom
-    (eglot-autoshutdown t))
+(use-package eglot
+  :defer t
+  :straight (:type built-in)
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-d" . eldoc)
+        ("C-c C-f" . eglot-format-buffer))
+  :hook ((python-ts-mode . eglot-ensure)
+         (rust-mode . eglot-ensure))
+  :custom
+  (eglot-autoshutdown t))
 #+end_src
 
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
 uses a timer to type some characters, and 'l' for going to a specific line.
 #+begin_src emacs-lisp
-  (use-package avy
-    :straight t)
+(use-package avy
+  :straight t)
 
-  ;; configure avy globally, use prefix M-g
-  (global-set-key (kbd "M-g c") #'avy-goto-char)
-  (global-set-key (kbd "M-g t") #'avy-goto-char-timer)
-  (global-set-key (kbd "M-g l") #'avy-goto-line)
+;; configure avy globally, use prefix M-g
+(global-set-key (kbd "M-g c") #'avy-goto-char)
+(global-set-key (kbd "M-g t") #'avy-goto-char-timer)
+(global-set-key (kbd "M-g l") #'avy-goto-line)
 #+end_src
 
 Use `treesit-fold` for code folding
 #+begin_src emacs-lisp
-  (use-package treesit-fold
-    :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
-    :hook (prog-mode . treesit-fold-mode)
-    :bind
-    (:map prog-mode-map
-          ("C-c f f" . treesit-fold-toggle)
-          ("C-c f c" . treesit-fold-close)
-          ("C-c f o" . treesit-fold-open)
-          ("C-c f r" . treesit-fold-open-recursively)
-          ("C-c f C" . treesit-fold-close-all)
-          ("C-c f O" . treesit-fold-open-all)))
+(use-package treesit-fold
+  :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
+  :hook (prog-mode . treesit-fold-mode)
+  :bind
+  (:map prog-mode-map
+        ("C-c f f" . treesit-fold-toggle)
+        ("C-c f c" . treesit-fold-close)
+        ("C-c f o" . treesit-fold-open)
+        ("C-c f r" . treesit-fold-open-recursively)
+        ("C-c f C" . treesit-fold-close-all)
+        ("C-c f O" . treesit-fold-open-all)))
 
-  (use-package treesit-fold-indicators
-    :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
-    :config
-    (global-treesit-fold-indicators-mode))
+(use-package treesit-fold-indicators
+  :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
+  :config
+  (global-treesit-fold-indicators-mode))
 #+end_src
 
 For general code formatting I use ~apheleia~. Python code formatting uses =ruff=
@@ -457,30 +457,30 @@ Python environment.
 For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
 
 #+begin_src emacs-lisp
-  (use-package apheleia
-    :straight t
-    :config
-    ;; supress auto-revert warnings
-    (setq apheleia-inhibit-functions
+(use-package apheleia
+  :straight t
+  :config
+  ;; supress auto-revert warnings
+  (setq apheleia-inhibit-functions
       	(cons #'buffer-modified-p apheleia-inhibit-functions))
-    ;; define formatters
-    (setf (alist-get 'ruff apheleia-formatters)
-          '("ruff" "format" "--verbose" "--line-length" "79"
+  ;; define formatters
+  (setf (alist-get 'ruff apheleia-formatters)
+        '("ruff" "format" "--verbose" "--line-length" "79"
       	  "--stdin-filename" filepath))
-    (setf (alist-get 'prettier-typescript apheleia-formatters)
+  (setf (alist-get 'prettier-typescript apheleia-formatters)
       	'("prettier" "--use-tabs=false" "--print-width" "80"
       	  "--stdin-filename" filepath "--parser=typescript"))
-    (setf (alist-get 'prettier-json apheleia-formatters)
+  (setf (alist-get 'prettier-json apheleia-formatters)
       	'("prettier" "--use-tabs=false" "--print-width" "80"
       	  "--stdin-filename" filepath "--parser=json"))
-    (setf (alist-get 'prettier-javascript apheleia-formatters)
+  (setf (alist-get 'prettier-javascript apheleia-formatters)
       	'("prettier" "--use-tabs=false" "--print-width" "80"
       	  "--stdin-filename" filepath "--parser=babel-flow"))
-    ;; define commands for each mode
-    (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
-    (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
-    (setf (alist-get 'js-ts-mode apheleia-mode-alist) 'prettier-javascript)
-    :hook (prog-mode . apheleia-mode))
+  ;; define commands for each mode
+  (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
+  (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
+  (setf (alist-get 'js-ts-mode apheleia-mode-alist) 'prettier-javascript)
+  :hook (prog-mode . apheleia-mode))
 #+end_src
 
 Use ~corfu~ for autocompletion. You can use multiple words to filter your search
@@ -490,56 +490,56 @@ like choosing to rename your file to something else that is a sub/superset of
 the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 
 #+begin_src emacs-lisp
-  (use-package corfu
-    :after orderless
-    :straight t
-    :custom
-    (corfu-auto t)              ; enable auto-completion
-    (corfu-quit-no-match t)     ; do nothing when no match is found
-    (corfu-cycle t)             ; allow cycling through candidates
-    (corfu-separator ?\s)       ; orderless field separator
-    (corfu-auto-prefix 2)       ; trigger after 2 chars
-    (corfu-auto-delay 0.1)      ; short delay for IDE-like feel
-    (corfu-popupinfo-delay 0.4) ; delay before doc popup appears
-    (corfu-quit-at-boundary nil)
-    :init
-    (global-corfu-mode)
-    (corfu-popupinfo-mode)
-    :config
-    (setq eldoc-echo-area-use-multiline-p nil)
-    (set-face-attribute 'corfu-default nil :inherit 'default)
-    :bind
-    (:map corfu-map
-          ("M-SPC" . corfu-insert-separator)
-          ("M-n" . corfu-popupinfo-scroll-up)
-          ("M-p" . corfu-popupinfo-scroll-down)))
+(use-package corfu
+  :after orderless
+  :straight t
+  :custom
+  (corfu-auto t)              ; enable auto-completion
+  (corfu-quit-no-match t)     ; do nothing when no match is found
+  (corfu-cycle t)             ; allow cycling through candidates
+  (corfu-separator ?\s)       ; orderless field separator
+  (corfu-auto-prefix 2)       ; trigger after 2 chars
+  (corfu-auto-delay 0.1)      ; short delay for IDE-like feel
+  (corfu-popupinfo-delay 0.4) ; delay before doc popup appears
+  (corfu-quit-at-boundary nil)
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  :config
+  (setq eldoc-echo-area-use-multiline-p nil)
+  (set-face-attribute 'corfu-default nil :inherit 'default)
+  :bind
+  (:map corfu-map
+        ("M-SPC" . corfu-insert-separator)
+        ("M-n" . corfu-popupinfo-scroll-up)
+        ("M-p" . corfu-popupinfo-scroll-down)))
 
-  (use-package nerd-icons-corfu
-    :straight t
-    :after corfu
-    :config
-    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+(use-package nerd-icons-corfu
+  :straight t
+  :after corfu
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
-  ;; add corfu extension
-  (use-package cape
-    :straight t
-    :bind (("C-c p p" . completion-at-point) ; explicitly trigger completion
-           ("C-c p t" . cape-tex)
-           ("C-c p f" . cape-file)
-           ("C-c p d" . cape-dabbrev)
-           ("C-c p s" . cape-elisp-symbol)
-           ("C-c p e" . cape-elisp-block))
-    :init
-    ;; use cape-file everywhere
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    
-    ;; only check for elisp blocks inside org files
-    (add-hook
-     'org-mode-hook (lambda ()
-                      (add-to-list 'completion-at-point-functions #'cape-elisp-block)))
-    (add-hook
-     'latex-mode-hook (lambda ()
-                        (add-to-list 'completion-at-point-functions #'cape-tex))))
+;; add corfu extension
+(use-package cape
+  :straight t
+  :bind (("C-c p p" . completion-at-point) ; explicitly trigger completion
+         ("C-c p t" . cape-tex)
+         ("C-c p f" . cape-file)
+         ("C-c p d" . cape-dabbrev)
+         ("C-c p s" . cape-elisp-symbol)
+         ("C-c p e" . cape-elisp-block))
+  :init
+  ;; use cape-file everywhere
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  
+  ;; only check for elisp blocks inside org files
+  (add-hook
+   'org-mode-hook (lambda ()
+                    (add-to-list 'completion-at-point-functions #'cape-elisp-block)))
+  (add-hook
+   'latex-mode-hook (lambda ()
+                      (add-to-list 'completion-at-point-functions #'cape-tex))))
 #+end_src
 
 A note for using ~corfu~:
@@ -548,9 +548,9 @@ A note for using ~corfu~:
 
 For a better parenthesis experience, use rainbow-delimiters:
 #+begin_src emacs-lisp
-  (use-package rainbow-delimiters
-    :straight t
-    :hook (prog-mode . rainbow-delimiters-mode))
+(use-package rainbow-delimiters
+  :straight t
+  :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 
 
@@ -561,88 +561,88 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
 ~uv venv my-new-env --python 3.11~ to create a new environment.
 
 #+begin_src emacs-lisp
-  (use-package pythonic
-    :straight t)
+(use-package pythonic
+  :straight t)
 
-  ;; load my custom venv manager
-  ;; which provides activate-venv & deactivate-venv
-  (use-package venv-manager
-    :straight nil
-    :load-path "/Users/delnatan/Apps/emacs-config/custom/venv-manager"
-    :init
-    (require 'venv-manager)
-    :custom
-    (venv-manager-directories
-     '("/Users/delnatan/envs"
-       "/Users/delnatan/uv-workspaces")))
+;; load my custom venv manager
+;; which provides activate-venv & deactivate-venv
+(use-package venv-manager
+  :straight nil
+  :load-path "/Users/delnatan/Apps/emacs-config/custom/venv-manager"
+  :init
+  (require 'venv-manager)
+  :custom
+  (venv-manager-directories
+   '("/Users/delnatan/envs"
+     "/Users/delnatan/uv-workspaces")))
 
-  ;; set the default python to 'utils' (remember to create this!)
-  (activate-venv "utils")
+;; set the default python to 'utils' (remember to create this!)
+(activate-venv "utils")
 #+end_src
 
 #+begin_src emacs-lisp
-  (use-package python
-    :custom
-    ;; 1. Fix the "dummy_completion" garbage
-    (python-shell-completion-native-enable nil)
-    
-    :config
-    ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
-    (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1")
-    (setq python-indent-guess-indent-offset t)
-    (setq python-indent-guess-indent-offset-verbose nil)
-    ;; use tree-sitter
-    (when (treesit-ready-p 'python)
-      (setq major-mode-remap-alist
-    	      (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
-    ;; get completions in the REPL
-    :hook
-    ((python-mode python-ts-mode) . (lambda ()
-                                      (remove-hook 'completion-at-point-functions
-                                                   #'python-completion-at-point 'local)))
-    ;; For REPL: remove the shell completion that causes the race condition
-    (inferior-python-mode . (lambda ()
-                              (corfu-mode 1)
-                              (setq comint-process-echoes t)
-                              (setq-local corfu-auto nil)
-                              (setq-local completion-at-point-functions
-                                          '(comint-completion-at-point t)))))
+(use-package python
+  :custom
+  ;; 1. Fix the "dummy_completion" garbage
+  (python-shell-completion-native-enable nil)
+  
+  :config
+  ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
+  (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1")
+  (setq python-indent-guess-indent-offset t)
+  (setq python-indent-guess-indent-offset-verbose nil)
+  ;; use tree-sitter
+  (when (treesit-ready-p 'python)
+    (setq major-mode-remap-alist
+    	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
+  ;; get completions in the REPL
+  :hook
+  ((python-mode python-ts-mode) . (lambda ()
+                                    (remove-hook 'completion-at-point-functions
+                                                 #'python-completion-at-point 'local)))
+  ;; For REPL: remove the shell completion that causes the race condition
+  (inferior-python-mode . (lambda ()
+                            (corfu-mode 1)
+                            (setq comint-process-echoes t)
+                            (setq-local corfu-auto nil)
+                            (setq-local completion-at-point-functions
+                                        '(comint-completion-at-point t)))))
 #+end_src
 
 #+begin_src emacs-lisp
-  (defun de/restart-python ()
-    "Clear current inferior python buffer and restart process"
-    (interactive)
-    (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-    	     (python-shell-restart)))
+(defun de/restart-python ()
+  "Clear current inferior python buffer and restart process"
+  (interactive)
+  (progn (with-current-buffer "*Python*" (comint-clear-buffer))
+    	 (python-shell-restart)))
 
-  ;; custom function to kill current cell
-  (defun de/kill-cell ()
-    "code-cells mode custom function to kill current cell"
-    (interactive)
-    (let ((beg (car (code-cells--bounds)))
-    	    (end (cadr (code-cells--bounds))))
-      (kill-region beg end)))
+;; custom function to kill current cell
+(defun de/kill-cell ()
+  "code-cells mode custom function to kill current cell"
+  (interactive)
+  (let ((beg (car (code-cells--bounds)))
+    	(end (cadr (code-cells--bounds))))
+    (kill-region beg end)))
 
-  (use-package code-cells
-    :straight t
-    :defer t
-    :hook ((python-ts-mode . code-cells-mode-maybe)
-    	     (python-mode . code-cells-mode-maybe))
-    :config
-    (add-to-list 'code-cells-eval-region-commands
-                 '(python-ts-mode . python-shell-send-region) t)
-    :bind
-    (:map
-     code-cells-mode-map
-     ("M-p" . code-cells-backward-cell)
-     ("M-n" . code-cells-forward-cell)
-     ("C-c r p" . de/restart-python)
-     ("C-c d d" . de/kill-cell)
-     ("M-S-<up>" . code-cells-move-cell-up)
-     ("M-S-<down>" . code-cells-move-cell-down)
-     ("C-c x ;" . code-cells-comment-or-uncomment)
-     ("C-c C-c" . code-cells-eval)))
+(use-package code-cells
+  :straight t
+  :defer t
+  :hook ((python-ts-mode . code-cells-mode-maybe)
+    	 (python-mode . code-cells-mode-maybe))
+  :config
+  (add-to-list 'code-cells-eval-region-commands
+               '(python-ts-mode . python-shell-send-region) t)
+  :bind
+  (:map
+   code-cells-mode-map
+   ("M-p" . code-cells-backward-cell)
+   ("M-n" . code-cells-forward-cell)
+   ("C-c r p" . de/restart-python)
+   ("C-c d d" . de/kill-cell)
+   ("M-S-<up>" . code-cells-move-cell-up)
+   ("M-S-<down>" . code-cells-move-cell-down)
+   ("C-c x ;" . code-cells-comment-or-uncomment)
+   ("C-c C-c" . code-cells-eval)))
 #+end_src
 
 
@@ -656,60 +656,60 @@ second monitor to have a separate frame for displaying plots and text output
 from the jupyter kernel.
 
 #+begin_src emacs-lisp
-  (use-package jupyter
-    :straight (jupyter :type git
-                       :repo "delnatan/jupyter"
-                       :local-repo "/Users/delnatan/Apps/emacs/jupyter"
-                       :branch "global_jupyter_output_buffer")
-    :defer t
-    :custom
-    (jupyter-eval-use-overlays t))
-  ;; (jupyter-repl-echo-eval-p nil)
-  ;; :config
-  ;; (add-to-list 'display-buffer-alist
-  ;;              '("\\*jupyter-output\\*"
-  ;;   	         (display-buffer-reuse-window
-  ;;   	          display-buffer-pop-up-window)
-  ;;   	         (reusable-frames . t))))
+(use-package jupyter
+  :straight (jupyter :type git
+                     :repo "delnatan/jupyter"
+                     :local-repo "/Users/delnatan/Apps/emacs/jupyter"
+                     :branch "global_jupyter_output_buffer")
+  :defer t
+  :custom
+  (jupyter-eval-use-overlays t))
+;; (jupyter-repl-echo-eval-p nil)
+;; :config
+;; (add-to-list 'display-buffer-alist
+;;              '("\\*jupyter-output\\*"
+;;   	         (display-buffer-reuse-window
+;;   	          display-buffer-pop-up-window)
+;;   	         (reusable-frames . t))))
 
-  ;; for using gnuplot
-  (use-package gnuplot
-    :defer t
-    :straight t
-    :mode (("\\.gp\\'" . gnuplot-mode)
-           ("\\.gnuplot\\'" . gnuplot-mode))
-    :config
-    (add-hook 'gnuplot-mode-hook
-              (lambda ()
-                (set (make-local-variable 'compile-command)
-                     (concat "gnuplot " buffer-file-name)))))
+;; for using gnuplot
+(use-package gnuplot
+  :defer t
+  :straight t
+  :mode (("\\.gp\\'" . gnuplot-mode)
+         ("\\.gnuplot\\'" . gnuplot-mode))
+  :config
+  (add-hook 'gnuplot-mode-hook
+            (lambda ()
+              (set (make-local-variable 'compile-command)
+                   (concat "gnuplot " buffer-file-name)))))
 
-  ;; enable languages for org-babel
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (awk . t)
-     (latex . t)
-     (sed . t)
-     (org . t)
-     (sqlite . t)
-     (shell . t)
-     (gnuplot . t)
-     (python . t)
-     (jupyter . t)))
+;; enable languages for org-babel
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (awk . t)
+   (latex . t)
+   (sed . t)
+   (org . t)
+   (sqlite . t)
+   (shell . t)
+   (gnuplot . t)
+   (python . t)
+   (jupyter . t)))
 
-  ;; uncomment below to override `python` language designation
-  ;; use `jupyter-python` for jupyter and `python` for vanilla python
-  ;; (org-babel-jupyter-override-src-block "python")
+;; uncomment below to override `python` language designation
+;; use `jupyter-python` for jupyter and `python` for vanilla python
+;; (org-babel-jupyter-override-src-block "python")
 
-  ;; patch for correct handling of 'python' org source blocks
-  (add-to-list 'org-src-lang-modes '("python" . python-ts))
+;; patch for correct handling of 'python' org source blocks
+(add-to-list 'org-src-lang-modes '("python" . python-ts))
 
-  ;; there seems to be already 'jupyter-python' entry in the list
-  ;; so we remove that, then add our own with 'python-ts'
-  (setq org-src-lang-modes
-        (cons '("jupyter-python" . python-ts)
-              (assq-delete-all "jupyter-python" org-src-lang-modes)))
+;; there seems to be already 'jupyter-python' entry in the list
+;; so we remove that, then add our own with 'python-ts'
+(setq org-src-lang-modes
+      (cons '("jupyter-python" . python-ts)
+            (assq-delete-all "jupyter-python" org-src-lang-modes)))
 #+end_src
 
 A typical workflow in org-mode is to use source blocks with the following tag (after running =activate-venv=!):
@@ -724,35 +724,35 @@ A typical workflow in org-mode is to use source blocks with the following tag (a
 
 To make life a bit simpler, I've made a function to insert this snippet with the help of ChatGPT. To insert the snippet above in an org file, do =C-c j=. The ~never-export~ option tells org not to re-evaluate the entire document whenever the document is exported.
 #+begin_src emacs-lisp
-  (defun de/insert-org-jupyter-kernel-spec ()
-    "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
+(defun de/insert-org-jupyter-kernel-spec ()
+  "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
         Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
-    (interactive)
-    (unless (executable-find "jupyter")
-      (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
-    ;; Ensure 'jupyter' is available after activation attempt.
-    (if (executable-find "jupyter")
-        (let* ((kernelspec (jupyter-completing-read-kernelspec))
-               (kernel-name (jupyter-kernelspec-name kernelspec))
-               (kernel-display-name
-                (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
-               (insertion-point (point-min))
-               (properties
-                (format
-                 "#+PROPERTY: header-args:jupyter-python :session py
+  (interactive)
+  (unless (executable-find "jupyter")
+    (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
+  ;; Ensure 'jupyter' is available after activation attempt.
+  (if (executable-find "jupyter")
+      (let* ((kernelspec (jupyter-completing-read-kernelspec))
+             (kernel-name (jupyter-kernelspec-name kernelspec))
+             (kernel-display-name
+              (plist-get (jupyter-kernelspec-plist kernelspec) :display_name))
+             (insertion-point (point-min))
+             (properties
+              (format
+               "#+PROPERTY: header-args:jupyter-python :session py
   ,#+PROPERTY: header-args:jupyter-python+ :async yes
   ,#+PROPERTY: header-args:jupyter-python+ :eval never-export
   ,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
-          (save-excursion
-            (goto-char insertion-point)
-            (insert properties)
-            (message "Inserted Jupyter kernel spec for '%s'." kernel-display-name)))
-      (message "Jupyter is not available. Please ensure it is installed and try again.")))
+        (save-excursion
+          (goto-char insertion-point)
+          (insert properties)
+          (message "Inserted Jupyter kernel spec for '%s'." kernel-display-name)))
+    (message "Jupyter is not available. Please ensure it is installed and try again.")))
 
-  (defun de/org-jupyter-setup ()
-    (define-key org-mode-map (kbd "C-c j") #'de/insert-org-jupyter-kernel-spec))
+(defun de/org-jupyter-setup ()
+  (define-key org-mode-map (kbd "C-c j") #'de/insert-org-jupyter-kernel-spec))
 
-  (add-hook 'org-mode-hook #'de/org-jupyter-setup)
+(add-hook 'org-mode-hook #'de/org-jupyter-setup)
 #+end_src
 
 Note: for routine work with matplotlib, you can add the following snippet to make exporting to PDF nicer (will export images!)
@@ -770,61 +770,62 @@ next/previous blocks.
 For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
 
 #+begin_src emacs-lisp
-  (defun de/python-with-jupyter-repl
-      (kernel-name &optional repl-name filename)
-    "Choose jupyter kernel to open/start new Python file associated to it.
+(defun de/python-with-jupyter-repl
+    (kernel-name &optional repl-name filename)
+  "Choose jupyter kernel to open/start new Python file associated to it.
     With prefix argument (C-u), use the current buffer if it's a Python file."
-    (interactive
-     (let ((current-file (and (memq major-mode '(python-mode python-ts-mode))
-                              (buffer-file-name))))
-       (if current-prefix-arg
-           (if current-file
-               (list
-                (jupyter-kernelspec-name
-                 (jupyter-completing-read-kernelspec nil current-prefix-arg))
-                (let ((input (read-string "REPL name (empty for default): " nil nil nil)))
-                  (if (string-empty-p input)
-                      (file-name-base current-file)
-                    input))
-                current-file)
-             (error "Current buffer is not a Python file"))
-         ;; Original behavior when no prefix
-         (let ((file (read-file-name "Open Python file: " nil nil nil)))
-           (list
-            (jupyter-kernelspec-name
-             (jupyter-completing-read-kernelspec nil current-prefix-arg))
-            (if current-prefix-arg
-                (read-string "REPL name: ")
-              (file-name-base file))
-            file)))))
+  (interactive
+   (let ((current-file (and (memq major-mode '(python-mode python-ts-mode))
+                            (buffer-file-name))))
+     (if current-prefix-arg
+         (if current-file
+             (list
+              (jupyter-kernelspec-name
+               (jupyter-completing-read-kernelspec nil current-prefix-arg))
+              (let ((input (read-string "REPL name (empty for default): " nil nil nil)))
+                (if (string-empty-p input)
+                    (file-name-base current-file)
+                  input))
+              current-file)
+           (error "Current buffer is not a Python file"))
+       ;; Original behavior when no prefix
+       (let ((file (read-file-name "Open Python file: " nil nil nil)))
+         (list
+          (jupyter-kernelspec-name
+           (jupyter-completing-read-kernelspec nil current-prefix-arg))
+          (if current-prefix-arg
+              (read-string "REPL name: ")
+            (file-name-base file))
+          file)))))
 
-    ;; open or create the Python file if needed
-    (unless (equal (buffer-file-name) filename)
-      (find-file filename))
+  ;; open or create the Python file if needed
+  (unless (equal (buffer-file-name) filename)
+    (find-file filename))
 
-    ;; start the jupyter REPL and store the client symbol
-    (let ((client (jupyter-run-repl kernel-name repl-name)))
-      ;; wait for REPL to start and then associate the buffer
-      (sleep-for 1.0)
-      (jupyter-repl-associate-buffer client)))
+  ;; start the jupyter REPL and store the client symbol
+  (let ((client (jupyter-run-repl kernel-name repl-name)))
+    ;; wait for REPL to start and then associate the buffer
+    (sleep-for 1.0)
+    (jupyter-repl-associate-buffer client)))
 
 #+end_src
 
 Convenience function to insert matplotlib plots in svg rather than the basic PNG.
 #+begin_src emacs-lisp
-  ;; place cursor within the top of the python source block
-  (defun de/insert-inline-svg-matplotlib ()
-    (interactive)
-    (insert "import matplotlib_inline\n")
-    (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
+;; place cursor within the top of the python source block
+(defun de/insert-inline-svg-matplotlib ()
+  (interactive)
+  (insert "import matplotlib_inline\n")
+  (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
 #+end_src
+
 
 
 ** Rust
 #+begin_src emacs-lisp
-  (use-package rust-mode
-    :init
-    (setq rust-mode-treesitter-derive t))
+(use-package rust-mode
+  :init
+  (setq rust-mode-treesitter-derive t))
 #+end_src
 
 
@@ -833,120 +834,120 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
 To justify both sides evenly like Rougier's examples. Use enriched-mode and press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the current paragraph. *But be careful!* This actually changes the document as rich-text and adds markup (tags) to the text file.
 
 #+begin_src emacs-lisp
-  ;; use rainbow-mode to display the color of a color string
-  (use-package rainbow-mode
-    :straight t
-    :hook (org-mode prog-mode))
+;; use rainbow-mode to display the color of a color string
+(use-package rainbow-mode
+  :straight t
+  :hook (org-mode prog-mode))
 
-  ;; use Rougier's nano emacs
-  (use-package nano
-    :straight (:type git :host github :repo "rougier/nano-emacs")
-    ;; don't load nano.el, load each modules explicitly
-    :no-require t 
-    :init
-    ;; Optional: for variable-pitch
-    ;; (setq nano-font-family-proportional "Fira Sans")
-    ;; default 'old' settings
-    ;; (setq nano-font-family-monospaced "Roboto Mono")
-    (setq nano-font-size 14)
-    
-    :config
-    ;; workaround, somehow NANO needs this face
-    (defface bookmark-menu-heading
-      `((((class color) (min-colors 89)) (:foreground "#000000")))
-      "workaround")
-    
-    ;; load modules explicitly
-    (require 'nano-defaults)
-    (require 'nano-faces)
-    (require 'nano-theme)
-    (require 'nano-theme-dark)
-    (require 'nano-theme-light)
-    (require 'nano-modeline)
-    (require 'nano-layout)
-    ;; this also sets `frame-background-mode` needed for functions below
-    (nano-theme-set-light) ;; set default to 'light'
+;; use Rougier's nano emacs
+(use-package nano
+  :straight (:type git :host github :repo "rougier/nano-emacs")
+  ;; don't load nano.el, load each modules explicitly
+  :no-require t 
+  :init
+  ;; Optional: for variable-pitch
+  ;; (setq nano-font-family-proportional "Fira Sans")
+  ;; default 'old' settings
+  ;; (setq nano-font-family-monospaced "Roboto Mono")
+  (setq nano-font-size 14)
+  
+  :config
+  ;; workaround, somehow NANO needs this face
+  (defface bookmark-menu-heading
+    `((((class color) (min-colors 89)) (:foreground "#000000")))
+    "workaround")
+  
+  ;; load modules explicitly
+  (require 'nano-defaults)
+  (require 'nano-faces)
+  (require 'nano-theme)
+  (require 'nano-theme-dark)
+  (require 'nano-theme-light)
+  (require 'nano-modeline)
+  (require 'nano-layout)
+  ;; this also sets `frame-background-mode` needed for functions below
+  (nano-theme-set-light) ;; set default to 'light'
 
-    ;; define custom fonts
-    (defun de/nano-font-stack ()
-      (set-face-attribute 'default nil
-                          :family "Roboto Mono" :weight 'light :height 140)
-      (set-face-attribute 'bold nil
-                          :family "Roboto Mono" :weight 'regular)
-      (set-face-attribute 'italic nil
-                          :family "Victor Mono" :weight 'semilight :slant
-                          'italic)
-      (set-fontset-font t 'unicode
-                        (font-spec :name "Fira Code" :size 14) nil)
-      ;; set the range of nerd fonts xe000 to xf8ff
-      (set-fontset-font t '(#xe000 . #xf8ff)
-                        (font-spec :name "RobotoMono Nerd Font" :size 12) nil))
+  ;; define custom fonts
+  (defun de/nano-font-stack ()
+    (set-face-attribute 'default nil
+                        :family "Roboto Mono" :weight 'light :height 140)
+    (set-face-attribute 'bold nil
+                        :family "Roboto Mono" :weight 'regular)
+    (set-face-attribute 'italic nil
+                        :family "Victor Mono" :weight 'semilight :slant
+                        'italic)
+    (set-fontset-font t 'unicode
+                      (font-spec :name "Fira Code" :size 14) nil)
+    ;; set the range of nerd fonts xe000 to xf8ff
+    (set-fontset-font t '(#xe000 . #xf8ff)
+                      (font-spec :name "RobotoMono Nerd Font" :size 12) nil))
 
-    ;; define custom org source block colors
-    (defun de/nano-org-block-faces ()
-      "Apply custom org-block faces for nano theme."
-      (let ((block-bg (if (eq frame-background-mode 'light)
-                          "#F5F5F5"    ; slightly darker than white
-                        "#3B4252")))   ; slightly lighter than nord dark
-        (set-face-attribute 'org-block nil
-                            :background block-bg
-                            :extend t)
-        (set-face-attribute 'org-block-begin-line nil
-                            :extend t)
-        (set-face-attribute 'org-block-end-line nil
-                            :extend t)))
+  ;; define custom org source block colors
+  (defun de/nano-org-block-faces ()
+    "Apply custom org-block faces for nano theme."
+    (let ((block-bg (if (eq frame-background-mode 'light)
+                        "#F5F5F5"    ; slightly darker than white
+                      "#3B4252")))   ; slightly lighter than nord dark
+      (set-face-attribute 'org-block nil
+                          :background block-bg
+                          :extend t)
+      (set-face-attribute 'org-block-begin-line nil
+                          :extend t)
+      (set-face-attribute 'org-block-end-line nil
+                          :extend t)))
 
-    ;; derive corfu faces from nano
-    (defun de/nano-corfu-faces ()
-      "Derive corfu popup faces from nano faces."
-      (with-eval-after-load 'corfu
-        (set-face 'corfu-default 'nano-face-subtle)
-        (set-face 'corfu-current '(nano-face-strong nano-face-subtle))
-        (set-face-attribute 'corfu-current nil :background nano-color-highlight)
-        (set-face 'corfu-bar 'nano-face-faded)
-        (set-face-attribute 'corfu-bar nil :background nano-color-foreground)
-        (set-face 'corfu-border 'nano-face-subtle)
-        (set-face-attribute 'corfu-border nil :background nano-color-faded)
-        (set-face 'corfu-annotations 'nano-face-faded)
-        (set-face 'corfu-deprecated 'nano-face-faded)))
+  ;; derive corfu faces from nano
+  (defun de/nano-corfu-faces ()
+    "Derive corfu popup faces from nano faces."
+    (with-eval-after-load 'corfu
+      (set-face 'corfu-default 'nano-face-subtle)
+      (set-face 'corfu-current '(nano-face-strong nano-face-subtle))
+      (set-face-attribute 'corfu-current nil :background nano-color-highlight)
+      (set-face 'corfu-bar 'nano-face-faded)
+      (set-face-attribute 'corfu-bar nil :background nano-color-foreground)
+      (set-face 'corfu-border 'nano-face-subtle)
+      (set-face-attribute 'corfu-border nil :background nano-color-faded)
+      (set-face 'corfu-annotations 'nano-face-faded)
+      (set-face 'corfu-deprecated 'nano-face-faded)))
 
-    ;; force corfu to recreate popup after theme change
-    (defun de/corfu-reset-frames (&rest _)
-      "Kill corfu child frames so they're recreated with new colors."
-      (dolist (frame (frame-list))
-        (when (frame-parameter frame 'corfu--frame)
-          (delete-frame frame))))
-    
-    ;; setup hooks and advice
-    (advice-add 'nano-theme :after #'de/nano-font-stack)
-    (advice-add 'nano-theme :after #'de/nano-org-block-faces)
-    (advice-add 'nano-theme :after #'de/nano-corfu-faces)
-    (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
-    (advice-add 'nano-refresh-theme :after #'de/corfu-reset-frames)
+  ;; force corfu to recreate popup after theme change
+  (defun de/corfu-reset-frames (&rest _)
+    "Kill corfu child frames so they're recreated with new colors."
+    (dolist (frame (frame-list))
+      (when (frame-parameter frame 'corfu--frame)
+        (delete-frame frame))))
+  
+  ;; setup hooks and advice
+  (advice-add 'nano-theme :after #'de/nano-font-stack)
+  (advice-add 'nano-theme :after #'de/nano-org-block-faces)
+  (advice-add 'nano-theme :after #'de/nano-corfu-faces)
+  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
+  (advice-add 'nano-refresh-theme :after #'de/corfu-reset-frames)
 
-    ;; Reapply when org loads
-    (with-eval-after-load 'org
-      (de/nano-org-block-faces))
+  ;; Reapply when org loads
+  (with-eval-after-load 'org
+    (de/nano-org-block-faces))
 
-    ;; Apply on initial load
-    (with-eval-after-load 'bookmark
-      (nano-theme)
-      (de/nano-org-block-faces))
+  ;; Apply on initial load
+  (with-eval-after-load 'bookmark
+    (nano-theme)
+    (de/nano-org-block-faces))
 
-    ;; initialize theme
-    (nano-faces)
-    (nano-theme) ;; all advice should be triggered correctly  
-    
-    ;; undo 'meta' key reassignment. I'm already used to 'alt' as 'meta'
-    (setq ns-alternate-modifier 'meta)
-    (setq ns-command-modifier 'super))
+  ;; initialize theme
+  (nano-faces)
+  (nano-theme) ;; all advice should be triggered correctly  
+  
+  ;; undo 'meta' key reassignment. I'm already used to 'alt' as 'meta'
+  (setq ns-alternate-modifier 'meta)
+  (setq ns-command-modifier 'super))
 
-  (recentf-mode 1)
+(recentf-mode 1)
 
-  ;; clean-up appearance (somehow nano missed this?)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (menu-bar-mode -1)
+;; clean-up appearance (somehow nano missed this?)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(menu-bar-mode -1)
 
 
 
@@ -956,44 +957,44 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
 * Nicolas Rougier's tools
 
 #+begin_src emacs-lisp
-  ;; add emacs ~app~ folder to load-path
-  (use-package notes-list
-    :straight nil
-    :load-path "~/Apps/emacs/notes-list"
-    :custom
-    (notes-list-directories '("~/Library/CloudStorage/Dropbox/org/notes")))
+;; add emacs ~app~ folder to load-path
+(use-package notes-list
+  :straight nil
+  :load-path "~/Apps/emacs/notes-list"
+  :custom
+  (notes-list-directories '("~/Library/CloudStorage/Dropbox/org/notes"
+                            "~/Documents/howtos/"
+                            "~/Documents/org")))
 
-  (use-package svg-lib
-    :defer t
-    :straight (svg-lib :type git :host github :repo "rougier/svg-lib"))
+(use-package svg-lib
+  :defer t
+  :straight (svg-lib :type git :host github :repo "rougier/svg-lib"))
 
-  (require 'notes-list)
+(defun de/insert-org-note-properties ()
+  "Insert common Org properties at the beginning of the document."
+  (interactive)
+  (let ((title (read-string "Title: "))
+        (filetags (read-string "File tags: "))
+        (summary (read-string "Summary: "))
+        (date (format-time-string "%Y-%m-%d"))
+        (icon "material/notebook"))
+    (goto-char (point-min))
+    (insert (format "#+TITLE: %s\n" title))
+    (insert (format "#+DATE: %s\n" date))
+    (insert (format "#+FILETAGS: %s\n" filetags))
+    (insert (format "#+SUMMARY: %s\n" summary))
+    (insert (format "#+ICON: %s\n" icon))))
 
-  (defun de/insert-org-note-properties ()
-    "Insert common Org properties at the beginning of the document."
-    (interactive)
-    (let ((title (read-string "Title: "))
-          (filetags (read-string "File tags: "))
-          (summary (read-string "Summary: "))
-          (date (format-time-string "%Y-%m-%d"))
-          (icon "material/notebook"))
-      (goto-char (point-min))
-      (insert (format "#+TITLE: %s\n" title))
-      (insert (format "#+DATE: %s\n" date))
-      (insert (format "#+FILETAGS: %s\n" filetags))
-      (insert (format "#+SUMMARY: %s\n" summary))
-      (insert (format "#+ICON: %s\n" icon))))
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c i p")
+              'de/insert-org-note-properties))
 
-  (with-eval-after-load 'org
-    (define-key org-mode-map (kbd "C-c i p")
-                'de/insert-org-note-properties))
-
-  ;; [2025-12-29 Mon] trying out buffer-box
-  (use-package buffer-box
-    :straight (buffer-box :type git :host github
-                          :repo "rougier/buffer-box")
-    :bind
-    ("C-c v b" . buffer-box))
+;; [2025-12-29 Mon] trying out buffer-box
+(use-package buffer-box
+  :straight (buffer-box :type git :host github
+                        :repo "rougier/buffer-box")
+  :bind
+  ("C-c v b" . buffer-box))
 #+end_src
 
 
@@ -1032,6 +1033,21 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-compiler "xelatex")
   (setq org-latex-pdf-process
   	    (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+  ;; Use xelatex -no-pdf + dvisvgm for previews (XDV pipeline).
+  ;; xelatex -no-pdf produces an XDV file that dvisvgm handles natively,
+  ;; consistent with org-latex-compiler = xelatex (fontspec works).
+  (setcdr (assq 'dvisvgm org-preview-latex-process-alist)
+          (list :programs '("xelatex" "dvisvgm")
+                :description "xdv > svg"
+                :image-input-type "xdv"
+                :image-output-type "svg"
+                :image-size-adjust '(1.7 . 1.5)
+                :latex-compiler '("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
+                :image-converter '("dvisvgm %f -n -b min -c %S -o %O")))
+  ;; Help dvisvgm find ghostscript on macOS (Homebrew)
+  (setenv "LIBGS" "/opt/homebrew/lib/libgs.dylib")
+  ;; Ensure the preview tmp directory exists
+  (make-directory (expand-file-name "~/.emacs.d/tmp") t)
   :bind (:map org-mode-map
   	          ("C-c l" . org-store-link)
   	          ("C-c C-l" . org-insert-link)
@@ -1288,7 +1304,8 @@ Resizing windows is counter intuitive, so I'd like up/down/left/right to resize 
 (global-set-key (kbd "s-C-<up>") #'enlarge-window)
 #+end_src
 
-Load my custom functions
+Load my custom functions. These were initially written so I can easily
+copy/paste biosequences when submitting AlphaFold jobs.
 #+begin_src emacs-lisp
 (load "/Users/delnatan/Apps/emacs-config/custom/DE_fun01.el" t nil t)
 #+end_src
