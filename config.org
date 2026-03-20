@@ -16,6 +16,7 @@
 
 A convenient way to debug is you can add the following tags under a heading:
 #+begin_src org
+# comma added here to avoid org parsing this example as a 'real' heading
 ,* Some heading
 :PROPERTIES:
 :header-args: :tangle no
@@ -632,6 +633,20 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   :config
   (add-to-list 'code-cells-eval-region-commands
                '(python-ts-mode . python-shell-send-region) t)
+
+  ;; Enable outline-minor-mode when code-cells-mode activates,
+  ;; with cell boundaries as headings
+  (defun de/code-cells-outline-setup ()
+    (when code-cells-mode
+      (setq-local outline-regexp "# %%")
+      (setq-local outline-minor-mode-highlight 'append)
+      (outline-minor-mode 1)
+      ;; unbind tab in favor of 'C-c o' prefix
+      (keymap-unset outline-minor-mode-map "TAB" t)
+      (keymap-unset outline-minor-mode-map "<tab>" t)))
+
+  (add-hook 'code-cells-mode-hook #'de/code-cells-outline-setup)
+
   :bind
   (:map
    code-cells-mode-map
@@ -642,7 +657,14 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
    ("M-S-<up>" . code-cells-move-cell-up)
    ("M-S-<down>" . code-cells-move-cell-down)
    ("C-c x ;" . code-cells-comment-or-uncomment)
-   ("C-c C-c" . code-cells-eval)))
+   ("C-c C-c" . code-cells-eval)
+   ;; folding
+   ("C-c o f"     . outline-hide-subtree) ;; fold
+   ("C-c o u"     . outline-show-subtree) ;; unfold
+   ("C-c o o"     . outline-hide-other) ;; show only current
+   ("C-c o a"     . outline-show-all) ;; show all
+   ("C-c o h"     . outline-show-only-headings) ;; collapse all
+   ))
 #+end_src
 
 
@@ -966,10 +988,6 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
                             "~/Documents/howtos/"
                             "~/Documents/org")))
 
-(use-package svg-lib
-  :defer t
-  :straight (svg-lib :type git :host github :repo "rougier/svg-lib"))
-
 (defun de/insert-org-note-properties ()
   "Insert common Org properties at the beginning of the document."
   (interactive)
@@ -995,6 +1013,28 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
                         :repo "rougier/buffer-box")
   :bind
   ("C-c v b" . buffer-box))
+                            #+end_src
+
+
+* Claude-coded tools
+
+#+begin_src emacs-lisp
+;; for drawing 
+(use-package mote
+  :straight nil
+  :load-path "~/Apps/emacs/mote-el")
+
+;; claude-modified Rougier's package
+(use-package svg-lib
+  :straight nil
+  :load-path "~/Apps/emacs/de-svg-lib")
+
+(use-package svg-lib-org
+  :straight nil
+  :load-path "~/Apps/emacs/de-svg-lib"
+  :after (svg-lib org)
+  :commands svg-lib-org-mode
+  :hook (org-mode . svg-lib-org-mode))
 #+end_src
 
 
