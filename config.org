@@ -63,9 +63,11 @@ By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangl
 ;; hooks to customize behavior of specific modes
 (add-hook 'text-mode-hook #'visual-line-mode)
 (add-hook 'prog-mode-hook #'visual-line-mode)
+
+;; uncomment below to draw fill-column (vertical line) indicator
 ;; draw fill-column indicator in text and prog modes
-(dolist (hook '(text-mode-hook prog-mode-hook))
-  (add-hook hook #'display-fill-column-indicator-mode))
+;; (dolist (hook '(text-mode-hook prog-mode-hook))
+;;   (add-hook hook #'display-fill-column-indicator-mode))
 
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -129,7 +131,7 @@ In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
   (setq scroll-conservatively 101
-      	scroll-margin 0)
+        scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 #+end_src
@@ -140,7 +142,7 @@ Use multiple cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-      	 ("C-c C-<" . mc/mark-all-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 #+end_src
@@ -463,20 +465,20 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
   :config
   ;; supress auto-revert warnings
   (setq apheleia-inhibit-functions
-      	(cons #'buffer-modified-p apheleia-inhibit-functions))
+        (cons #'buffer-modified-p apheleia-inhibit-functions))
   ;; define formatters
   (setf (alist-get 'ruff apheleia-formatters)
         '("ruff" "format" "--verbose" "--line-length" "79"
-      	  "--stdin-filename" filepath))
+          "--stdin-filename" filepath))
   (setf (alist-get 'prettier-typescript apheleia-formatters)
-      	'("prettier" "--use-tabs=false" "--print-width" "80"
-      	  "--stdin-filename" filepath "--parser=typescript"))
+        '("prettier" "--use-tabs=false" "--print-width" "80"
+          "--stdin-filename" filepath "--parser=typescript"))
   (setf (alist-get 'prettier-json apheleia-formatters)
-      	'("prettier" "--use-tabs=false" "--print-width" "80"
-      	  "--stdin-filename" filepath "--parser=json"))
+        '("prettier" "--use-tabs=false" "--print-width" "80"
+          "--stdin-filename" filepath "--parser=json"))
   (setf (alist-get 'prettier-javascript apheleia-formatters)
-      	'("prettier" "--use-tabs=false" "--print-width" "80"
-      	  "--stdin-filename" filepath "--parser=babel-flow"))
+        '("prettier" "--use-tabs=false" "--print-width" "80"
+          "--stdin-filename" filepath "--parser=babel-flow"))
   ;; define commands for each mode
   (setf (alist-get 'python-ts-mode apheleia-mode-alist) '(ruff-isort ruff))
   (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
@@ -595,7 +597,7 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   ;; use tree-sitter
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
-    	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
+      	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
   ;; get completions in the REPL
   :hook
   ((python-mode python-ts-mode) . (lambda ()
@@ -615,21 +617,21 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   "Clear current inferior python buffer and restart process"
   (interactive)
   (progn (with-current-buffer "*Python*" (comint-clear-buffer))
-    	 (python-shell-restart)))
+      	 (python-shell-restart)))
 
 ;; custom function to kill current cell
 (defun de/kill-cell ()
   "code-cells mode custom function to kill current cell"
   (interactive)
   (let ((beg (car (code-cells--bounds)))
-    	(end (cadr (code-cells--bounds))))
+      	(end (cadr (code-cells--bounds))))
     (kill-region beg end)))
 
 (use-package code-cells
   :straight t
   :defer t
   :hook ((python-ts-mode . code-cells-mode-maybe)
-    	 (python-mode . code-cells-mode-maybe))
+      	 (python-mode . code-cells-mode-maybe))
   :config
   (add-to-list 'code-cells-eval-region-commands
                '(python-ts-mode . python-shell-send-region) t)
@@ -748,7 +750,7 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 #+begin_src emacs-lisp
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
-        Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
+          Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
   (interactive)
   (unless (executable-find "jupyter")
     (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
@@ -762,9 +764,9 @@ To make life a bit simpler, I've made a function to insert this snippet with the
              (properties
               (format
                "#+PROPERTY: header-args:jupyter-python :session py
-  ,#+PROPERTY: header-args:jupyter-python+ :async yes
-  ,#+PROPERTY: header-args:jupyter-python+ :eval never-export
-  ,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
+    ,#+PROPERTY: header-args:jupyter-python+ :async yes
+    ,#+PROPERTY: header-args:jupyter-python+ :eval never-export
+    ,#+PROPERTY: header-args:jupyter-python+ :kernel %s\n"  kernel-name)))
         (save-excursion
           (goto-char insertion-point)
           (insert properties)
@@ -795,7 +797,7 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
   "Choose jupyter kernel to open/start new Python file associated to it.
-    With prefix argument (C-u), use the current buffer if it's a Python file."
+      With prefix argument (C-u), use the current buffer if it's a Python file."
   (interactive
    (let ((current-file (and (memq major-mode '(python-mode python-ts-mode))
                             (buffer-file-name))))
@@ -848,12 +850,23 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
 (use-package rust-mode
   :init
   (setq rust-mode-treesitter-derive t))
+
+(use-package ob-rust
+  :straight t)
+
+(with-eval-after-load 'org
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((rust . t))))
 #+end_src
 
 
 * Theme and appearance
 
-To justify both sides evenly like Rougier's examples. Use enriched-mode and press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the current paragraph. *But be careful!* This actually changes the document as rich-text and adds markup (tags) to the text file.
+To justify both sides evenly like Rougier's examples. Use enriched-mode and
+press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the
+current paragraph. *But be careful!* This actually changes the document as
+rich-text and adds markup (tags) to the text file.
 
 #+begin_src emacs-lisp
 ;; use rainbow-mode to display the color of a color string
@@ -897,13 +910,14 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
     (set-face-attribute 'bold nil
                         :family "Roboto Mono" :weight 'regular)
     (set-face-attribute 'italic nil
-                        :family "Victor Mono" :weight 'semilight :slant
+                        :family "Victor Mono" :weight 'semibold :slant
                         'italic)
     (set-fontset-font t 'unicode
                       (font-spec :name "Fira Code" :size 14) nil)
     ;; set the range of nerd fonts xe000 to xf8ff
     (set-fontset-font t '(#xe000 . #xf8ff)
-                      (font-spec :name "RobotoMono Nerd Font" :size 12) nil))
+                      (font-spec :name "RobotoMono Nerd Font" :size 12)
+                      nil))
 
   ;; define custom org source block colors
   (defun de/nano-org-block-faces ()
@@ -970,9 +984,11 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
-
-
-
+(setq default-frame-alist
+      '((height . 44) (width . 81)
+        (left-fringe . 0) (right-fringe . 0)
+        (internal-border-width . 24)
+        (undecorated-round . t)))
 #+end_src
 
 
