@@ -4,31 +4,31 @@
 
 * Preamble
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 ;; toggle this debug issues
 ;; (setq debug-on-error t)
 
 ;; use the latest transient (needed by magit, dirvish, and probably many others)
 (use-package transient
   :straight t)
-#+end_src
+  #+end_src
 
 
-A convenient way to debug is you can add the following tags under a heading:
-#+begin_src org
+  A convenient way to debug is you can add the following tags under a heading:
+  #+begin_src org
 # comma added here to avoid org parsing this example as a 'real' heading
 ,* Some heading
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-#+end_src
+  :PROPERTIES:
+  :header-args: :tangle no
+  :END:
+  #+end_src
 
-By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangled.
+  By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangled.
 
 
 * Basic settings
 
-#+begin_src emacs-lisp
+                    #+begin_src emacs-lisp
 ;; keep things tidy
 (use-package no-littering
   :straight t
@@ -71,6 +71,9 @@ By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangl
 
 ;; I only want to show line numbers in programming mode.
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+
+;; recentf-mode
+(recentf-mode 1)
 
 ;; new in emacs 30, enable which-key-mode
 (which-key-mode)
@@ -123,10 +126,10 @@ By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangl
 
 (global-set-key (kbd "M-N") #'de/new-frame)
 (global-set-key (kbd "M-`") #'other-frame)
-#+end_src
+                    #+end_src
 
 In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (use-package ultra-scroll
   :straight (ultra-scroll :type git :host github :repo "jdtsmith/ultra-scroll")
   :init
@@ -134,10 +137,10 @@ In January 8, 2025, ~ultra-scroll~ came out and it seems to work well.
         scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
-#+end_src
+  #+end_src
 
 Use multiple cursors
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (use-package multiple-cursors
   :straight t
   :bind (("C->" . mc/mark-next-like-this)
@@ -145,11 +148,10 @@ Use multiple cursors
          ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
-#+end_src
+  #+end_src
 
 I now use consult to replace the default =C-s= search in buffer.
-
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
@@ -213,15 +215,11 @@ I now use consult to replace the default =C-s= search in buffer.
    ("C-h o" . helpful-symbol)
    ;; Lookup the current symbol at point
    ("C-c C-d" . helpful-at-point)))
-#+end_src
+  #+end_src
 
-I find myself using more of ~artist-mode~ to write plain ASCII notes because I
-prefer to not do any context switching when working on a problem or learning
-new concepts. I'll define a personal prefix map for entering and exiting this
-mode so that it would not interfere with commonly used keybindings like =C-c
-C-c=. Use =C-c u a= to enter artist-mode and =C-c u a= again to exit.
+I find myself using more of ~artist-mode~ to write plain ASCII notes because I prefer to not do any context switching when working on a problem or learning new concepts. I'll define a personal prefix map for entering and exiting this mode so that it would not interfere with commonly used keybindings like =C-c C-c=. Use =C-c u a= to enter artist-mode and =C-c u a= again to exit.
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (define-prefix-command 'de/artist-map)
 (global-set-key (kbd "C-c u") #'de/artist-map)
 ;; unbind C-c C-c (previously bound to 'artist-mode-off)
@@ -230,24 +228,24 @@ C-c=. Use =C-c u a= to enter artist-mode and =C-c u a= again to exit.
 
 (define-key de/artist-map (kbd "a") #'artist-mode)
 (define-key de/artist-map (kbd "q") #'artist-mode-off)
-#+end_src
+  #+end_src
 
 Common operations while in artist mode is to draw boxes/lines/ellipses, which is triggered by the `artist-select-op-*` functions. The default mode is `artist-select-op-pen-line`.
 
 
 ** Enhancements
 
-The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
-#+begin_src emacs-lisp
+   The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
+                     #+begin_src emacs-lisp
 ;; (global-set-key (kbd "M-o") 'other-window)
 (use-package ace-window
   :straight t
   :bind
   (("M-o" . ace-window)))
-#+end_src
+                     #+end_src
 
 Switching to using ~dirvish~ for an enhanced dired experience
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package dirvish
   :straight t
   :init
@@ -270,10 +268,10 @@ Switching to using ~dirvish~ for an enhanced dired experience
                          (display-line-numbers-mode -1)
                          (visual-line-mode -1)
                          (hl-line-mode 1))))
-#+end_src
+   #+end_src
 
 Let's make `ibuffer` look nicer:
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package nerd-icons-ibuffer
   :straight t
   :hook (ibuffer-mode . nerd-icons-ibuffer-mode)
@@ -304,12 +302,11 @@ Let's make `ibuffer` look nicer:
   (add-hook 'ibuffer-mode-hook
             (lambda ()
               (ibuffer-switch-to-saved-filter-groups "Default"))))
-#+end_src
+   #+end_src
 
-I'd like to be able to toggle horizontal/vertical split when I have 2 windows
-open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
+I'd like to be able to toggle horizontal/vertical split when I have 2 windows open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-split-orientation-fastest-way][Emacs Stackexchange]].
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (defun de/toggle-split-direction ()
   (interactive)
   (if (= (count-windows) 2)
@@ -337,24 +334,20 @@ open. Found in [[https://emacs.stackexchange.com/questions/318/switch-window-spl
 
 (global-set-key (kbd "C-x |")  #'de/toggle-split-direction)
 
-#+end_src
+   #+end_src
 
-I often use fill-region or org-fill-paragraph when not using visual-line-mode,
-but there's no native function that would do the inverse of these
-operations. The unfill package does just that.
+I often use fill-region or org-fill-paragraph when not using visual-line-mode, but there's no native function that would do the inverse of these operations. The unfill package does just that.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package unfill
   :straight t)
-#+end_src
+   #+end_src
 
 
 ** Navigation
 
-I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these
-keybindings to custom functions that scrolls half-page up/down & keep things in
-the center for easier viewing:
-#+begin_src emacs-lisp
+   I seldom use =C-v= or =M-v= to move page-by-page. So here I rebind these keybindings to custom functions that scrolls half-page up/down & keep things in the center for easier viewing:
+   #+begin_src emacs-lisp
 (defun de/scroll-half-page-down ()
   (interactive)
   (move-to-window-line-top-bottom)
@@ -369,25 +362,26 @@ the center for easier viewing:
 
 (global-set-key (kbd "C-v") #'de/scroll-half-page-down)
 (global-set-key (kbd "M-v") #'de/scroll-half-page-up)
-#+end_src
+   #+end_src
 
 
 * Programming setup
+
 ** General setup
 
-Using magit for git project management.
+   Using magit for git project management.
 
-#+begin_src emacs-lisp :tangle yes
+   #+begin_src emacs-lisp :tangle yes
 (use-package magit
   :defer t
   :straight t
   :bind (("C-x g" . magit-status)))
-#+end_src
+   #+end_src
 
-Setup ~treesitter~ for several languages. To tell whether the current buffer is
-using the ~ts~ mode is by running =M-x major-mode=.
+   Setup ~treesitter~ for several languages. To tell whether the current buffer is
+   using the ~ts~ mode is by running =M-x major-mode=.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (dolist (lang '((python "https://github.com/tree-sitter/tree-sitter-python")
                 (cpp    "https://github.com/tree-sitter/tree-sitter-cpp")
                 (c      "https://github.com/tree-sitter/tree-sitter-c")
@@ -398,16 +392,16 @@ using the ~ts~ mode is by running =M-x major-mode=.
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'major-mode-remap-alist '(elisp-mode . elisp-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
-#+end_src
+   #+end_src
 
-Silence eglot progress (in the *Messages* buffer)
-#+begin_src emacs-lisp
+   Silence eglot progress (in the *Messages* buffer)
+   #+begin_src emacs-lisp
 (setq eglot-report-progress nil)
-#+end_src
+   #+end_src
 
-Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
+   Since eglot is the LSP client, you can also configure each LSP settings 'globally' by defining the variables in ~eglot-workspace-configuration~ variable.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package eglot
   :defer t
   :straight (:type built-in)
@@ -419,11 +413,11 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
          (rust-mode . eglot-ensure))
   :custom
   (eglot-autoshutdown t))
-#+end_src
+   #+end_src
 
-Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
-uses a timer to type some characters, and 'l' for going to a specific line.
-#+begin_src emacs-lisp
+   Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
+   uses a timer to type some characters, and 'l' for going to a specific line.
+   #+begin_src emacs-lisp
 (use-package avy
   :straight t)
 
@@ -431,10 +425,10 @@ uses a timer to type some characters, and 'l' for going to a specific line.
 (global-set-key (kbd "M-g c") #'avy-goto-char)
 (global-set-key (kbd "M-g t") #'avy-goto-char-timer)
 (global-set-key (kbd "M-g l") #'avy-goto-line)
-#+end_src
+   #+end_src
 
-Use `treesit-fold` for code folding
-#+begin_src emacs-lisp
+   Use `treesit-fold` for code folding
+   #+begin_src emacs-lisp
 (use-package treesit-fold
   :straight (treesit-fold :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :hook (prog-mode . treesit-fold-mode)
@@ -451,15 +445,15 @@ Use `treesit-fold` for code folding
   :straight (treesit-fold-indicators :type git :host github :repo "emacs-tree-sitter/treesit-fold")
   :config
   (global-treesit-fold-indicators-mode))
-#+end_src
+   #+end_src
 
-For general code formatting I use ~apheleia~. Python code formatting uses =ruff=
-installed via homebrew. Doing so will obviate installing a formatter for every
-Python environment.
+   For general code formatting I use ~apheleia~. Python code formatting uses =ruff=
+   installed via homebrew. Doing so will obviate installing a formatter for every
+   Python environment.
 
-For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
+   For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package apheleia
   :straight t
   :config
@@ -484,15 +478,15 @@ For ~rustfmt~ and ~prettier~ you need to install those with homebrew.
   (setf (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-typescript)
   (setf (alist-get 'js-ts-mode apheleia-mode-alist) 'prettier-javascript)
   :hook (prog-mode . apheleia-mode))
-#+end_src
+   #+end_src
 
-Use ~corfu~ for autocompletion. You can use multiple words to filter your search
-by using a separator, which is bound to the key =M-<space>= when a pop-up box is
-on the screen. Sometimes the partial match can get in the way of doing things,
-like choosing to rename your file to something else that is a sub/superset of
-the string. Do =M-<enter>= to enter the literal entry, rather than the match.
+   Use ~corfu~ for autocompletion. You can use multiple words to filter your search
+   by using a separator, which is bound to the key =M-<space>= when a pop-up box is
+   on the screen. Sometimes the partial match can get in the way of doing things,
+   like choosing to rename your file to something else that is a sub/superset of
+   the string. Do =M-<enter>= to enter the literal entry, rather than the match.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package corfu
   :after orderless
   :straight t
@@ -535,7 +529,7 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   :init
   ;; use cape-file everywhere
   (add-to-list 'completion-at-point-functions #'cape-file)
-  
+
   ;; only check for elisp blocks inside org files
   (add-hook
    'org-mode-hook (lambda ()
@@ -543,27 +537,27 @@ the string. Do =M-<enter>= to enter the literal entry, rather than the match.
   (add-hook
    'latex-mode-hook (lambda ()
                       (add-to-list 'completion-at-point-functions #'cape-tex))))
-#+end_src
+   #+end_src
 
-A note for using ~corfu~:
-=M-h= is bound to ~corfu-popupinfo-documentation~ which show/hide the docstring popup.
+   A note for using ~corfu~:
+   =M-h= is bound to ~corfu-popupinfo-documentation~ which show/hide the docstring popup.
 
 
-For a better parenthesis experience, use rainbow-delimiters:
-#+begin_src emacs-lisp
+   For a better parenthesis experience, use rainbow-delimiters:
+   #+begin_src emacs-lisp
 (use-package rainbow-delimiters
   :straight t
   :hook (prog-mode . rainbow-delimiters-mode))
-#+end_src
+   #+end_src
 
 
 ** Python
 
-Simple Python setup using venv for managing environments. I've been using `uv` to manage my Python environments and `venv` for creating separate environments. You can simply run:
+   Simple Python setup using venv for managing environments. I've been using `uv` to manage my Python environments and `venv` for creating separate environments. You can simply run:
 
-~uv venv my-new-env --python 3.11~ to create a new environment.
+   ~uv venv my-new-env --python 3.11~ to create a new environment.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package pythonic
   :straight t)
 
@@ -581,14 +575,14 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
 
 ;; set the default python to 'utils' (remember to create this!)
 (activate-venv "utils")
-#+end_src
+   #+end_src
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package python
   :custom
   ;; 1. Fix the "dummy_completion" garbage
   (python-shell-completion-native-enable nil)
-  
+
   :config
   ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
   (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1")
@@ -610,9 +604,9 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
                             (setq-local corfu-auto nil)
                             (setq-local completion-at-point-functions
                                         '(comint-completion-at-point t)))))
-#+end_src
+   #+end_src
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (defun de/restart-python ()
   "Clear current inferior python buffer and restart process"
   (interactive)
@@ -667,19 +661,19 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
    ("C-c o a"     . outline-show-all) ;; show all
    ("C-c o h"     . outline-show-only-headings) ;; collapse all
    ))
-#+end_src
+   #+end_src
 
 
 ** Jupyter setup
 
-I'm using my own fork of the jupyter package because I don't like the default
-behavior of the jupyter-display buffer when using a jupyter kernel. A new frame
-would be made, rather than being re-used, if the window associated with the
-kernel does not belong to the same frame. This became annoying when I use a
-second monitor to have a separate frame for displaying plots and text output
-from the jupyter kernel.
+   I'm using my own fork of the jupyter package because I don't like the default
+   behavior of the jupyter-display buffer when using a jupyter kernel. A new frame
+   would be made, rather than being re-used, if the window associated with the
+   kernel does not belong to the same frame. This became annoying when I use a
+   second monitor to have a separate frame for displaying plots and text output
+   from the jupyter kernel.
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package jupyter
   :straight (jupyter :type git
                      :repo "delnatan/jupyter"
@@ -688,13 +682,6 @@ from the jupyter kernel.
   :defer t
   :custom
   (jupyter-eval-use-overlays t))
-;; (jupyter-repl-echo-eval-p nil)
-;; :config
-;; (add-to-list 'display-buffer-alist
-;;              '("\\*jupyter-output\\*"
-;;   	         (display-buffer-reuse-window
-;;   	          display-buffer-pop-up-window)
-;;   	         (reusable-frames . t))))
 
 ;; for using gnuplot
 (use-package gnuplot
@@ -734,20 +721,20 @@ from the jupyter kernel.
 (setq org-src-lang-modes
       (cons '("jupyter-python" . python-ts)
             (assq-delete-all "jupyter-python" org-src-lang-modes)))
-#+end_src
+   #+end_src
 
-A typical workflow in org-mode is to use source blocks with the following tag (after running =activate-venv=!):
-#+begin_example
+   A typical workflow in org-mode is to use source blocks with the following tag (after running =activate-venv=!):
+   #+begin_example
 #+PROPERTY: header-args:python :session py
 #+PROPERTY: header-args:python+ :async yes
 #+PROPERTY: header-args:python+ :kernel GEManalysis
 #+begin_src python :session py :kernel GEManalysis :async yes
 <python code goes here>
 #+end_src
-#+end_example
+   #+end_example
 
-To make life a bit simpler, I've made a function to insert this snippet with the help of ChatGPT. To insert the snippet above in an org file, do =C-c j=. The ~never-export~ option tells org not to re-evaluate the entire document whenever the document is exported.
-#+begin_src emacs-lisp
+   To make life a bit simpler, I've made a function to insert this snippet with the help of ChatGPT. To insert the snippet above in an org file, do =C-c j=. The ~never-export~ option tells org not to re-evaluate the entire document whenever the document is exported.
+   #+begin_src emacs-lisp
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
           Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
@@ -777,23 +764,23 @@ To make life a bit simpler, I've made a function to insert this snippet with the
   (define-key org-mode-map (kbd "C-c j") #'de/insert-org-jupyter-kernel-spec))
 
 (add-hook 'org-mode-hook #'de/org-jupyter-setup)
-#+end_src
+   #+end_src
 
-Note: for routine work with matplotlib, you can add the following snippet to make exporting to PDF nicer (will export images!)
-#+begin_example
+   Note: for routine work with matplotlib, you can add the following snippet to make exporting to PDF nicer (will export images!)
+   #+begin_example
 ;; this tells org to produce an image file (don't forget to specify file name with `:file`)
 #+PROPERTY: header-args:jupyter-python+ :results graphics file :exports both
 
 ;; above the inserted image, you can add this to adjust size
 #+ATTR_LATEX: :width 0.4\textwidth :float nil
-#+end_example
+   #+end_example
 
-You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for
-next/previous blocks.
+   You can navigate between org-mode blocks with keybindings =C-c C-v n/p= for
+   next/previous blocks.
 
-For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
+   For prototyping a lot of code, I typically open a Python file and associate a jupyter console to it. Since I do this a lot, I decided to simplify this into a function:
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (defun de/python-with-jupyter-repl
     (kernel-name &optional repl-name filename)
   "Choose jupyter kernel to open/start new Python file associated to it.
@@ -832,21 +819,21 @@ For prototyping a lot of code, I typically open a Python file and associate a ju
     (sleep-for 1.0)
     (jupyter-repl-associate-buffer client)))
 
-#+end_src
+   #+end_src
 
-Convenience function to insert matplotlib plots in svg rather than the basic PNG.
-#+begin_src emacs-lisp
+   Convenience function to insert matplotlib plots in svg rather than the basic PNG.
+   #+begin_src emacs-lisp
 ;; place cursor within the top of the python source block
 (defun de/insert-inline-svg-matplotlib ()
   (interactive)
   (insert "import matplotlib_inline\n")
   (insert "matplotlib_inline.backend_inline.set_matplotlib_formats(\"svg\")"))
-#+end_src
+   #+end_src
 
 
 
 ** Rust
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (use-package rust-mode
   :init
   (setq rust-mode-treesitter-derive t))
@@ -858,127 +845,77 @@ Convenience function to insert matplotlib plots in svg rather than the basic PNG
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((rust . t))))
-#+end_src
+   #+end_src
 
 
 * Theme and appearance
 
-To justify both sides evenly like Rougier's examples. Use enriched-mode and
-press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the
-current paragraph. *But be careful!* This actually changes the document as
-rich-text and adds markup (tags) to the text file.
+  To justify both sides evenly like Rougier's examples. Use enriched-mode and press 'M-j b' on each paragraph. This runs ~set-justification-full~ on the current paragraph. *But be careful!* This actually changes the document as rich-text and adds markup (tags) to the text file.
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 ;; use rainbow-mode to display the color of a color string
 (use-package rainbow-mode
   :straight t
   :hook (org-mode prog-mode))
 
-;; use Rougier's nano emacs
-(use-package nano
-  :straight (:type git :host github :repo "rougier/nano-emacs")
-  ;; don't load nano.el, load each modules explicitly
-  :no-require t 
-  :init
-  ;; Optional: for variable-pitch
-  ;; (setq nano-font-family-proportional "Fira Sans")
-  ;; default 'old' settings
-  ;; (setq nano-font-family-monospaced "Roboto Mono")
-  (setq nano-font-size 14)
-  
+(use-package nano-emacs
+  :straight nil
+  :load-path "~/Apps/emacs/nano-minimal"
   :config
-  ;; workaround, somehow NANO needs this face
-  (defface bookmark-menu-heading
-    `((((class color) (min-colors 89)) (:foreground "#000000")))
-    "workaround")
-  
-  ;; load modules explicitly
-  (require 'nano-defaults)
-  (require 'nano-faces)
-  (require 'nano-theme)
-  (require 'nano-theme-dark)
-  (require 'nano-theme-light)
-  (require 'nano-modeline)
-  (require 'nano-layout)
-  ;; this also sets `frame-background-mode` needed for functions below
-  (nano-theme-set-light) ;; set default to 'light'
-
-  ;; define custom fonts
-  (defun de/nano-font-stack ()
-    (set-face-attribute 'default nil
-                        :family "Roboto Mono" :weight 'light :height 140)
-    (set-face-attribute 'bold nil
-                        :family "Roboto Mono" :weight 'regular)
-    (set-face-attribute 'italic nil
-                        :family "Victor Mono" :weight 'semibold :slant
-                        'italic)
-    (set-fontset-font t 'unicode
-                      (font-spec :name "Fira Code" :size 14) nil)
-    ;; set the range of nerd fonts xe000 to xf8ff
-    (set-fontset-font t '(#xe000 . #xf8ff)
-                      (font-spec :name "RobotoMono Nerd Font" :size 12)
-                      nil))
-
-  ;; define custom org source block colors
-  (defun de/nano-org-block-faces ()
-    "Apply custom org-block faces for nano theme."
-    (let ((block-bg (if (eq frame-background-mode 'light)
-                        "#F5F5F5"    ; slightly darker than white
-                      "#3B4252")))   ; slightly lighter than nord dark
-      (set-face-attribute 'org-block nil
-                          :background block-bg
-                          :extend t)
-      (set-face-attribute 'org-block-begin-line nil
-                          :extend t)
-      (set-face-attribute 'org-block-end-line nil
-                          :extend t)))
-
-  ;; derive corfu faces from nano
-  (defun de/nano-corfu-faces ()
-    "Derive corfu popup faces from nano faces."
-    (with-eval-after-load 'corfu
-      (set-face 'corfu-default 'nano-face-subtle)
-      (set-face 'corfu-current '(nano-face-strong nano-face-subtle))
-      (set-face-attribute 'corfu-current nil :background nano-color-highlight)
-      (set-face 'corfu-bar 'nano-face-faded)
-      (set-face-attribute 'corfu-bar nil :background nano-color-foreground)
-      (set-face 'corfu-border 'nano-face-subtle)
-      (set-face-attribute 'corfu-border nil :background nano-color-faded)
-      (set-face 'corfu-annotations 'nano-face-faded)
-      (set-face 'corfu-deprecated 'nano-face-faded)))
-
-  ;; force corfu to recreate popup after theme change
-  (defun de/corfu-reset-frames (&rest _)
-    "Kill corfu child frames so they're recreated with new colors."
-    (dolist (frame (frame-list))
-      (when (frame-parameter frame 'corfu--frame)
-        (delete-frame frame))))
-  
-  ;; setup hooks and advice
-  (advice-add 'nano-theme :after #'de/nano-font-stack)
-  (advice-add 'nano-theme :after #'de/nano-org-block-faces)
-  (advice-add 'nano-theme :after #'de/nano-corfu-faces)
-  (advice-add 'nano-toggle-theme :after #'de/nano-org-block-faces)
-  (advice-add 'nano-refresh-theme :after #'de/corfu-reset-frames)
-
-  ;; Reapply when org loads
+  ;; Call nano-dark here to override the default nano-light set at load time.
+  ;; Remove this line if you prefer light or want the command-line flag to decide.
+  ;; (nano-dark)
+  ;; --- Org mode ---------------------------------------------------------------
+  ;; Prevent org from switching to variable-pitch and inflating heading sizes.
+  ;; Map org semantic roles onto nano faces for color/weight consistency.
   (with-eval-after-load 'org
-    (de/nano-org-block-faces))
+    (nano-link-face 'nano-faded
+                    '(org-meta-line
+                      org-document-info org-document-info-keyword
+                      org-block-begin-line org-block-end-line
+                      org-tag org-date org-done
+                      org-drawer org-special-keyword))
+    (nano-link-face 'nano-strong
+                    '(org-document-title
+                      org-level-1 org-level-2 org-level-3 org-level-4
+                      org-level-5 org-level-6 org-level-7 org-level-8))
+    (nano-link-face 'nano-salient  '(org-link))
+    (nano-link-face 'nano-critical '(org-todo org-warning))
+    (nano-link-face 'nano-popout   '(org-verbatim org-code org-formula))
+    (nano-link-face 'nano-subtle   '(org-quote org-verse)))
 
-  ;; Apply on initial load
-  (with-eval-after-load 'bookmark
-    (nano-theme)
-    (de/nano-org-block-faces))
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (variable-pitch-mode -1)          ;; stay monospace
+              (setq-local line-spacing 0.15)))  ;; a touch more than prose default
 
-  ;; initialize theme
-  (nano-faces)
-  (nano-theme) ;; all advice should be triggered correctly  
-  
-  ;; undo 'meta' key reassignment. I'm already used to 'alt' as 'meta'
-  (setq ns-alternate-modifier 'meta)
-  (setq ns-command-modifier 'super))
+  ;; --- Corfu ------------------------------------------------------------------
+  (with-eval-after-load 'corfu
+    (nano-link-face 'nano-subtle    '(corfu-default corfu-border))
+    (nano-link-face 'nano-highlight '(corfu-current))
+    (nano-link-face 'nano-faded     '(corfu-annotations corfu-deprecated corfu-bar)))
 
-(recentf-mode 1)
+  ;; --- Vertico ----------------------------------------------------------------
+  (with-eval-after-load 'vertico
+    (nano-link-face 'nano-highlight '(vertico-current))
+    (nano-link-face 'nano-faded     '(vertico-group-title
+                                      vertico-group-separator
+                                      vertico-multiline)))
+
+  ;; --- Marginalia -------------------------------------------------------------
+  ;; All annotation text is supplementary — map the bulk to nano-faded.
+  ;; Distinguish on/off states and salient values with semantic faces.
+  (with-eval-after-load 'marginalia
+    (nano-link-face 'nano-faded
+                    '(marginalia-documentation
+                      marginalia-type marginalia-char marginalia-lighter
+                      marginalia-key  marginalia-mode marginalia-date
+                      marginalia-size marginalia-version marginalia-file-name
+                      marginalia-file-owner marginalia-number marginalia-string
+                      marginalia-null marginalia-false marginalia-archive))
+    (nano-link-face 'nano-salient
+                    '(marginalia-on marginalia-true marginalia-installed)))
+  )
 
 ;; clean-up appearance (somehow nano missed this?)
 (tool-bar-mode -1)
@@ -988,13 +925,16 @@ rich-text and adds markup (tags) to the text file.
       '((height . 44) (width . 81)
         (left-fringe . 0) (right-fringe . 0)
         (internal-border-width . 24)
-        (undecorated-round . t)))
-#+end_src
+        (undecorated-round . t)
+        (vertical-scroll-bars . nil)
+        (horizontal-scroll-bar . nil)
+        ))
+  #+end_src
 
 
 * Nicolas Rougier's tools
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 ;; add emacs ~app~ folder to load-path
 (use-package notes-list
   :straight nil
@@ -1029,46 +969,32 @@ rich-text and adds markup (tags) to the text file.
                         :repo "rougier/buffer-box")
   :bind
   ("C-c v b" . buffer-box))
-                            #+end_src
+  #+end_src
 
 
 * Claude-coded tools
 
-#+begin_src emacs-lisp
-;; for drawing 
+  #+begin_src emacs-lisp
+;; for drawing
 (use-package mote
   :straight nil
   :load-path "~/Apps/emacs/mote-el")
 
-;; claude-modified Rougier's package
 (use-package svg-lib
   :straight nil
   :load-path "~/Apps/emacs/de-svg-lib")
-
-(use-package svg-lib-org
-  :straight nil
-  :load-path "~/Apps/emacs/de-svg-lib"
-  :after (svg-lib org)
-  :commands svg-lib-org-mode
-  :hook (org-mode . svg-lib-org-mode))
-#+end_src
+  #+end_src
 
 
 * org-mode configuration
-:PROPERTIES:
-:header-args: :tangle yes
-:END:
-Minor reconfiguration of ~org-mode~.
+  :PROPERTIES:
+  :header-args: :tangle yes
+  :END:
+  Minor reconfiguration of ~org-mode~.
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (use-package org
   :config
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  (setq org-startup-indented t)
-  ;; make sure org-indent is there
-  (require 'org-indent nil t)
-  ;; fix org indent issue for multi-level bullets
-  (set-face-attribute 'org-indent nil :inherit '(org-hide fixed-pitch))
   (setq org-confirm-babel-evaluate nil)
   (setq org-display-inline-images t)
   (setq org-adapt-indentation t)
@@ -1133,6 +1059,62 @@ Minor reconfiguration of ~org-mode~.
   (setq org-latex-src-block-backend 'engraved))
 
 (setq org-latex-engraved-theme nil)
+  #+end_src
+
+  #+begin_src emacs-lisp
+(use-package org-modern
+  :straight t
+  :hook (org-mode . org-modern-mode)
+  :config
+  (defun nano-org-set-fringe ()
+    (walk-windows
+     (lambda (win)
+       (with-current-buffer (window-buffer win)
+         (when (derived-mode-p 'org-mode)
+           (set-window-fringes win 6 0))))
+     nil t))
+  (add-hook 'window-configuration-change-hook #'nano-org-set-fringe)
+  :custom
+  ;; Headings — simple geometric progression
+  (org-modern-star ["◉" "○" "◈" "◇" "·"])
+  ;; (org-modern-hide-stars t)
+
+  ;; Tables — light vertical rule, no added horizontal weight
+  (org-modern-table-vertical 1)
+  (org-modern-table-horizontal 0)
+
+  ;; Let nano face mappings handle #+KEYWORD lines — don't double-style them
+  (org-modern-keyword nil)
+
+  ;; Timestamps and block labels use the pill style
+  (org-modern-timestamp t)
+  (org-modern-block-name t)
+
+  :config
+  ;; Base label face: slightly smaller and condensed so pills don't crowd text.
+  ;; Set directly — nano-link-face would strip the :height we need here.
+  ;; (set-face-attribute 'org-modern-label nil
+  ;;                     :height 0.85
+  ;;                     :width 'condensed
+  ;;                     :weight 'regular
+  ;;                     :inherit 'nano-subtle
+  ;;                     :Box '(:line-width (4 . 1) :style flat-button))
+
+  ;; Map org-modern semantic faces onto nano faces
+  (nano-link-face 'nano-default '(org-block))
+  (nano-link-face 'nano-critical-i '(org-modern-todo))
+  (nano-link-face 'nano-faded-i    '(org-modern-done org-modern-tag))
+  (nano-link-face 'nano-salient    '(org-modern-statistics
+                                     org-modern-priority))
+  (nano-link-face 'nano-faded      '(org-modern-date-active
+                                     org-modern-date-inactive
+                                     org-modern-time-active
+                                     org-modern-time-inactive
+                                     org-modern-block-name
+                                     org-modern-block-keyword
+                                     org-modern-internal-target
+                                     org-modern-radio-target))
+  (nano-link-face 'nano-subtle     '(org-modern-horizontal-rule)))
 #+end_src
 
 For a nicer org source block experience, trying ~corg.el~. You can trigger completion at point to see what's available. Typically I prefer just invoking ~complete-symbol~ via `M-<tab>`.
@@ -1142,9 +1124,7 @@ For a nicer org source block experience, trying ~corg.el~. You can trigger compl
   :hook (org-mode . corg-setup))
 #+end_src
 
-Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience
-writing LaTeX in org documents.
-
+Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience writing LaTeX in org documents.
 #+begin_src emacs-lisp
 (use-package org-fragtog
   :straight t
