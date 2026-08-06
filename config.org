@@ -416,6 +416,18 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
   (eglot-autoshutdown t))
 #+end_src
 
+For a better eglot experience when looking for functions in a codebase, use consult-eglot
+#+begin_src emacs-lisp
+(use-package consult-eglot
+  :straight t
+  :after (consult eglot)
+  :bind (:map eglot-mode-map
+              ("M-g s" . consult-eglot-symbols)))
+#+end_src
+
+#+RESULTS:
+: consult-eglot-symbols
+
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
 uses a timer to type some characters, and 'l' for going to a specific line.
 #+begin_src emacs-lisp
