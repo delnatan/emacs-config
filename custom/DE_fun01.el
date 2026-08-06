@@ -19,7 +19,7 @@ C-u 50 M-x wrap-region
   (if (use-region-p)
       ;; if using region
       (save-excursion
-	    (let* ((regionp (clean-string (buffer-substring start end)))
+	    (let* ((regionp (de/clean-string (buffer-substring start end)))
 	           (result
 		        (string-join (split-string-every regionp n) "\n")))
 	      ;; `let` body
@@ -50,7 +50,7 @@ C-u 50 M-x wrap-region
   (if (use-region-p)
       ;; if using region
       (save-excursion
-	    (let* ((regionp (clean-string-keep-punctuations (buffer-substring start end)))
+	    (let* ((regionp (de/clean-string-keep-punctuations (buffer-substring start end)))
 	           (result
 		        (string-join (split-string-every regionp n) "\n")))
 	      ;; `let` body
@@ -63,26 +63,48 @@ C-u 50 M-x wrap-region
   )
 
 
-
 (defun de/copy-cleaned-region (start end)
   "run clean-string() on current region and put into kill-ring"
   (interactive "r")
   (if (use-region-p)
-      (kill-new (clean-string (buffer-substring start end)))
+      (kill-new (de/clean-string (buffer-substring start end)))
     (message "no region was selected")
     ))
 
+
 (defun de/subset-cleaned-region (start end)
-  "run clean-string() on current region and take subset from
-string's start (sstart) and end (send)"
+  "Clean the selected region and extract a 1-indexed substring.
+
+Prompts for a start and end position (1-indexed, inclusive).
+The cleaned string has digits, punctuation, and whitespace removed.
+The result is placed on the kill ring."
   (interactive "r")
-  (if (use-region-p)
-      (let* ((regionp (clean-string (buffer-substring start end)))
-	         (sstart (string-to-number (read-from-minibuffer "String start: ")))
-	         (send (string-to-number (read-from-minibuffer (format "String end (%d): " (length regionp))))))
-	    (message "Put %d to %d (%d total chars) to kill-ring" sstart send (length regionp))
-	    (kill-new (substring regionp (- sstart 1) send)))
-    (message "no region was selected")))
+  (unless (use-region-p)
+    (user-error "No region selected"))
+  (let* ((cleaned  (de/clean-string (buffer-substring start end)))
+         (len      (length cleaned))
+         (sstart   (de/read-bounded-number
+                    (format "Start position [1-%d]: " len) 1 len))
+         (send     (de/read-bounded-number
+                    (format "End position [%d-%d]: " sstart len) sstart len)))
+    (kill-new (substring cleaned (1- sstart) send))
+    (message "Copied residues %d–%d (%d chars) to kill-ring"
+             sstart send (- send (1- sstart)))))
+
+(defun de/read-bounded-number (prompt min max)
+  "Read a number from the minibuffer with PROMPT, constrained to [MIN, MAX].
+Re-prompts on invalid input."
+  (let (value)
+    (while (not value)
+      (let ((raw (read-from-minibuffer prompt)))
+        (let ((n (string-to-number raw)))
+          (if (and (> (length raw) 0)
+                   (>= n min)
+                   (<= n max))
+              (setq value n)
+            (message "Please enter a number between %d and %d" min max)
+            (sit-for 1)))))
+    value))
 
 
 (defun de/cleaned-region-length (start end)
@@ -91,7 +113,7 @@ Useful for counting the number of characters in a region with linebreaks.
 Meant to be used with biosequences."
   (interactive "r")
   (if (use-region-p)
-      (message "Region has %d characters" (length (clean-string (buffer-substring-no-properties start end))))
+      (message "Region has %d characters" (length (de/clean-string (buffer-substring-no-properties start end))))
     (message "no region was selected")))
 
 (defun split-string-every (string chars)
@@ -105,19 +127,17 @@ This returns a list of strings."
 		         (split-string-every (substring string chars)
 				                     chars)))))
 
-(defun clean-string (string)
+(defun de/clean-string (string)
+  "Remove digits, punctuation, whitespace, and newlines from STRING."
+  (replace-regexp-in-string "[[:digit:][:punct:][:space:]\n]" "" string))
+
+
+(defun de/clean-string-keep-punctuations (string)
   "cleans input STRING
 
 These characters are removed:
 numbers, punctuation marks (non-word), whitespace, newline"
-  (replace-regexp-in-string "[[:digit:][:punct:]\s\n]" "" string))
-
-(defun clean-string-keep-punctuations (string)
-  "cleans input STRING
-
-These characters are removed:
-numbers, punctuation marks (non-word), whitespace, newline"
-  (replace-regexp-in-string "[[:digit:]\s\n]" "" string))
+  (replace-regexp-in-string "[[:digit:][:space:]\n]" "" string))
 
 
 (defun de/get-char-index-in-cleaned-region (char start end)
@@ -125,7 +145,7 @@ numbers, punctuation marks (non-word), whitespace, newline"
 Numbers, whitespace, newlines and punctuation marks are removed from region."
   (interactive "cCharacter to find: \nr") ;; 'c' gets character, 'r' gets region
   (if (use-region-p)
-      (let ((text (clean-string (buffer-substring-no-properties start end)))
+      (let ((text (de/clean-string (buffer-substring-no-properties start end)))
             (indices '()))
         (dotimes (i (length text))
           (when (char-equal (aref text i) char)
