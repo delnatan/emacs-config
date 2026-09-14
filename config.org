@@ -3,14 +3,18 @@
 #+STARTUP: overview
 
 * Preamble
-
-  #+begin_src emacs-lisp
+  #+begin_src emacs-lisp :tangle yes :padline no
+;; -*- lexical-binding: t; -*-
 ;; toggle this debug issues
 ;; (setq debug-on-error t)
 
 ;; use the latest transient (needed by magit, dirvish, and probably many others)
 (use-package transient
   :straight t)
+
+;; I want the initial major mode to be a plain text
+(setq initial-major-mode 'text-mode)
+(setq initial-scratch-message ";; Scratch buffer\n\n")
   #+end_src
 
 A convenient way to debug is you can add the following tags under a heading:
@@ -189,11 +193,8 @@ I now use consult to replace the default =C-s= search in buffer.
          ("M-s f" . consult-find))
   :config
   ;; Optional: Improve the preview experience
-  (setq consult-preview-key 'any)
-  ;; NOTE: consult--regexp-compiler is an internal API (double-dash);
-  ;; this is the canonical recommendation from consult docs but may
-  ;; need updating if consult internals change.
-  (setq consult--regexp-compiler #'consult--orderless-regexp-compiler))
+  (setq consult-preview-key 'any))
+
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -215,6 +216,23 @@ I now use consult to replace the default =C-s= search in buffer.
    ;; Lookup the current symbol at point
    ("C-c C-d" . helpful-at-point)))
 #+end_src
+
+For better dired experience, use the `gls` tool.
+#+begin_src emacs-lisp
+(use-package dired
+  :straight (:type built-in)
+  :custom
+  (insert-directory-program
+   (or (executable-find "gls")
+       "/opt/homebrew/bin/gls"))
+  (dired-use-ls-dired t)
+  (dired-listing-switches
+   "-alh --group-directories-first --sort=extension")
+  :config
+  (require 'dired-x)
+  (add-hook 'dired-mode-hook #'dired-omit-mode))
+#+end_src
+
 
 I find myself using more of ~artist-mode~ to write plain ASCII notes because I prefer to not do any context switching when working on a problem or learning new concepts. I'll define a personal prefix map for entering and exiting this mode so that it would not interfere with commonly used keybindings like =C-c C-c=. Use =C-c u a= to enter artist-mode and =C-c u a= again to exit.
 
@@ -688,11 +706,13 @@ from the jupyter kernel.
 
 #+begin_src emacs-lisp
 (use-package jupyter
-  :straight (jupyter :type git
-                     :repo "delnatan/jupyter"
-                     :local-repo "/Users/delnatan/Apps/emacs/jupyter"
-                     :branch "global_jupyter_output_buffer")
+  :straight t
   :defer t
+  :init
+  (add-to-list 'display-buffer-alist
+               '("^\\*jupyter-display*\\*$"
+                 (display-buffer-reuse-window)
+                 (reusable-frames . visible)))
   :custom
   (jupyter-eval-use-overlays t))
 
@@ -876,7 +896,7 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
   :load-path "~/Apps/emacs/nano-minimal"
   :init
   (setq nano-font-family "Roboto Mono"
-        nano-font-size 140
+        nano-font-size 130
         nano-font-weight 'light)
   
   :config
@@ -1436,6 +1456,7 @@ Each becomes its own agenda-visible entry with an active timestamp."
         (insert (format "%s TBD\n<%s %s>\n" stars date-str time-range))))))
 #+end_src
 
+
 * Org-capture setup
 :PROPERTIES:
 :header-args: :tangle yes
@@ -1543,12 +1564,12 @@ Use citar to manage/access up-to-date bibliography in Zotero
 
 I love org mode but sometimes it's convenient to write documents in markdown
 #+begin_src emacs-lisp
-(use-package markdown-mode
-  :straight t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
-  :bind (:map markdown-mode-map
-              ("C-c C-e" . markdown-do)))
+(use-package markdown-ts-mode
+  :ensure nil
+  :straight nil
+  :mode ("\\.md\\'" "\\.mdx\\'" "\\.markdown\\'")
+  :config
+  (require 'markdown-ts-mode-x))
 #+end_src
 
 Typst support
@@ -1556,3 +1577,47 @@ Typst support
 (use-package typst-ts-mode
   :straight t)
 #+end_src
+
+Playing around with local LLM. In the prompt buffer, ~C-c RET~ to enter your prompt.
+
+Setup llama.cpp
+~brew install llama.cpp~
+
+llama can directly fetch a model and serve it. Check hugging face for models.
+~llama serve -hf unsloth/gemma-4-E2B-it-GGUF:UD-Q4_K_XL~
+
+Run the following for starting the server:
+#+begin_src zshell
+llama-server \
+  -hf unsloth/gemma-4-E2B-it-GGUF:UD-Q4_K_XL \
+  --host 127.0.0.1 --port 8080 \
+  -c 8192 \
+  -ngl 99 \
+  --jinja
+#+end_src
+
+This downloads the model to ~~/.cache/huggingface/hub~.
+
+#+begin_src emacs-lisp
+(use-package gptel
+  :straight t
+  :bind (("C-c g g" . gptel)
+         ("C-c g s" . gptel-send)
+         ("C-c g r" . gptel-rewrite))
+  :config
+  ;; needs to be run 
+  (setq gptel-model 'gemma-4-e2b-it
+        gptel-backend
+        (gptel-make-openai "llama-cpp"
+          :host "127.0.0.1:8080"
+          :endpoint "/v1/chat/completions"
+          :protocol "http"
+          :stream t
+          :models '(gemma-3n-e2b-it)))
+
+  (setq gptel-directives
+        (append gptel-directives
+                '((my-writing-editor
+                   . "Edit this text for clarity and correctness, as a native English editor would for a non-native writer. Prioritize: run-on sentences (split at natural clause breaks), article errors (a/an/the), two ideas fused into one sentence (split or add an explicit connective), and passive voice (convert to active unless the actor is truly irrelevant — flag those cases instead of silently converting). Also fix anything else that reads as non-native or unclear. Preserve voice, vocabulary, and tone — don't polish beyond what's needed. After the rewrite, briefly list what you changed and why, grouped by type.")))))
+#+end_src
+
