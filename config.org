@@ -1599,25 +1599,25 @@ llama-server \
 This downloads the model to ~~/.cache/huggingface/hub~.
 
 #+begin_src emacs-lisp
-(use-package gptel
-  :straight t
-  :bind (("C-c g g" . gptel)
-         ("C-c g s" . gptel-send)
-         ("C-c g r" . gptel-rewrite))
-  :config
-  ;; needs to be run 
-  (setq gptel-model 'gemma-4-e2b-it
-        gptel-backend
-        (gptel-make-openai "llama-cpp"
-          :host "127.0.0.1:8080"
-          :endpoint "/v1/chat/completions"
-          :protocol "http"
-          :stream t
-          :models '(gemma-3n-e2b-it)))
+;; (use-package gptel
+;;   :straight t
+;;   :bind (("C-c g g" . gptel)
+;;          ("C-c g s" . gptel-send)
+;;          ("C-c g r" . gptel-rewrite))
+;;   :config
+;;   ;; needs to be run 
+;;   (setq gptel-model 'gemma-4-e2b-it
+;;         gptel-backend
+;;         (gptel-make-openai "llama-cpp"
+;;           :host "127.0.0.1:8080"
+;;           :endpoint "/v1/chat/completions"
+;;           :protocol "http"
+;;           :stream t
+;;           :models '(gemma-3n-e2b-it)))
 
-  (setq gptel-directives
-        (append gptel-directives
-                '((my-writing-editor
-                   . "Edit this text for clarity and correctness, as a native English editor would for a non-native writer. Prioritize: run-on sentences (split at natural clause breaks), article errors (a/an/the), two ideas fused into one sentence (split or add an explicit connective), and passive voice (convert to active unless the actor is truly irrelevant — flag those cases instead of silently converting). Also fix anything else that reads as non-native or unclear. Preserve voice, vocabulary, and tone — don't polish beyond what's needed. After the rewrite, briefly list what you changed and why, grouped by type.")))))
+;;   (setq gptel-directives
+;;         (append gptel-directives
+;;                 '((my-writing-editor
+;;                    . "Edit this text for clarity and correctness, as a native English editor would for a non-native writer. Prioritize: run-on sentences (split at natural clause breaks), article errors (a/an/the), two ideas fused into one sentence (split or add an explicit connective), and passive voice (convert to active unless the actor is truly irrelevant — flag those cases instead of silently converting). Also fix anything else that reads as non-native or unclear. Preserve voice, vocabulary, and tone — don't polish beyond what's needed. After the rewrite, briefly list what you changed and why, grouped by type.")))))
 #+end_src
 

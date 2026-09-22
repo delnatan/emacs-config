@@ -32,6 +32,11 @@
   :type 'hook
   :group 'venv-manager)
 
+(defcustom venv-manager-auto-activate t
+  "When non-nil, automatically use a uv .venv found for a Python buffer's file."
+  :type 'boolean
+  :group 'venv-manager)
+
 (defvar venv-manager-current-venv nil
   "Path to currently activated virtual environment.")
 
@@ -152,6 +157,38 @@ VENV-NAME can be either the name of the environment or its full path."
     (run-hooks 'venv-manager-postdeactivate-hook)
     
     (message "Deactivated virtual environment")))
+
+(defun venv-manager--find-project-venv (file)
+  "Find a uv-style .venv for FILE by walking up its directory tree.
+Returns the .venv directory path, or nil if none is found."
+  (let* ((start-dir (file-name-directory (expand-file-name file)))
+         (root (locate-dominating-file
+                start-dir
+                (lambda (dir)
+                  (file-exists-p (expand-file-name ".venv/bin/python" dir))))))
+    (when root
+      (expand-file-name ".venv" root))))
+
+(defun venv-manager--configure-eglot (venv)
+  "Buffer-locally point eglot at VENV, if eglot is loaded."
+  (when (featurep 'eglot)
+    (let ((python-path (expand-file-name "bin/python" venv)))
+      (setq-local eglot-workspace-configuration
+                  `(:pylsp (:plugins (:jedi (:environment ,venv)))
+                    :python (:pythonPath ,python-path))))))
+
+(defun venv-manager-auto-activate-buffer ()
+  "Buffer-locally configure the Python interpreter from a uv .venv, if found."
+  (when (and venv-manager-auto-activate buffer-file-name)
+    (let ((venv (venv-manager--find-project-venv buffer-file-name)))
+      (when venv
+        (setq-local python-shell-virtualenv-root venv)
+        (setq-local python-shell-interpreter (expand-file-name "bin/python" venv))
+        (setq-local exec-path (cons (expand-file-name "bin" venv) exec-path))
+        (venv-manager--configure-eglot venv)))))
+
+(add-hook 'python-mode-hook #'venv-manager-auto-activate-buffer -90)
+(add-hook 'python-ts-mode-hook #'venv-manager-auto-activate-buffer -90)
 
 (provide 'venv-manager)
 ;;; venv-manager.el ends here
