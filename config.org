@@ -613,6 +613,10 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   :custom
   ;; 1. Fix the "dummy_completion" garbage
   (python-shell-completion-native-enable nil)
+  ;; give each project its own dedicated REPL process, keyed by
+  ;; project root, so C-c C-p in different projects doesn't reuse
+  ;; the same *Python* buffer/interpreter
+  (python-shell-dedicated 'project)
 
   :config
   ;; disable the new Python 3.13+ fancy REPL which breaks emacs DUMB terminals
@@ -704,9 +708,19 @@ kernel does not belong to the same frame. This became annoying when I use a
 second monitor to have a separate frame for displaying plots and text output
 from the jupyter kernel.
 
+The package is built from a local clone at =~/Apps/emacs/jupyter=, using
+whichever branch is checked out there (no =:branch= in the recipe on purpose).
+Its =master= includes a fix for the kernel getting stuck as "busy" when a
+message handler re-enters the ioloop's process filter. The =emacs-31-compat=
+branch additionally fixes native-comp warnings under Emacs 31 / Org 9.8 and an
+unbound =shutdown= variable in =jupyter-server-kernel.el=. After switching
+branches or editing the clone, run =M-x straight-rebuild-package RET jupyter=.
+
 #+begin_src emacs-lisp
 (use-package jupyter
-  :straight t
+  :straight (jupyter :type git :host github :repo "emacs-jupyter/jupyter"
+                     :local-repo "~/Apps/emacs/jupyter"
+                     :files (:defaults "Makefile" "widget.html" "js"))
   :defer t
   :init
   (add-to-list 'display-buffer-alist
@@ -1012,6 +1026,9 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
 
 
 * Claude-coded tools
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 
 #+begin_src emacs-lisp
 ;; for drawing
@@ -1035,10 +1052,11 @@ Minor reconfiguration of ~org-mode~.
 (use-package org
   :config
   (setq org-confirm-babel-evaluate nil)
-  (setq org-display-inline-images t)
   ;; uncomment to adapt indentation to heading levels  
   ;; (setq org-adapt-indentation t)
   (setq org-hide-leading-stars t)
+  ;; hide bookmark 'flag'
+  (setq bookmark-fringe-mark nil)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-edit-src-content-indentation 0)
@@ -1070,10 +1088,10 @@ Minor reconfiguration of ~org-mode~.
   (setenv "LIBGS" "/opt/homebrew/lib/libgs.dylib")
   ;; Ensure the preview tmp directory exists
   (make-directory (expand-file-name "~/.emacs.d/tmp") t)
-  :bind (:map org-mode-map
-  	          ("C-c l" . org-store-link)
-  	          ("C-c C-l" . org-insert-link)
-  	          ("C-x v l" . org-toggle-link-display)))
+  :bind (("C-c l" . org-store-link)
+         :map org-mode-map
+  	     ("C-c C-l" . org-insert-link)
+  	     ("C-x v l" . org-toggle-link-display)))
 
 ;; Enable variable-pitch-mode in org buffers
 ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
@@ -1179,28 +1197,6 @@ Setup a more modern-looking org-mode and use ~org-fragtog~ for nicer experience 
   (setq org-appear-autoemphasis   t   ; Show bold, italics, verbatim, etc.
         org-appear-autolinks      t   ; Show links
 		org-appear-autosubmarkers t)) ; Show sub- and superscripts
-#+end_src
-
-Let's change the bullets appearance too.
-#+begin_src emacs-lisp
-(use-package org-superstar
-  :straight t
-  :after org
-  :hook (org-mode . org-superstar-mode)
-  :config
-  ;; Hide the leading asterisks (e.g., "** Headline" becomes "   Headline")
-  ;; This creates a much cleaner outline structure.
-  (setq org-superstar-remove-leading-stars t)
-
-  ;; Set specific bullets for the first few levels.
-  ;; This list cycles if you go deeper than the defined length.
-  ;; Options: ◉ ○ ✸ ✿ ⁖ ⊚ ⊛ ∙ ▷
-  (setq org-superstar-headline-bullets-list '("◉" "○" "◦" "•" "•" "•"))
-  ;; Optional: If you want to prettify plain lists ( - or + ) as well
-  (setq org-superstar-item-bullet-alist
-        '((?* . ?•)
-          (?+ . ?➤)
-          (?- . ?–))))
 #+end_src
 
 A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to show/hide preview of latex. You enclose the expression with =\[= and =\]= or =$=.
@@ -1413,11 +1409,28 @@ agenda items in my main todo-list.
 ;; setup org-agenda keybinding to `C-c a`
 (global-set-key (kbd "C-c a") #'org-agenda)
 
-(setq org-agenda-files
-      '("/Users/delnatan/Documents/org-agenda/tasks.org"
-        "/Users/delnatan/Documents/org-agenda/meetings.org"
-        "/Users/delnatan/Documents/org-agenda/events.org"
-        "/Users/delnatan/Work/org/schedules.org"))
+;; all agenda files live here; any new .org file in this directory is picked up
+(setq org-directory "~/Documents/org-agenda/")
+(setq org-agenda-files (list org-directory "~/Work/org/schedules.org"))
+
+;; TODO workflow: WAIT = waiting on reagents/collaborators (asks for a note)
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "WAIT(w@)" "|" "DONE(d)" "CANCELLED(c)")))
+(setq org-log-done 'time
+      org-log-into-drawer t)
+
+;; agenda defaults
+(setq org-agenda-span 'week
+      org-agenda-start-on-weekday 1
+      org-agenda-skip-scheduled-if-done t
+      org-agenda-skip-deadline-if-done t
+      org-deadline-warning-days 5
+      org-agenda-window-setup 'current-window)
+
+;; numeric priorities, e.g. =* TODO [#1] item= (1 = highest)
+(setq org-priority-highest 1
+      org-priority-lowest 5
+      org-priority-default 3)
 #+end_src
 
 A convenient aspect of the org calendar system is that you can do arithmetic very easily. When you invoke a calendar minibuffer (e.g. via =C-c != or =C-c .=) you can simply just do ~+4w~ to set a date 4-weeks from today.
@@ -1438,22 +1451,41 @@ Where:
 
 I asked Claude to write this function to conveniently enter a range of dates for meetings. Useful for recurring meetings:
 #+begin_src emacs-lisp
-(defun df/org-insert-meeting-series (start-date time-range weeks count)
-  "Insert COUNT weekly dated sub-headings (each titled TBD) below point.
-Each becomes its own agenda-visible entry with an active timestamp."
+(defun de/org-read-time-range ()
+  "Prompt until a valid HH:MM or HH:MM-HH:MM string is entered."
+  (let (str)
+    (while (not (and str (string-match-p
+                          "\\`[0-2][0-9]:[0-5][0-9]\\(?:-[0-2][0-9]:[0-5][0-9]\\)?\\'" str)))
+      (setq str (read-string "Time range (HH:MM-HH:MM): " nil nil str)))
+    str))
+
+(defun de/org-insert-meeting-series (start-date time-range weeks count title)
+  "Insert COUNT dated :MEETING: sub-headings titled TITLE at the end of the subtree.
+Each is spaced WEEKS weeks apart and carries an active timestamp, so it
+shows up in the agenda.  Dates are computed on the calendar (at noon), so
+daylight saving changes cannot shift them."
   (interactive
    (list (org-read-date nil nil nil "Start date: ")
-         (read-string "Time range (HH:MM-HH:MM): ")
+         (de/org-read-time-range)
          (read-number "Weeks between meetings: " 1)
-         (read-number "How many occurrences to insert: " 10)))
-  (let* ((start-time (org-time-string-to-time start-date))
-         (day-step (* weeks 7 86400))
-         (level (1+ (or (org-current-level) 2)))
-         (stars (make-string level ?*)))
+         (read-number "How many occurrences to insert: " 10)
+         (read-string "Title: " "TBD")))
+  (let* ((start (org-parse-time-string start-date))
+         (day (nth 3 start)) (month (nth 4 start)) (year (nth 5 start))
+         (stars (make-string (1+ (or (org-current-level) 1)) ?*)))
+    ;; move to a clean line boundary after the current entry
+    (if (org-before-first-heading-p)
+        (beginning-of-line)
+      (org-end-of-subtree t)
+      (if (eobp)
+          (unless (bolp) (insert "\n"))
+        (forward-char 1)))
     (dotimes (i count)
-      (let* ((this-time (time-add start-time (seconds-to-time (* i day-step))))
-             (date-str (format-time-string "%Y-%m-%d %a" this-time)))
-        (insert (format "%s TBD\n<%s %s>\n" stars date-str time-range))))))
+      (let ((time (encode-time 0 0 12 (+ day (* i weeks 7)) month year)))
+        (insert (format "%s %s :MEETING:\n<%s %s>\n"
+                        stars title
+                        (format-time-string "%Y-%m-%d %a" time)
+                        time-range))))))
 #+end_src
 
 
@@ -1475,39 +1507,49 @@ Enter time in a 24-hour format.
 You can add priorities to each TODO or notes by adding a =[#1]= (a numeric value to each tag). For example:
 =* TODO [#1] my TODO item.=
 
-Generally, the notes are meant to be refiled so that it would show up when you run =M-x notes-list=. However, the TODO items get added to the calendar.
+Generally, the notes are meant to be refiled so that it would show up when you run =M-x notes-list=. Plain TODO items (=t=) only show up in the agenda's TODO list; use the Scheduled TODO template (=s=) to put them on the calendar.
 
 #+begin_src emacs-lisp
 ;; set =C-c c= to do org-capture
 (define-key global-map (kbd "C-c c") #'org-capture)
 
-;; set templates
+;; set templates (relative file names resolve against `org-directory')
 (setq org-capture-templates
-      '(("t" "TODO" entry (file+headline "/Users/delnatan/Documents/org-agenda/tasks.org" "Tasks")
-    	 "TODO %U %? \n  %i\n" :prepend t :empty-lines 1)
-  	    ("n" "Note" entry (file+headline "/Users/delnatan/Documents/org-agenda/notes.org" "Notes")
-  	     "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t :empty-lines 1)
-  	    ("m" "Meeting" entry (file+headline "/Users/delnatan/Documents/org-agenda/meetings.org" "Meetings")
-  	     "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t :empty-lines 1)
-  	    ("e" "Event" entry (file+headline "/Users/delnatan/Documents/org-agenda/events.org" "Events")
-  	     "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t :empty-lines 1)))
+      '(("t" "TODO" entry (file+headline "tasks.org" "Tasks")
+         "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i" :prepend t :empty-lines 1)
+        ("s" "Scheduled TODO" entry (file+headline "tasks.org" "Tasks")
+         "* TODO %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n%i" :prepend t :empty-lines 1)
+        ("n" "Note" entry (file+headline "notes.org" "Notes")
+         "* %^{TITLE} :NOTE:\n#+DATE: %<%Y-%m-%d %a>\n#+FILETAGS: note\n#+SUMMARY: %^{SUMMARY}\n#+ICON: material/notebook\n%?\n" :prepend t :empty-lines 1)
+        ("m" "Meeting" entry (file+headline "meetings.org" "Meetings")
+         "* %? :MEETING:\n%^T\n- Location: %^{Location}\n- Participants: %^{Participants}\n- Agenda:\n  - %^{Agenda}\n" :prepend t :empty-lines 1)
+        ("e" "Event" entry (file+headline "events.org" "Events")
+         "* %? :EVENT:\n%^T\n- Location: %^{Location}\n-  %i\n" :prepend t :empty-lines 1)))
 
 (defun de/org-sort-entries-by-date ()
-  "Sort entries in descending order by date"
-  (when (or (string= (buffer-name) "events.org")
-	        (string= (buffer-name) "meetings.org"))
-    (org-sort-entries nil ?T)))
+  "Sort entries of events.org / meetings.org by date after a successful capture."
+  (when (and (not org-note-abort)
+             buffer-file-name
+             (member (file-name-nondirectory buffer-file-name)
+                     '("events.org" "meetings.org")))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "^\\* " nil t)
+        (org-sort-entries nil ?T)))))
 
 (add-hook 'org-capture-after-finalize-hook #'de/org-sort-entries-by-date)
 
-;; configure refile targets
+;; configure refile targets: complete as file/heading/subheading in one step
 (setq org-refile-targets '((nil :maxlevel . 3)
-                           (org-agenda-files :maxlevel . 3)))
+                           (org-agenda-files :maxlevel . 3)
+                           ("notes.org" :maxlevel . 2)))
+(setq org-refile-use-outline-path 'file
+      org-outline-path-complete-in-steps nil)
 #+end_src
 
-The workflow is such: do =C-c n= to capture a note in a new buffer, then save the file and do =C-c C-c= to complete the capture. Do =C-c C-k= to abort capture.
+The workflow is such: do =C-c c= and choose a template, then do =C-c C-c= to complete the capture. Do =C-c C-k= to abort capture.
 
-To refile the captured notes and todo lists, do =C-c C-w=, entries can be refiled to files listed in ~org-agenda-files~.
+To refile the captured notes and todo lists, do =C-c C-w=, entries can be refiled to files listed in ~org-agenda-files~ (and =notes.org=), completing as =file/heading=.
 
 
 * Miscellaneous support
