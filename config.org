@@ -1239,15 +1239,37 @@ For citations, I want to use csl styles, so I'll need the ~citeproc~ package
   :straight t)
 #+end_src
 
-To use citeproc you need to add ~#+CSL_STYLE~ AND ~#+BIBLIOGRAPHY~ tags in the org document pointing to the relevant files (CSL file and bibliography exported from zotero or manually constructed), invoke ~org-cite-insert~ and select the citation from the mini-buffer. Note that a single citation can cite more than one references. When done do =M-<return>=. Here's an example of how to use it:
+*** Manuscript workflow (one bibliography per manuscript)
+
+1. In Zotero, make a collection for the manuscript. Right-click it → Export
+   Collection → Better BibTeX, tick *Keep updated*, and save it as
+   =references.bib= in the manuscript folder. Adding a paper to the collection
+   updates the file, and citar picks up the change.
+2. Point the document at it with ~#+BIBLIOGRAPHY~ and choose an export style
+   with ~#+CITE_EXPORT~: =csl <style.csl>= (via citeproc) for Word/HTML drafts,
+   or =biblatex= for LaTeX submissions. CSL styles downloaded through Zotero
+   live in =~/Zotero/styles/=.
+3. Put a =.dir-locals.el= in the manuscript folder so only the local
+   =references.bib= is offered and exported there (otherwise the global library
+   is used too, and the folder sent to a journal can be missing references).
+   Press =!= the first time Emacs asks whether to trust it.
+   #+begin_src emacs-lisp :tangle no
+((org-mode . ((org-cite-global-bibliography . nil)
+              (citar-bibliography . nil))))
+   #+end_src
+
+Keys: =C-c b= inserts a citation (a single citation can cite several
+references; finish with =M-<return>=), typing =@= completes citation keys,
+=C-c B= on a citation opens its PDF/URL/entry, and =C-.= (embark) on a citation
+or a candidate in the =C-c b= picker lists more actions.
 
 #+begin_src org
 
 ,#+TITLE: My Paper
-,#+BIBLIOGRAPHY: ~/Documents/references.bib
-,#+CITE_EXPORT: csl ~/Documents/styles/ieee.csl
+,#+BIBLIOGRAPHY: references.bib
+,#+CITE_EXPORT: csl ~/Zotero/styles/nature.csl
 ,* Introduction
-Here is a claim supported by evidence.
+Here is a claim supported by evidence [cite:@smith2020].
 
 ,* References
 ,#+PRINT_BIBLIOGRAPHY:
@@ -1556,7 +1578,9 @@ I started learning TypeScript. Note regarding the Emacs-style regex. ~\\.~ is to
 (add-to-list 'major-mode-remap-alist '(typescript-mode . typescript-ts-mode))
 #+end_src
 
-Use citar to manage/access up-to-date bibliography in Zotero
+Use citar to manage/access up-to-date bibliography in Zotero. The global
+bibliography is for notes; manuscripts use their own =references.bib= (see the
+manuscript workflow under the citeproc notes).
 #+begin_src emacs-lisp
 (use-package citar
   :no-require
@@ -1566,15 +1590,22 @@ Use citar to manage/access up-to-date bibliography in Zotero
   (org-cite-follow-processor 'citar)
   (org-cite-activate-processor 'citar)
   (citar-bibliography org-cite-global-bibliography)
-  ;; optional: org-cite-insert is also bound to C-c C-x C-@
+  ;; complete citation keys after typing @
+  :hook (org-mode . citar-capf-setup)
+  ;; org-cite-insert is also bound to C-c C-x C-@
   :bind
-  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
+  (:map org-mode-map :package org
+        ("C-c b" . org-cite-insert)
+        ("C-c B" . citar-dwim)))
 
-;; Recommended: Citar Embark integration
-;; This allows you to use Embark actions on citations (e.g., open url, open pdf, insert key)
+(use-package embark
+  :straight t
+  :bind ("C-." . embark-act))
+
+;; embark actions on citations (e.g., open url, open pdf, insert key)
 (use-package citar-embark
   :straight t
-  :after citar embark
+  :after (citar embark)
   :no-require
   :config (citar-embark-mode))
 #+end_src
@@ -1594,47 +1625,3 @@ Typst support
 (use-package typst-ts-mode
   :straight t)
 #+end_src
-
-Playing around with local LLM. In the prompt buffer, ~C-c RET~ to enter your prompt.
-
-Setup llama.cpp
-~brew install llama.cpp~
-
-llama can directly fetch a model and serve it. Check hugging face for models.
-~llama serve -hf unsloth/gemma-4-E2B-it-GGUF:UD-Q4_K_XL~
-
-Run the following for starting the server:
-#+begin_src zshell
-llama-server \
-  -hf unsloth/gemma-4-E2B-it-GGUF:UD-Q4_K_XL \
-  --host 127.0.0.1 --port 8080 \
-  -c 8192 \
-  -ngl 99 \
-  --jinja
-#+end_src
-
-This downloads the model to ~~/.cache/huggingface/hub~.
-
-#+begin_src emacs-lisp
-;; (use-package gptel
-;;   :straight t
-;;   :bind (("C-c g g" . gptel)
-;;          ("C-c g s" . gptel-send)
-;;          ("C-c g r" . gptel-rewrite))
-;;   :config
-;;   ;; needs to be run 
-;;   (setq gptel-model 'gemma-4-e2b-it
-;;         gptel-backend
-;;         (gptel-make-openai "llama-cpp"
-;;           :host "127.0.0.1:8080"
-;;           :endpoint "/v1/chat/completions"
-;;           :protocol "http"
-;;           :stream t
-;;           :models '(gemma-3n-e2b-it)))
-
-;;   (setq gptel-directives
-;;         (append gptel-directives
-;;                 '((my-writing-editor
-;;                    . "Edit this text for clarity and correctness, as a native English editor would for a non-native writer. Prioritize: run-on sentences (split at natural clause breaks), article errors (a/an/the), two ideas fused into one sentence (split or add an explicit connective), and passive voice (convert to active unless the actor is truly irrelevant — flag those cases instead of silently converting). Also fix anything else that reads as non-native or unclear. Preserve voice, vocabulary, and tone — don't polish beyond what's needed. After the rewrite, briefly list what you changed and why, grouped by type.")))))
-#+end_src
-
