@@ -982,6 +982,14 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
         (vertical-scroll-bars . nil)
         (horizontal-scroll-bar . nil)
         ))
+
+;; nano sets `truncate-lines' in the minibuffer, so long prompts (e.g. the
+;; "Save file ...? (y, n, !, ...)" prompt on exit) get scrolled out of view.
+;; Wrap them instead; depth 90 makes this run after nano's hook. Vertico
+;; manages `truncate-lines' itself during completion, so it is unaffected.
+(defun de/minibuffer-wrap-lines ()
+  (setq truncate-lines nil))
+(add-hook 'minibuffer-setup-hook #'de/minibuffer-wrap-lines 90)
 #+end_src
 
 
