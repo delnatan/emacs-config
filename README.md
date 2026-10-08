@@ -1,13 +1,11 @@
 # My Emacs configuration
 
-Emacs was setup using `homebrew` with `emacs-plus@30`.
-Any local packages should be set in "~/Apps/emacs". 
+Emacs was setup using `homebrew` with `emacs-plus@31`.
+Any local packages should be set in "~/Apps/emacs".
 
-These are the following packages that I use (using the `ssh` address):
+These are the local packages that the config loads from there:
 
-Nicolas Rougier's `Notes-list` and `svg-tag-mode`
-
-- git@github.com:rougier/notes-list.git
-- git@github.com:rougier/svg-tag-mode.git
-- git@github.com:jdtsmith/org-modern-indent.git
-
+- `nano-minimal`: git@github.com:delnatan/nano-minimal.git
+- `notes-list`: git@github.com:delnatan/notes-list.git
+- `jupyter` (built by straight from this local clone): https://github.com/emacs-jupyter/jupyter.git
+- `de-tools`, `de-svg-lib`, `mote-el`: personal packages (no remote)

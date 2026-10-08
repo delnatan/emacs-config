@@ -18,7 +18,7 @@
   :custom
   (straight-use-package-by-default t))
 
-;; org-mode version 9.6.15 came with emacs@29
+;; use the latest org from straight instead of the built-in version
 (use-package org
   :straight t)
 

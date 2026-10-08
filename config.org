@@ -48,7 +48,7 @@ By setting ~:tangle no~ or ~:tangle yes~ you can omit the block from being tangl
 (setq auto-revert-verbose nil)
 ;; use y/n for yes-or-no
 (setq use-short-answers t)
-;; for programming set fill to 80 columns and display column indicator
+;; wrap/fill text at 79 columns
 (setq-default fill-column 79)
 ;; enable recent-file mode
 (setq recentf-max-saved-items 50)
@@ -254,7 +254,6 @@ Common operations while in artist mode is to draw boxes/lines/ellipses, which is
 
 The default keybinding to switch to another window is =C-x o=, let's just make this shorter since I use it often. This is being re-bound to ~ace-window~.
 #+begin_src emacs-lisp
-;; (global-set-key (kbd "M-o") 'other-window)
 (use-package ace-window
   :straight t
   :bind
@@ -269,7 +268,6 @@ Switching to using ~dirvish~ for an enhanced dired experience
   ;; Enable dirvish globally (replaces standard dired)
   (dirvish-override-dired-mode)
   :custom
-  ;; Go back to the 'vscode-icon' style you had, or use 'nerd-icons'
   (dirvish-attributes '(nerd-icons collapse subtree-state vc-state))
   (dirvish-side-width 30)
   (dirvish-use-mode-line nil)
@@ -278,8 +276,9 @@ Switching to using ~dirvish~ for an enhanced dired experience
   ;; (dirvish-side-follow-mode)
   :bind
   ;; Bind a key to toggle the sidebar
-  ("C-x C-n" . dirvish-side) ;; 'o' for outline/open
-  ("TAB" . dirvish-subtree-toggle)
+  ("C-x C-n" . dirvish-side)
+  (:map dirvish-mode-map
+        ("TAB" . dirvish-subtree-toggle))
   :hook
   ;; Clean up the sidebar look
   (dirvish-side-mode . (lambda ()
@@ -404,12 +403,10 @@ using the ~ts~ mode is by running =M-x major-mode=.
                 (cpp    "https://github.com/tree-sitter/tree-sitter-cpp")
                 (c      "https://github.com/tree-sitter/tree-sitter-c")
                 (rust   "https://github.com/tree-sitter/tree-sitter-rust")
-                (typst  "https://github.com/uben0/tree-sitter-typst")
-                (elisp  "https://github.com/Wilfred/tree-sitter-elisp")))
+                (typst  "https://github.com/uben0/tree-sitter-typst")))
   (add-to-list 'treesit-language-source-alist lang))
 
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
-(add-to-list 'major-mode-remap-alist '(elisp-mode . elisp-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.c\\'" . c-ts-mode))
 #+end_src
 
@@ -442,9 +439,6 @@ For a better eglot experience when looking for functions in a codebase, use cons
   :bind (:map eglot-mode-map
               ("M-g s" . consult-eglot-symbols)))
 #+end_src
-
-#+RESULTS:
-: consult-eglot-symbols
 
 Use ~avy~ via keybinding =M-g= as a prefix for avy. where 'c' is go to char, 't'
 uses a timer to type some characters, and 'l' for going to a specific line.
@@ -611,7 +605,7 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
 #+begin_src emacs-lisp
 (use-package python
   :custom
-  ;; 1. Fix the "dummy_completion" garbage
+  ;; Fix the "dummy_completion" garbage
   (python-shell-completion-native-enable nil)
   ;; give each project its own dedicated REPL process, keyed by
   ;; project root, so C-c C-p in different projects doesn't reuse
@@ -627,8 +621,8 @@ Simple Python setup using venv for managing environments. I've been using `uv` t
   (when (treesit-ready-p 'python)
     (setq major-mode-remap-alist
       	  (append '((python-mode . python-ts-mode)) major-mode-remap-alist)))
-  ;; get completions in the REPL
   :hook
+  ;; in source buffers, leave completion to eglot instead of the REPL process
   ((python-mode python-ts-mode) . (lambda ()
                                     (remove-hook 'completion-at-point-functions
                                                  #'python-completion-at-point 'local)))
@@ -784,10 +778,10 @@ To make life a bit simpler, I've made a function to insert this snippet with the
 #+begin_src emacs-lisp
 (defun de/insert-org-jupyter-kernel-spec ()
   "Interactively insert a Jupyter kernel spec at the beginning of an Org document.
-          Ensure 'jupyter' is available, or interactively activate it using 'micromamba-activate'."
+Ensure 'jupyter' is available, or interactively activate a venv using `activate-venv'."
   (interactive)
   (unless (executable-find "jupyter")
-    (call-interactively 'micromamba-activate)) ;; Call `micromamba-activate` interactively to ensure prompt.
+    (call-interactively #'activate-venv))
   ;; Ensure 'jupyter' is available after activation attempt.
   (if (executable-find "jupyter")
       (let* ((kernelspec (jupyter-completing-read-kernelspec))
@@ -914,8 +908,7 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
         nano-font-weight 'light)
   
   :config
-  ;; Call nano-dark here to override the default nano-light set at load time.
-  ;; Remove this line if you prefer light or want the command-line flag to decide.
+  ;; Uncomment to override the default nano-light set at load time.
   ;; (nano-dark)
   ;; --- Org mode ---------------------------------------------------------------
   ;; Prevent org from switching to variable-pitch and inflating heading sizes.
@@ -970,10 +963,8 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
                     '(marginalia-on marginalia-true marginalia-installed)))
   )
 
-;; clean-up appearance (somehow nano missed this?)
-(tool-bar-mode -1)
+;; nano already disables the tool-bar and menu-bar, but not scroll bars
 (scroll-bar-mode -1)
-(menu-bar-mode -1)
 (setq default-frame-alist
       '((height . 44) (width . 81)
         (left-fringe . 0) (right-fringe . 0)
@@ -996,33 +987,15 @@ To justify both sides evenly like Rougier's examples. Use enriched-mode and pres
 * Nicolas Rougier's tools
 
 #+begin_src emacs-lisp
-;; add emacs ~app~ folder to load-path
 (use-package notes-list
   :straight nil
   :load-path "~/Apps/emacs/notes-list"
+  :bind (("C-c n n" . notes-list-new-note)
+         ("C-c n l" . notes-list))
   :custom
   (notes-list-directories '("~/Library/CloudStorage/Dropbox/org/notes"
                             "~/Documents/howtos/"
                             "~/Documents/org")))
-
-(defun de/insert-org-note-properties ()
-  "Insert common Org properties at the beginning of the document."
-  (interactive)
-  (let ((title (read-string "Title: "))
-        (filetags (read-string "File tags: "))
-        (summary (read-string "Summary: "))
-        (date (format-time-string "%Y-%m-%d"))
-        (icon "material/notebook"))
-    (goto-char (point-min))
-    (insert (format "#+TITLE: %s\n" title))
-    (insert (format "#+DATE: %s\n" date))
-    (insert (format "#+FILETAGS: %s\n" filetags))
-    (insert (format "#+SUMMARY: %s\n" summary))
-    (insert (format "#+ICON: %s\n" icon))))
-
-(with-eval-after-load 'org
-  (define-key org-mode-map (kbd "C-c i p")
-              'de/insert-org-note-properties))
 
 ;; [2025-12-29 Mon] trying out buffer-box
 (use-package buffer-box
@@ -1100,9 +1073,6 @@ Minor reconfiguration of ~org-mode~.
          :map org-mode-map
   	     ("C-c C-l" . org-insert-link)
   	     ("C-x v l" . org-toggle-link-display)))
-
-;; Enable variable-pitch-mode in org buffers
-;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 
 (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
 
@@ -1212,8 +1182,7 @@ A neat trick for when writing LaTeX snippets is the =C-c C-x C-l= keybinding to 
 For some reason, I'm having trouble (specifically on MacOS) rendering LaTeX fragments within an org document whenever the org file is in any of my Dropbox folder. So here I'm trying to see if changing the temporary directory to be in an absolute local folder instead of a relative one helps. This didn't solve the problem! But going straight to the directory at =~/Library/CloudStorage/Dropbox= doesn't!
 
 #+begin_src emacs-lisp
-(setq org-latex-preview-image-directory (expand-file-name "~/.emacs.d/tmp"))
-(setq org-latex-preview-ltxpng-directory (expand-file-name "~/.emacs.d/tmp"))
+(setq org-preview-latex-image-directory (expand-file-name "~/.emacs.d/tmp/"))
 (setq temporary-file-directory (file-truename "~/.emacs.d/tmp"))
 #+end_src
 
@@ -1333,7 +1302,7 @@ Use the svg package when exporting svg images or graphs into PDF.
 :PROPERTIES:
 :header-args: :tangle yes
 :END:
-All custom functions are preceded by the prefix ~de/~. All other custom functions that can be called interactively is placed under ~~/Apps/emacs-config/custom~.
+All custom functions are preceded by the prefix ~de/~. Small helpers live under ~~/Apps/emacs-config/custom~; larger tools (molecular biology, SVG drawing) live in ~~/Apps/emacs/de-tools~.
 
 When programming, I often want to move lines/regions up or down, bound to
 =Super-<up>/<down>=.
@@ -1401,17 +1370,15 @@ copy/paste biosequences when submitting AlphaFold jobs.
 #+end_src
 
 ** Molecular Biology work
-[2025-11-30 Sun] moved to ~~/Apps/emacs/de-tools/molbio-utils.el~.
-
-Some tasks in wet lab is repetitive (like setting up a PCR). I decided to use ~dynamic blocks~ to try out how this can make my life a bit easier.
+[2025-11-30 Sun] moved to ~~/Apps/emacs/de-tools/molbio-utils.el~, including the ~dynamic blocks~ for repetitive wet lab tasks (e.g. setting up a PCR or HiFi assembly).
 
 
 * Org-agenda
 :PROPERTIES:
 :header-args: :tangle yes
 :END:
-I've started using org-mode for scheduling stuff. For now, I'll just keep any
-agenda items in my main todo-list.
+I use org-mode for scheduling. Agenda items live in ~org-directory~ (every
+.org file there is picked up) plus my work schedule file.
 
 #+begin_src emacs-lisp
 ;; setup org-agenda keybinding to `C-c a`
@@ -1448,8 +1415,8 @@ The syntax for relative dates is:
 
 Where:
 + or - : Specifies addition or subtraction from the current date/time.
-  N      : Is the number of units.
-  unit   : Is a letter for the time unit:
+  N    : Is the number of units.
+  unit : Is a letter for the time unit:
 
   h for hours (relative to current time)
   d for days (relative to today at midnight)
