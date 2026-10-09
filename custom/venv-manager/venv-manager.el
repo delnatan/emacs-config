@@ -169,13 +169,19 @@ Returns the .venv directory path, or nil if none is found."
     (when root
       (expand-file-name ".venv" root))))
 
-(defun venv-manager--configure-eglot (venv)
-  "Buffer-locally point eglot at VENV, if eglot is loaded."
-  (when (featurep 'eglot)
-    (let ((python-path (expand-file-name "bin/python" venv)))
-      (setq-local eglot-workspace-configuration
-                  `(:pylsp (:plugins (:jedi (:environment ,venv)))
-                    :python (:pythonPath ,python-path))))))
+;;;###autoload
+(defun venv-manager-eglot-workspace-configuration (_server)
+  "Return eglot workspace settings pointing the language server at a venv.
+Intended as the global value of `eglot-workspace-configuration'.  Eglot
+calls it from a temp buffer whose `default-directory' is the project root
+\(or the requesting file's directory), so a buffer-local value would never
+be seen.  Uses the project's uv .venv if there is one, else the venv
+activated with `activate-venv'."
+  (let ((venv (or (venv-manager--find-project-venv default-directory)
+                  venv-manager-current-venv)))
+    `(:basedpyright (:analysis (:typeCheckingMode "standard"))
+      ,@(when venv
+          `(:python (:pythonPath ,(expand-file-name "bin/python" venv)))))))
 
 (defun venv-manager-auto-activate-buffer ()
   "Buffer-locally configure the Python interpreter from a uv .venv, if found."
@@ -184,8 +190,7 @@ Returns the .venv directory path, or nil if none is found."
       (when venv
         (setq-local python-shell-virtualenv-root venv)
         (setq-local python-shell-interpreter (expand-file-name "bin/python" venv))
-        (setq-local exec-path (cons (expand-file-name "bin" venv) exec-path))
-        (venv-manager--configure-eglot venv)))))
+        (setq-local exec-path (cons (expand-file-name "bin" venv) exec-path))))))
 
 (add-hook 'python-mode-hook #'venv-manager-auto-activate-buffer -90)
 (add-hook 'python-ts-mode-hook #'venv-manager-auto-activate-buffer -90)

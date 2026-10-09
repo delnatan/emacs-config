@@ -428,7 +428,14 @@ Since eglot is the LSP client, you can also configure each LSP settings 'globall
   :hook ((python-ts-mode . eglot-ensure)
          (rust-mode . eglot-ensure))
   :custom
-  (eglot-autoshutdown t))
+  (eglot-autoshutdown t)
+  :config
+  ;; one global basedpyright (`uv tool install basedpyright') for every
+  ;; project; venv-manager tells it which interpreter to analyze against
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) "basedpyright-langserver" "--stdio"))
+  (setq-default eglot-workspace-configuration
+                #'venv-manager-eglot-workspace-configuration))
 #+end_src
 
 For a better eglot experience when looking for functions in a codebase, use consult-eglot
